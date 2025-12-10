@@ -1,7 +1,7 @@
 'use client';
 
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -11,6 +11,20 @@ import { sampleArticles, sampleCategories } from '@/lib/fallbacks';
 import { getLocalizedText } from '@/lib/utils';
 
 export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6 text-center text-[var(--color-muted)]">
+          Loading search…
+        </div>
+      }
+    >
+      <SearchContent />
+    </Suspense>
+  );
+}
+
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [term, setTerm] = useState(searchParams.get('query') || '');
