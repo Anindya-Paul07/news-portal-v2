@@ -39,7 +39,9 @@ export default function MediaPage() {
         {media?.map((item) => (
           <div key={item.id} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-3 text-sm">
             <p className="font-semibold text-[var(--color-ink)]">
-              {(typeof item.alt === 'string' && item.alt) || item.alt?.en || 'Asset'}
+              {typeof item.alt === 'string'
+                ? item.alt
+                : item.alt?.en || item.alt?.bn || Object.values(item.alt || {}).find(Boolean) || 'Asset'}
             </p>
             <p className="text-[var(--color-muted)]">{item.url}</p>
           </div>
