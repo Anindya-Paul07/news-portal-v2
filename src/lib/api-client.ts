@@ -5,6 +5,11 @@ import { ApiResponse } from '@/lib/types';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
+type RequestOptions = RequestInit & {
+  skipAuth?: boolean;
+  formData?: boolean;
+};
+
 export class ApiClient {
   private baseUrl: string;
   private accessToken: string | null;
@@ -35,11 +40,13 @@ export class ApiClient {
     return `${this.baseUrl}/api/v1${path}`;
   }
 
-  async request<T>(path: string, options: RequestInit & { skipAuth?: boolean; formData?: boolean } = {}): Promise<T> {
+  async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const { skipAuth, formData, ...rest } = options;
-    const headers: HeadersInit = rest.headers || {};
+    const headers: Record<string, string> = {
+      ...(rest.headers as Record<string, string>),
+    };
 
-    if (!formData && !(headers as Record<string, string>)['Content-Type']) {
+    if (!formData && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
 
@@ -81,11 +88,11 @@ export class ApiClient {
       });
 
       if (!res.ok) return false;
-      const payload = (await res.json()) as ApiResponse<{ accessToken: string; refreshToken?: string }>;
+      const payload = (await res.json()) as ApiResponse<{ accessToken: string; refreshToken?: string | null }>;
       const accessToken = payload.data?.accessToken;
-      const refreshToken = payload.data?.refreshToken || this.refreshToken;
+      const refreshToken = payload.data?.refreshToken ?? this.refreshToken ?? undefined;
       if (!accessToken) return false;
-      this.setTokens(accessToken, refreshToken);
+      this.setTokens(accessToken, refreshToken || undefined);
       return true;
     } catch (error) {
       console.error('Refresh failed', error);
@@ -98,21 +105,23 @@ export class ApiClient {
     return this.request<T>(path, { ...init, method: 'GET' });
   }
 
-  async post<T>(path: string, body?: unknown, init?: RequestInit) {
+  async post<T>(path: string, body?: unknown, init?: RequestOptions) {
+    const formData = body instanceof FormData;
     return this.request<T>(path, {
       ...init,
       method: 'POST',
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
-      formData: body instanceof FormData,
+      body: formData ? body : body ? JSON.stringify(body) : undefined,
+      formData,
     });
   }
 
-  async put<T>(path: string, body?: unknown, init?: RequestInit) {
+  async put<T>(path: string, body?: unknown, init?: RequestOptions) {
+    const formData = body instanceof FormData;
     return this.request<T>(path, {
       ...init,
       method: 'PUT',
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
-      formData: body instanceof FormData,
+      body: formData ? body : body ? JSON.stringify(body) : undefined,
+      formData,
     });
   }
 

@@ -5,22 +5,24 @@ import { AdminShell } from '@/components/layout/AdminShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useSaveUser, useUsers } from '@/hooks/api-hooks';
+import { Role } from '@/lib/types';
+
+const roles: Role[] = ['super_admin', 'admin', 'journalist', 'reader'];
 
 export default function UsersPage() {
   const { data: users } = useUsers();
   const { mutateAsync: saveUser } = useSaveUser();
-  const [draft, setDraft] = useState({ name: '', email: '', role: 'journalist', password: '' });
-  const roles: Array<'super_admin' | 'admin' | 'journalist' | 'reader'> = [
-    'super_admin',
-    'admin',
-    'journalist',
-    'reader',
-  ];
+  const [draft, setDraft] = useState<{ name: string; email: string; role: Role; password: string }>({
+    name: '',
+    email: '',
+    role: 'journalist',
+    password: '',
+  });
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await saveUser(draft);
-    setDraft({ name: '', email: '', role: 'journalist', password: '' });
+    setDraft({ name: '', email: '', role: 'journalist' as const, password: '' });
   };
 
   return (

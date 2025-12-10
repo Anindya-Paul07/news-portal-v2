@@ -206,7 +206,7 @@ export const useSaveAd = () => {
 export const useSaveUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<User> & { id?: string }) =>
+    mutationFn: (payload: Partial<User> & { id?: string; password?: string }) =>
       payload.id
         ? apiClient.put<ApiResponse<User>>(`/users/${payload.id}`, payload)
         : apiClient.post<ApiResponse<User>>('/users', payload),
