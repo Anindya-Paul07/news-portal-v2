@@ -4,35 +4,67 @@ import { useState } from 'react';
 import { AdminShell } from '@/components/layout/AdminShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState({ apiUrl: process.env.NEXT_PUBLIC_API_BASE || '', frontendUrl: '', rateLimit: 120 });
+  const { changePassword } = useAuth();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setStatus('error');
+      setMessage('New password does not match confirmation.');
+      return;
+    }
+    try {
+      await changePassword(currentPassword, newPassword);
+      setStatus('success');
+      setMessage('Password updated successfully.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      setStatus('error');
+      setMessage(error instanceof Error ? error.message : 'Unable to update password.');
+    }
+  };
 
   return (
-    <AdminShell title="Settings" description="Ops-level controls for rate limits and environment URLs.">
-      <div className="grid gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-4">
+    <AdminShell title="Security" description="Update your backoffice password.">
+      <form className="grid gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-5" onSubmit={onSubmit}>
         <Input
-          label="API Base URL"
-          value={settings.apiUrl}
-          onChange={(e) => setSettings((s) => ({ ...s, apiUrl: e.target.value }))}
-          helper="Read-only from env"
-          readOnly
+          label="Current password"
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          required
         />
         <Input
-          label="Frontend URL"
-          value={settings.frontendUrl}
-          onChange={(e) => setSettings((s) => ({ ...s, frontendUrl: e.target.value }))}
-          placeholder="https://news.thecontemporary.news"
+          label="New password"
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          required
         />
         <Input
-          label="Rate limit (rpm)"
-          type="number"
-          value={settings.rateLimit}
-          onChange={(e) => setSettings((s) => ({ ...s, rateLimit: Number(e.target.value) }))}
+          label="Confirm new password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
         />
-        <Button className="w-fit">Save settings</Button>
-        <p className="text-xs text-[var(--color-muted)]">API version: v1</p>
-      </div>
+        <Button type="submit" className="w-fit">
+          Update password
+        </Button>
+        {status !== 'idle' && (
+          <p className={`text-sm ${status === 'success' ? 'text-green-600' : 'text-red-600'}`}>{message}</p>
+        )}
+      </form>
     </AdminShell>
   );
 }

@@ -1,0 +1,14 @@
+{
+  email admin@thecontemporary.news
+}
+
+thecontemporary.news {
+  encode gzip
+  reverse_proxy web:3000
+}
+
+# Optional: forward API subdomain to existing backend host if desired.
+# Uncomment and adjust if this Caddy instance should proxy the backend too.
+# backoffice.thecontemporary.news {
+#   reverse_proxy https://backoffice.thecontemporary.news
+# }

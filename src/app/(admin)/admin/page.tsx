@@ -43,6 +43,7 @@ export default function AdminDashboard() {
   const { data: trending } = useTrendingArticles();
   const { data: ads } = useAdminAds();
   const { data: media } = useMediaLibrary({ limit: 4 });
+  const topTrending = trending?.slice(0, 4) ?? [];
 
   const articleStats = overview?.articles || {};
   const userStats = overview?.users || {};
@@ -85,7 +86,7 @@ export default function AdminDashboard() {
         <div className="space-y-3">
           <h3 className="headline text-xl font-bold">Top performers</h3>
           <div className="grid gap-3 sm:grid-cols-2">
-            {trending?.slice(0, 4).map((article) => (
+            {topTrending.map((article) => (
               <ArticleCard key={article.id} article={article} />
             ))}
           </div>

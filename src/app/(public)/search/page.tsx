@@ -6,6 +6,9 @@ import { ArticleCard } from '@/components/news/ArticleCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useArticles, useMenuCategories, useSearchArticles } from '@/hooks/api-hooks';
+import { useLanguage } from '@/contexts/language-context';
+import { sampleArticles, sampleCategories } from '@/lib/fallbacks';
+import { getLocalizedText } from '@/lib/utils';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -17,6 +20,11 @@ export default function SearchPage() {
   const { data: categories } = useMenuCategories();
   const { data: results } = useSearchArticles(term, { sort, category });
   const { data: latest } = useArticles({ limit: 4 });
+  const { language } = useLanguage();
+  const categoryList = categories && categories.length > 0 ? categories : sampleCategories;
+  const latestList = latest && latest.length > 0 ? latest : sampleArticles.slice(0, 4);
+  const shouldShowPlaceholderResults = !term || results === undefined;
+  const resultItems = shouldShowPlaceholderResults ? sampleArticles.slice(0, 6) : results || [];
 
   useEffect(() => {
     const query = new URLSearchParams();
@@ -52,7 +60,7 @@ export default function SearchPage() {
           </div>
           <div className="flex flex-wrap gap-2 text-sm">
             <span className="text-[var(--color-muted)]">Category:</span>
-            {categories?.map((cat) => (
+            {categoryList?.map((cat) => (
               <Button
                 key={cat.id}
                 variant={category === cat.slug ? 'primary' : 'outline'}
@@ -61,23 +69,25 @@ export default function SearchPage() {
                   router.replace(`/search?query=${encodeURIComponent(term)}&category=${cat.slug}&sort=${sort}`)
                 }
               >
-                {cat.name}
+                {getLocalizedText(cat.name, language)}
               </Button>
             ))}
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {results?.map((article) => (
+          {resultItems.map((article) => (
             <ArticleCard key={article.id} article={article} />
           ))}
-          {!results?.length && <p className="text-[var(--color-muted)]">No matches yet. Try another keyword.</p>}
+          {results?.length === 0 && (
+            <p className="text-[var(--color-muted)]">No matches yet. Try another keyword.</p>
+          )}
         </div>
       </div>
       <aside className="space-y-3">
         <h3 className="headline text-xl font-bold">Latest</h3>
         <div className="space-y-3">
-          {latest?.map((article) => (
+          {latestList.map((article) => (
             <ArticleCard key={article.id} article={article} />
           ))}
         </div>

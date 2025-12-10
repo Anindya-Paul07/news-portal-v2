@@ -44,8 +44,8 @@ export function AdminShell({ children, title, description }: { children: ReactNo
               key={item.href}
               href={item.href}
               className={cn(
-                'block rounded-xl px-3 py-2 transition-colors hover:bg-[rgba(13,59,102,0.08)] dark:hover:bg-[rgba(126,211,255,0.08)]',
-                pathname === item.href && 'bg-[rgba(177,14,30,0.08)] text-[var(--color-primary)]',
+                'block rounded-xl px-3 py-2 transition-colors hover:bg-[rgba(35,53,84,0.08)]',
+                pathname === item.href && 'bg-[rgba(197,55,39,0.12)] text-[var(--color-primary)]',
               )}
             >
               {item.label}

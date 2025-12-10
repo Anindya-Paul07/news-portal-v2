@@ -2,8 +2,19 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { sampleAds, sampleArticles, sampleCategories, sampleDashboard } from '@/lib/fallbacks';
-import { Advertisement, ApiResponse, Article, Category, DashboardOverview, Media, User } from '@/lib/types';
+import {
+  Advertisement,
+  AdvertisementPayload,
+  ApiResponse,
+  Article,
+  ArticlePayload,
+  Category,
+  CategoryPayload,
+  DashboardOverview,
+  Media,
+  MediaUploadPayload,
+  User,
+} from '@/lib/types';
 
 const buildQuery = (params?: Record<string, string | number | boolean | undefined>) => {
   const search = new URLSearchParams();
@@ -23,50 +34,44 @@ const fetcher = async <T,>(path: string) => {
 export const useMenuCategories = () =>
   useQuery({
     queryKey: ['categories', 'menu'],
-    queryFn: () => fetcher<Category[]>(`/categories${buildQuery({ menu: true })}`),
-    placeholderData: sampleCategories,
+    queryFn: () => fetcher<Category[]>(`/categories${buildQuery({ isActive: true, showInMenu: true })}`),
   });
 
 export const useCategoryTree = () =>
   useQuery({
     queryKey: ['categories', 'tree'],
-    queryFn: () => fetcher<Category[]>(`/categories${buildQuery({ active: true })}`),
-    placeholderData: sampleCategories,
+    queryFn: () => fetcher<Category[]>('/categories/tree/all'),
   });
 
 export const useFeaturedArticles = () =>
   useQuery({
     queryKey: ['articles', 'featured'],
-    queryFn: () => fetcher<Article[]>('/articles/featured'),
-    placeholderData: sampleArticles,
+    queryFn: () => fetcher<Article[]>(`/articles/featured/list${buildQuery({ limit: 5 })}`),
   });
 
 export const useBreakingTicker = () =>
   useQuery({
     queryKey: ['articles', 'breaking'],
-    queryFn: () => fetcher<Article[]>('/articles/breaking'),
-    placeholderData: sampleArticles.slice(0, 3),
+    queryFn: () => fetcher<Article[]>('/articles/breaking/list'),
   });
 
 export const useTrendingArticles = () =>
   useQuery({
     queryKey: ['articles', 'trending'],
-    queryFn: () => fetcher<Article[]>('/articles/trending'),
-    placeholderData: sampleArticles,
+    queryFn: () => fetcher<Article[]>(`/articles${buildQuery({ isTrending: true, status: 'published', limit: 12 })}`),
   });
 
 export const useLatestArticles = () =>
   useQuery({
     queryKey: ['articles', 'latest'],
-    queryFn: () => fetcher<Article[]>(`/articles${buildQuery({ sort: 'publishedAt', order: 'desc', limit: 12 })}`),
-    placeholderData: sampleArticles,
+    queryFn: () =>
+      fetcher<Article[]>(`/articles${buildQuery({ sort: '-publishedAt', status: 'published', limit: 12 })}`),
   });
 
 export const useArticles = (params?: Record<string, string | number | boolean | undefined>) =>
   useQuery({
     queryKey: ['articles', params],
     queryFn: () => fetcher<Article[]>(`/articles${buildQuery(params)}`),
-    placeholderData: sampleArticles,
   });
 
 export const useArticle = (identifier: string) =>
@@ -74,7 +79,6 @@ export const useArticle = (identifier: string) =>
     enabled: !!identifier,
     queryKey: ['article', identifier],
     queryFn: () => fetcher<Article>(`/articles/${identifier}`),
-    placeholderData: sampleArticles[0],
   });
 
 export const useRelatedArticles = (categoryId?: string) =>
@@ -82,7 +86,6 @@ export const useRelatedArticles = (categoryId?: string) =>
     enabled: !!categoryId,
     queryKey: ['articles', 'related', categoryId],
     queryFn: () => fetcher<Article[]>(`/articles${buildQuery({ category: categoryId, limit: 6 })}`),
-    placeholderData: sampleArticles,
   });
 
 export const useCategory = (identifier: string) =>
@@ -90,78 +93,78 @@ export const useCategory = (identifier: string) =>
     enabled: !!identifier,
     queryKey: ['category', identifier],
     queryFn: () => fetcher<Category>(`/categories/${identifier}`),
-    placeholderData: sampleCategories[0],
   });
 
-export const useCategoryArticles = (identifier: string, params?: Record<string, string | number | boolean | undefined>) =>
+export const useCategoryArticles = (
+  identifier: string,
+  params?: Record<string, string | number | boolean | undefined>,
+) =>
   useQuery({
     enabled: !!identifier,
     queryKey: ['category', identifier, 'articles', params],
-    queryFn: () => fetcher<Article[]>(`/articles${buildQuery({ category: identifier, ...params })}`),
-    placeholderData: sampleArticles,
+    queryFn: () => fetcher<Article[]>(`/categories/${identifier}/articles${buildQuery(params)}`),
   });
 
 export const useSearchArticles = (term: string, filters?: Record<string, string | number | boolean | undefined>) =>
   useQuery({
     enabled: term.length > 0,
     queryKey: ['articles', 'search', term, filters],
-    queryFn: () => fetcher<Article[]>(`/articles${buildQuery({ search: term, ...filters })}`),
-    placeholderData: sampleArticles,
+    queryFn: () => fetcher<Article[]>(`/articles/search/query${buildQuery({ q: term, ...filters })}`),
   });
 
 export const useAds = (position?: string, page?: string) =>
   useQuery({
     queryKey: ['ads', 'active', position, page],
-    queryFn: () => fetcher<Advertisement[]>(`/advertisements/active${buildQuery({ position, page, type: 'image' })}`),
-    placeholderData: sampleAds,
+    queryFn: () =>
+      fetcher<Advertisement[]>(
+        `/advertisements/active${buildQuery({
+          type: position === 'sidebar' ? 'sidebar' : 'banner',
+          position,
+          page,
+        })}`,
+      ),
   });
 
 export const useDashboardOverview = () =>
   useQuery({
     queryKey: ['dashboard', 'overview'],
-    queryFn: () => fetcher<DashboardOverview>('/dashboard/stats'),
-    placeholderData: sampleDashboard,
+    queryFn: () => fetcher<DashboardOverview>('/dashboard/overview'),
   });
 
 export const useAdminArticles = (params?: Record<string, string | number | boolean | undefined>) =>
   useQuery({
     queryKey: ['admin', 'articles', params],
     queryFn: () => fetcher<Article[]>(`/articles${buildQuery(params)}`),
-    placeholderData: sampleArticles,
   });
 
 export const useAdminCategories = () =>
   useQuery({
     queryKey: ['admin', 'categories'],
     queryFn: () => fetcher<Category[]>('/categories'),
-    placeholderData: sampleCategories,
   });
 
 export const useAdminAds = () =>
   useQuery({
     queryKey: ['admin', 'ads'],
     queryFn: () => fetcher<Advertisement[]>('/advertisements'),
-    placeholderData: sampleAds,
   });
 
 export const useUsers = () =>
   useQuery({
     queryKey: ['admin', 'users'],
     queryFn: () => fetcher<User[]>('/users'),
-    placeholderData: [],
   });
 
 export const useMediaLibrary = (params?: Record<string, string | number | boolean | undefined>) =>
   useQuery({
     queryKey: ['admin', 'media', params],
     queryFn: () => fetcher<Media[]>(`/media${buildQuery(params)}`),
-    placeholderData: [],
   });
 
 export const useSaveArticle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<Article> & { id?: string }) =>
+    mutationFn: (payload: ArticlePayload) =>
       payload.id
         ? apiClient.put<ApiResponse<Article>>(`/articles/${payload.id}`, payload)
         : apiClient.post<ApiResponse<Article>>('/articles', payload),
@@ -175,7 +178,7 @@ export const useSaveArticle = () => {
 export const useSaveCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<Category> & { id?: string }) =>
+    mutationFn: (payload: CategoryPayload) =>
       payload.id
         ? apiClient.put<ApiResponse<Category>>(`/categories/${payload.id}`, payload)
         : apiClient.post<ApiResponse<Category>>('/categories', payload),
@@ -189,7 +192,7 @@ export const useSaveCategory = () => {
 export const useSaveAd = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<Advertisement> & { id?: string }) =>
+    mutationFn: (payload: AdvertisementPayload) =>
       payload.id
         ? apiClient.put<ApiResponse<Advertisement>>(`/advertisements/${payload.id}`, payload)
         : apiClient.post<ApiResponse<Advertisement>>('/advertisements', payload),
@@ -216,10 +219,17 @@ export const useSaveUser = () => {
 export const useUploadMedia = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { file: File; alt?: string; tags?: string[]; folder?: string }) => {
+    mutationFn: (payload: MediaUploadPayload) => {
       const formData = new FormData();
       formData.append('file', payload.file);
-      if (payload.alt) formData.append('alt', payload.alt);
+      if (payload.alt && typeof payload.alt === 'string') {
+        formData.append('alt[en]', payload.alt);
+      } else if (payload.alt) {
+        Object.entries(payload.alt).forEach(([locale, text]) => {
+          if (!text) return;
+          formData.append(`alt[${locale}]`, text);
+        });
+      }
       if (payload.folder) formData.append('folder', payload.folder);
       if (payload.tags?.length) formData.append('tags', payload.tags.join(','));
       return apiClient.post<ApiResponse<Media>>('/media/upload', formData, { formData: true });

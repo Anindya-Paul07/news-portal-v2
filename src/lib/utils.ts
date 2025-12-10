@@ -1,3 +1,5 @@
+import { LocalizedText } from '@/lib/types';
+
 export function cn(...classes: Array<string | undefined | null | false>) {
   return classes.filter(Boolean).join(' ');
 }
@@ -18,5 +20,13 @@ export function readingTimeFromWords(words?: number) {
   return `${minutes} min read`;
 }
 
-export const heroGradientClass =
-  'bg-[radial-gradient(circle_at_12%_20%,rgba(177,14,30,0.08),transparent_28%),radial-gradient(circle_at_88%_12%,rgba(13,59,102,0.12),transparent_26%)] dark:bg-[radial-gradient(circle_at_18%_18%,rgba(255,92,108,0.12),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(126,211,255,0.16),transparent_32%)]';
+export function getLocalizedText(value?: LocalizedText | null, language: 'en' | 'bn' = 'en') {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  const normalized = language.toLowerCase();
+  if (value[normalized]) return value[normalized];
+  if (value.en) return value.en;
+  if (value.bn) return value.bn;
+  const firstEntry = Object.values(value).find((entry) => typeof entry === 'string' && entry.trim().length > 0);
+  return firstEntry || '';
+}

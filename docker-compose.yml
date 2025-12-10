@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  web:
+    build: .
+    container_name: contemporary-web
+    environment:
+      NEXT_PUBLIC_API_BASE: https://backoffice.thecontemporary.news
+    restart: unless-stopped
+    networks:
+      - contemporary
+
+  caddy:
+    image: caddy:2.8
+    container_name: contemporary-caddy
+    depends_on:
+      - web
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - contemporary
+
+networks:
+  contemporary:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
