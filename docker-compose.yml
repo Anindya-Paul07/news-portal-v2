@@ -6,11 +6,6 @@ services:
       NEXT_PUBLIC_API_BASE: https://backoffice.thecontemporary.news
     restart: unless-stopped
     # optional: remove host port if you only need internal access
-    # ports:
-    #   - '3000:3000'
-    networks:
-      - newsportal-backend-net
-
-networks:
-  newsportal-backend-net:
-    external: true
+    ports:
+      - '3000:3000'
+    

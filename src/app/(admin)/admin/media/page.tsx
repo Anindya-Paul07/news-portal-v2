@@ -1,10 +1,20 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Grid from '@mui/material/Grid';
+import ImageList from '@mui/material/ImageList';
+import ImageListItem from '@mui/material/ImageListItem';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { AdminShell } from '@/components/layout/AdminShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useMediaLibrary, useUploadMedia } from '@/hooks/api-hooks';
+import { EmptyState } from '@/components/states/EmptyState';
+import { LoadingBlock } from '@/components/states/LoadingBlock';
 
 export default function MediaPage() {
   const { data: media } = useMediaLibrary({ limit: 20 });
@@ -24,29 +34,46 @@ export default function MediaPage() {
 
   return (
     <AdminShell title="Media library" description="Upload assets, edit metadata, and pick for articles/ads.">
-      <form className="grid gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-4" onSubmit={onUpload}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <Input label="Alt text (EN)" value={altEn} onChange={(e) => setAltEn(e.target.value)} />
-          <Input label="Alt text (BN)" value={altBn} onChange={(e) => setAltBn(e.target.value)} />
-        </div>
-        <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-        <Button type="submit" className="w-fit">
-          Upload
-        </Button>
-      </form>
+      <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 3 }}>
+        <CardHeader title="Upload" subheader="Add alt text for accessibility and SEO." />
+        <CardContent>
+          <Stack component="form" onSubmit={onUpload} spacing={2}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Input label="Alt text (EN)" value={altEn} onChange={(e) => setAltEn(e.target.value)} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Input label="Alt text (BN)" value={altBn} onChange={(e) => setAltBn(e.target.value)} />
+              </Grid>
+            </Grid>
+            <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            <Button type="submit" sx={{ alignSelf: 'flex-start' }}>
+              Upload
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {media?.map((item) => (
-          <div key={item.id} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-3 text-sm">
-            <p className="font-semibold text-[var(--color-ink)]">
-              {typeof item.alt === 'string'
-                ? item.alt
-                : item.alt?.en || item.alt?.bn || Object.values(item.alt || {}).find(Boolean) || 'Asset'}
-            </p>
-            <p className="text-[var(--color-muted)]">{item.url}</p>
-          </div>
-        ))}
-      </div>
+      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+        Library
+      </Typography>
+      {!media && <LoadingBlock lines={3} />}
+      {media?.length === 0 && <EmptyState title="No media" description="Upload assets to see them here." />}
+      {media && media.length > 0 && (
+        <ImageList variant="masonry" cols={4} gap={12}>
+          {media.map((item) => (
+            <ImageListItem key={item.id} sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={item.url} alt={typeof item.alt === 'string' ? item.alt : item.alt?.en || 'Asset'} loading="lazy" />
+              <Typography variant="caption" sx={{ display: 'block', p: 1 }}>
+                {typeof item.alt === 'string'
+                  ? item.alt
+                  : item.alt?.en || item.alt?.bn || Object.values(item.alt || {}).find(Boolean) || 'Asset'}
+              </Typography>
+            </ImageListItem>
+          ))}
+        </ImageList>
+      )}
     </AdminShell>
   );
 }

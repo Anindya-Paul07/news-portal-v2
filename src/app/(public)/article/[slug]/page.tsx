@@ -3,83 +3,176 @@
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { alpha, useTheme } from '@mui/material/styles';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/states/EmptyState';
 import { useArticle, useRelatedArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
-import { sampleArticles } from '@/lib/fallbacks';
 import { formatDate, getLocalizedText } from '@/lib/utils';
 
 export default function ArticlePage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug as string;
-  const fallbackArticle = sampleArticles.find((item) => item.slug === slug) || sampleArticles[0];
   const { data: article } = useArticle(slug);
-  const categoryIdForRelated = article?.categoryId ?? fallbackArticle.categoryId;
+  const categoryIdForRelated = article?.categoryId;
   const { data: related } = useRelatedArticles(categoryIdForRelated);
   const { language } = useLanguage();
   const [lang, setLang] = useState<'en' | 'bn'>('en');
-  const displayArticle = article || fallbackArticle;
+  const [readingMode, setReadingMode] = useState(false);
+  const [largeText, setLargeText] = useState(false);
+  const theme = useTheme();
+  const displayArticle = article;
   const relatedStories =
-    related && related.length > 0
-      ? related
-      : sampleArticles.filter((item) => item.id !== displayArticle.id).slice(0, 4);
-  const categoryLabel = getLocalizedText(displayArticle.category?.name, language) || 'News';
-  const title = getLocalizedText(displayArticle.title, language);
-  const summary = getLocalizedText(displayArticle.excerpt, language);
-  const featuredImage = displayArticle.featuredImage?.url || displayArticle.coverImage;
-  const featuredAlt = getLocalizedText(displayArticle.featuredImage?.alt, language) || title;
+    related && related.length > 0 && displayArticle
+      ? related.filter((item) => item.id !== displayArticle.id).slice(0, 4)
+      : [];
+  const categoryLabel = displayArticle ? getLocalizedText(displayArticle.category?.name, language) || 'News' : 'News';
+  const title = displayArticle ? getLocalizedText(displayArticle.title, language) : '';
+  const summary = displayArticle ? getLocalizedText(displayArticle.excerpt, language) : '';
+  const featuredImage = displayArticle?.featuredImage?.url || displayArticle?.coverImage;
+  const featuredAlt = displayArticle ? getLocalizedText(displayArticle.featuredImage?.alt, language) || title : '';
   const bodyContent =
-    typeof displayArticle.content === 'string'
+    displayArticle && typeof displayArticle.content === 'string'
       ? displayArticle.content
-      : displayArticle.content?.[lang] || displayArticle.content?.en || summary || '';
+      : displayArticle?.content
+        ? (displayArticle.content as Record<string, string | undefined>)[lang] ||
+          (displayArticle.content as Record<string, string | undefined>).en ||
+          summary ||
+          ''
+        : summary || '';
+
+  if (!displayArticle) {
+    return (
+      <EmptyState
+        title="Article not found"
+        description="The story could not be loaded. Please try again later."
+      />
+    );
+  }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-      <article className="space-y-4">
-        <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-muted)]">
-          <span className="rounded-full bg-[rgba(252,186,4,0.2)] px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
-            {categoryLabel}
-          </span>
-          {displayArticle.publishedAt && <span>{formatDate(displayArticle.publishedAt)}</span>}
-          {displayArticle.readingTime && <span>• {displayArticle.readingTime} min read</span>}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" className="px-3 py-1 text-xs" onClick={() => setLang('en')}>
-              EN
-            </Button>
-            <Button variant="outline" className="px-3 py-1 text-xs" onClick={() => setLang('bn')}>
-              বাংলা
-            </Button>
-          </div>
-        </div>
-        <h1 className="headline text-3xl font-extrabold leading-tight md:text-4xl">{title}</h1>
-        {summary && <p className="text-lg text-[var(--color-muted)]">{summary}</p>}
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12, lg: 8 }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: { xs: 2.5, md: readingMode ? 3.5 : 3 },
+            borderRadius: readingMode ? 3.5 : 3,
+            boxShadow: readingMode ? 1 : 3,
+            bgcolor: readingMode
+              ? alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.94 : 0.98)
+              : 'background.paper',
+            borderColor: readingMode ? alpha(theme.palette.primary.main, 0.15) : undefined,
+          }}
+        >
+          <Stack spacing={1.5} direction="row" flexWrap="wrap" alignItems="center" sx={{ color: 'text.secondary' }}>
+            <Chip
+              label={categoryLabel}
+              color="warning"
+              size="small"
+              sx={{ fontWeight: 700, letterSpacing: 1, bgcolor: alpha(theme.palette.warning.main, 0.18) }}
+            />
+            {displayArticle.publishedAt && <Typography variant="body2">{formatDate(displayArticle.publishedAt)}</Typography>}
+            {displayArticle.readingTime && (
+              <Typography variant="body2">• {displayArticle.readingTime} min read</Typography>
+            )}
+            <Stack direction="row" spacing={1}>
+              <Button variant={lang === 'en' ? 'secondary' : 'outline'} size="small" onClick={() => setLang('en')}>
+                EN
+              </Button>
+              <Button variant={lang === 'bn' ? 'secondary' : 'outline'} size="small" onClick={() => setLang('bn')}>
+                বাংলা
+              </Button>
+            </Stack>
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant={readingMode ? 'secondary' : 'outline'}
+                size="small"
+                onClick={() => setReadingMode((prev) => !prev)}
+              >
+                {readingMode ? 'Reading mode on' : 'Reading mode'}
+              </Button>
+              <Button
+                variant={largeText ? 'secondary' : 'outline'}
+                size="small"
+                onClick={() => setLargeText((prev) => !prev)}
+              >
+                {largeText ? 'Text: Large' : 'Text: Default'}
+              </Button>
+            </Stack>
+          </Stack>
 
-        {featuredImage && (
-          <div className="relative h-80 w-full overflow-hidden rounded-2xl">
-            <Image src={featuredImage} alt={featuredAlt} fill className="object-cover" sizes="100vw" />
-          </div>
-        )}
+          <Typography variant="h3" component="h1" sx={{ fontWeight: 800, mt: 2 }}>
+            {title}
+          </Typography>
+          {summary && (
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 1.5 }}>
+              {summary}
+            </Typography>
+          )}
 
-        <div className="article-content prose max-w-none prose-headings:font-serif">
-          <p>{bodyContent || 'বাংলা কন্টেন্ট আসছে।'}</p>
-        </div>
+          {featuredImage && (
+            <Box
+              sx={{
+                position: 'relative',
+                height: { xs: 240, md: 320 },
+                width: '100%',
+                mt: 2,
+                borderRadius: 3,
+                overflow: 'hidden',
+                boxShadow: 3,
+              }}
+            >
+              <Image src={featuredImage} alt={featuredAlt} fill className="object-cover" sizes="100vw" />
+            </Box>
+          )}
 
-        <AdSlot position="in_content" page="article" />
-      </article>
+          <Divider sx={{ my: 3 }} />
 
-      <aside className="space-y-4">
-        <AdSlot position="sidebar" page="article" />
-        <div className="surface-card p-4">
-          <h3 className="headline mb-3 text-xl font-bold">Related stories</h3>
-          <div className="space-y-3">
-            {relatedStories.slice(0, 4).map((item) => (
-              <ArticleCard key={item.id} article={item} />
-            ))}
-          </div>
-        </div>
-      </aside>
-    </div>
+          <Box
+            sx={{
+              color: 'text.primary',
+              lineHeight: readingMode ? 1.9 : 1.7,
+              fontSize: largeText ? '1.08rem' : '1rem',
+              maxWidth: readingMode ? 760 : '100%',
+              mx: readingMode ? 'auto' : undefined,
+              '& p': { mb: 2 },
+            }}
+            className="article-content"
+          >
+            <Typography variant="body1">{bodyContent || 'বাংলা কন্টেন্ট আসছে।'}</Typography>
+          </Box>
+
+          <Box sx={{ mt: 3 }}>
+            <AdSlot position="in_content" page="article" />
+          </Box>
+        </Paper>
+      </Grid>
+
+      <Grid size={{ xs: 12, lg: 4 }}>
+        <Stack spacing={2.5}>
+          <AdSlot position="sidebar" page="article" />
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, boxShadow: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, mb: 1.5 }}>
+              Related stories
+            </Typography>
+            <Stack spacing={1.5}>
+              {relatedStories.slice(0, 4).map((item) => (
+                <ArticleCard key={item.id} article={item} />
+              ))}
+            </Stack>
+          </Paper>
+        </Stack>
+      </Grid>
+    </Grid>
   );
 }

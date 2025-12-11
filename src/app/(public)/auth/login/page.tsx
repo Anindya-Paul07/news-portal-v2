@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/contexts/auth-context';
@@ -25,11 +28,22 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6 shadow-lg">
-      <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--color-muted)]">Access</p>
-      <h1 className="headline text-3xl font-extrabold">Welcome back</h1>
-      <p className="text-sm text-[var(--color-muted)]">Enter your newsroom credentials.</p>
-      <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+    <Paper
+      variant="outlined"
+      sx={{ maxWidth: 420, mx: 'auto', p: 4, borderRadius: 3, boxShadow: 4, bgcolor: 'background.paper' }}
+    >
+      <Stack spacing={0.5}>
+        <Typography variant="overline" sx={{ letterSpacing: 3, color: 'text.secondary' }}>
+          Access
+        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 800 }}>
+          Welcome back
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Enter your newsroom credentials.
+        </Typography>
+      </Stack>
+      <Stack component="form" onSubmit={onSubmit} spacing={2} mt={3}>
         <Input
           label="Email"
           type="email"
@@ -44,17 +58,21 @@ export default function LoginPage() {
           onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
           required
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button type="submit" className="w-full py-3 text-base font-bold">
+        {error && (
+          <Typography variant="body2" color="error">
+            {error}
+          </Typography>
+        )}
+        <Button type="submit" sx={{ py: 1.2, fontWeight: 800 }}>
           Sign in
         </Button>
-      </form>
-      <p className="mt-4 text-sm text-[var(--color-muted)]">
+      </Stack>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
         No account?{' '}
-        <Link href="/auth/register" className="font-semibold text-[var(--color-accent)]">
+        <Link href="/auth/register" style={{ fontWeight: 700, color: 'inherit' }}>
           Create one
         </Link>
-      </p>
-    </div>
+      </Typography>
+    </Paper>
   );
 }

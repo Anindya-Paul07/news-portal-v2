@@ -1,37 +1,105 @@
 'use client';
 
-import { ButtonHTMLAttributes } from 'react';
-import { cn } from '@/lib/utils';
+import MuiButton, { type ButtonProps as MuiButtonProps } from '@mui/material/Button';
+import { alpha } from '@mui/material/styles';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 type Variant = 'primary' | 'ghost' | 'outline' | 'subtle' | 'secondary';
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type ButtonProps = Omit<MuiButtonProps, 'variant' | 'color'> & {
   variant?: Variant;
 };
 
-const styles: Record<Variant, string> = {
-  primary:
-    'bg-[var(--color-primary)] text-[var(--color-primary-contrast)] shadow-sm shadow-[rgba(197,55,39,0.35)] hover:opacity-95',
-  secondary:
-    'bg-[var(--color-secondary)] text-[var(--color-secondary-contrast)] shadow-[0_10px_24px_rgba(35,53,84,0.25)] hover:opacity-95',
-  ghost:
-    'bg-transparent text-[var(--color-ink)] hover:text-[var(--color-accent)] hover:bg-[rgba(35,53,84,0.08)]',
-  outline:
-    'border border-[var(--color-border)] bg-transparent text-[var(--color-muted)] hover:border-[var(--color-accent)]',
-  subtle: 'bg-[var(--color-surface-elevated)] text-[var(--color-ink)] hover:bg-[var(--color-surface-hover)]',
+type VariantStyles = {
+  muiVariant: MuiButtonProps['variant'];
+  color?: MuiButtonProps['color'];
+  sx?: SxProps<Theme>;
 };
 
-export function Button({ className, children, variant = 'primary', ...props }: ButtonProps) {
+const variantStyles: Record<Variant, VariantStyles> = {
+  primary: {
+    muiVariant: 'contained',
+    color: 'primary',
+    sx: (theme) => ({
+      boxShadow: theme.shadows[2],
+    }),
+  },
+  secondary: {
+    muiVariant: 'contained',
+    color: 'secondary',
+    sx: (theme) => ({
+      boxShadow: theme.shadows[3],
+    }),
+  },
+  ghost: {
+    muiVariant: 'text',
+    color: 'inherit',
+    sx: (theme) => ({
+      color: theme.palette.text.primary,
+      backgroundColor: 'transparent',
+      '&:hover': {
+        backgroundColor: alpha(theme.palette.primary.main, 0.08),
+      },
+    }),
+  },
+  outline: {
+    muiVariant: 'outlined',
+    color: 'inherit',
+    sx: (theme) => ({
+      borderColor: theme.palette.divider,
+      color: theme.palette.text.secondary,
+      '&:hover': {
+        borderColor: theme.palette.primary.main,
+        backgroundColor: alpha(theme.palette.primary.main, 0.04),
+      },
+    }),
+  },
+  subtle: {
+    muiVariant: 'contained',
+    color: 'inherit',
+    sx: (theme) => ({
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      boxShadow: theme.shadows[1],
+      '&:hover': {
+        backgroundColor: theme.palette.action.hover,
+        boxShadow: theme.shadows[2],
+      },
+    }),
+  },
+};
+
+export function Button({ children, variant = 'primary', sx, size = 'medium', ...props }: ButtonProps) {
+  const styles = variantStyles[variant];
+
   return (
-    <button
-      className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-60',
-        styles[variant],
-        className,
-      )}
+    <MuiButton
+      disableElevation
+      variant={styles.muiVariant}
+      color={styles.color}
+      size={size}
+      sx={(theme) => {
+        const radius = typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius * 3 : theme.shape.borderRadius;
+        const baseStyles = {
+          textTransform: 'none',
+          fontWeight: 600,
+          borderRadius: radius,
+          px: 2.5,
+          py: 1,
+        } as const;
+
+        const resolved = typeof styles.sx === 'function' ? styles.sx(theme) : styles.sx;
+        const extra = typeof sx === 'function' ? sx(theme) : sx;
+
+        return {
+          ...baseStyles,
+          ...(resolved as Record<string, unknown> | undefined),
+          ...(extra as Record<string, unknown> | undefined),
+        };
+      }}
       {...props}
     >
       {children}
-    </button>
+    </MuiButton>
   );
 }

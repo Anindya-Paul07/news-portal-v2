@@ -1,10 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import { alpha, useTheme } from '@mui/material/styles';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { Article } from '@/lib/types';
-import { Button } from '@/components/ui/Button';
 import { HeroLead } from '@/components/news/HeroLead';
-import { cn } from '@/lib/utils';
 
 type HeroCarouselProps = {
   articles: Article[];
@@ -14,6 +18,7 @@ type HeroCarouselProps = {
 export function HeroCarousel({ articles, intervalMs = 8000 }: HeroCarouselProps) {
   const slides = useMemo(() => articles.filter(Boolean), [articles]);
   const [index, setIndex] = useState(0);
+  const theme = useTheme();
 
   useEffect(() => {
     if (slides.length <= 1) return;
@@ -33,55 +38,92 @@ export function HeroCarousel({ articles, intervalMs = 8000 }: HeroCarouselProps)
   };
 
   return (
-    <div className="relative overflow-hidden">
-      <div
-        className="flex transition-transform duration-500 ease-out"
-        style={{ transform: `translateX(-${index * 100}%)` }}
+    <Box position="relative" overflow="hidden" sx={{ borderRadius: 3, boxShadow: theme.shadows[5] }}>
+      <Box
+        sx={{
+          display: 'flex',
+          transition: 'transform 500ms ease-out',
+          transform: `translateX(-${index * 100}%)`,
+        }}
       >
         {slides.map((article) => (
-          <div key={article.id} className="w-full flex-shrink-0 flex-grow-0 px-0">
+          <Box key={article.id} sx={{ flex: '0 0 100%' }}>
             <HeroLead article={article} />
-          </div>
+          </Box>
         ))}
-      </div>
+      </Box>
       {slides.length > 1 && (
         <>
-          <div className="pointer-events-none absolute inset-y-0 flex w-full items-center justify-between px-4">
-            <Button
-              type="button"
-              variant="subtle"
-              className="pointer-events-auto rounded-full bg-[rgba(37,0,1,0.75)] text-[var(--color-header-text)] hover:bg-[rgba(37,0,1,0.95)]"
+          <Box
+            sx={{
+              pointerEvents: 'none',
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 1,
+            }}
+          >
+            <IconButton
               aria-label="Previous slide"
               onClick={() => goTo('prev')}
+              sx={{
+                pointerEvents: 'auto',
+                bgcolor: alpha(theme.palette.primary.dark, 0.75),
+                color: theme.palette.primary.contrastText,
+                '&:hover': { bgcolor: alpha(theme.palette.primary.dark, 0.95) },
+                boxShadow: theme.shadows[3],
+              }}
             >
-              ‹
-            </Button>
-            <Button
-              type="button"
-              variant="subtle"
-              className="pointer-events-auto rounded-full bg-[rgba(37,0,1,0.75)] text-[var(--color-header-text)] hover:bg-[rgba(37,0,1,0.95)]"
+              <ArrowBackRoundedIcon />
+            </IconButton>
+            <IconButton
               aria-label="Next slide"
               onClick={() => goTo('next')}
+              sx={{
+                pointerEvents: 'auto',
+                bgcolor: alpha(theme.palette.primary.dark, 0.75),
+                color: theme.palette.primary.contrastText,
+                '&:hover': { bgcolor: alpha(theme.palette.primary.dark, 0.95) },
+                boxShadow: theme.shadows[3],
+              }}
             >
-              ›
-            </Button>
-          </div>
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+              <ArrowForwardRoundedIcon />
+            </IconButton>
+          </Box>
+          <Stack
+            direction="row"
+            spacing={1}
+            justifyContent="center"
+            sx={{ position: 'absolute', bottom: 16, left: 0, right: 0 }}
+          >
             {slides.map((_, dotIndex) => (
-              <button
+              <IconButton
                 key={`dot-${dotIndex}`}
-                type="button"
+                size="small"
                 aria-label={`Go to slide ${dotIndex + 1}`}
-                className={cn(
-                  'h-2.5 w-2.5 rounded-full border border-[var(--color-header-text)] transition',
-                  dotIndex === index ? 'bg-[var(--color-header-text)]' : 'bg-transparent opacity-60',
-                )}
                 onClick={() => setIndex(dotIndex)}
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  border: `1px solid ${theme.palette.primary.contrastText}`,
+                  bgcolor:
+                    dotIndex === index
+                      ? theme.palette.primary.contrastText
+                      : 'transparent',
+                  opacity: dotIndex === index ? 1 : 0.65,
+                  '&:hover': {
+                    bgcolor: theme.palette.primary.contrastText,
+                    opacity: 1,
+                  },
+                }}
               />
             ))}
-          </div>
+          </Stack>
         </>
       )}
-    </div>
+    </Box>
   );
 }

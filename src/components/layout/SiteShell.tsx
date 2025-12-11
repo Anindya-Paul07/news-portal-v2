@@ -1,12 +1,24 @@
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 
 export function SiteShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+        color: 'text.primary',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <Header />
-      <main className="container py-6 md:py-10">{children}</main>
+      <Container component="main" maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, flex: 1 }}>
+        {children}
+      </Container>
       <Footer />
-    </div>
+    </Box>
   );
 }

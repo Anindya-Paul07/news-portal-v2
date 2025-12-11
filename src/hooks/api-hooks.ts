@@ -68,10 +68,14 @@ export const useLatestArticles = () =>
       fetcher<Article[]>(`/articles${buildQuery({ sort: '-publishedAt', status: 'published', limit: 12 })}`),
   });
 
-export const useArticles = (params?: Record<string, string | number | boolean | undefined>) =>
+export const useArticles = (
+  params?: Record<string, string | number | boolean | undefined>,
+  options?: { enabled?: boolean },
+) =>
   useQuery({
     queryKey: ['articles', params],
     queryFn: () => fetcher<Article[]>(`/articles${buildQuery(params)}`),
+    enabled: options?.enabled ?? true,
   });
 
 export const useArticle = (identifier: string) =>

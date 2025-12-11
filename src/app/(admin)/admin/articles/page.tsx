@@ -1,6 +1,17 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Chip from '@mui/material/Chip';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -9,6 +20,8 @@ import { AdminShell } from '@/components/layout/AdminShell';
 import { useAdminArticles, useAdminCategories, useSaveArticle } from '@/hooks/api-hooks';
 import { ArticleStatus } from '@/lib/types';
 import { useAlert } from '@/contexts/alert-context';
+import { EmptyState } from '@/components/states/EmptyState';
+import { LoadingBlock } from '@/components/states/LoadingBlock';
 
 export default function ArticlesAdminPage() {
   const { data: articles } = useAdminArticles({ limit: 12 });
@@ -64,98 +77,119 @@ export default function ArticlesAdminPage() {
       title="Articles"
       description="Create, schedule, and manage featured/breaking/trending flags with bilingual content."
     >
-      <form className="grid gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-4" onSubmit={onCreate}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <Input
-            label="Title (EN)"
-            value={draft.titleEn}
-            onChange={(e) => setDraft((d) => ({ ...d, titleEn: e.target.value }))}
-            required
-          />
-          <Input
-            label="Title (BN)"
-            value={draft.titleBn}
-            onChange={(e) => setDraft((d) => ({ ...d, titleBn: e.target.value }))}
-          />
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          <Input label="Slug" value={draft.slug} onChange={(e) => setDraft((d) => ({ ...d, slug: e.target.value }))} required />
-          <Input
-            label="Featured image URL"
-            value={draft.imageUrl}
-            onChange={(e) => setDraft((d) => ({ ...d, imageUrl: e.target.value }))}
-            helper="Serve from media library or CDN"
-          />
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          <Textarea
-            label="Excerpt (EN)"
-            value={draft.excerptEn}
-            onChange={(e) => setDraft((d) => ({ ...d, excerptEn: e.target.value }))}
-            helper="Short dek for card and hero contexts"
-          />
-          <Textarea
-            label="Excerpt (BN)"
-            value={draft.excerptBn}
-            onChange={(e) => setDraft((d) => ({ ...d, excerptBn: e.target.value }))}
-          />
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          <Textarea
-            label="Content (EN)"
-            value={draft.contentEn}
-            onChange={(e) => setDraft((d) => ({ ...d, contentEn: e.target.value }))}
-            rows={5}
-          />
-          <Textarea
-            label="Content (BN)"
-            value={draft.contentBn}
-            onChange={(e) => setDraft((d) => ({ ...d, contentBn: e.target.value }))}
-            rows={5}
-          />
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-ink)]">
-            <span>Category</span>
-            <select
-              value={draft.categoryId}
-              onChange={(e) => setDraft((d) => ({ ...d, categoryId: e.target.value }))}
-              className="min-w-[220px] rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-normal text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-            >
-              <option value="">Select category</option>
-              {categories?.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {typeof category.name === 'string' ? category.name : category.name?.en || category.slug}
-                </option>
-              ))}
-            </select>
-            <span className="text-xs font-normal text-[var(--color-muted)]">Choose which section this article belongs to.</span>
-          </label>
-          <div className="flex flex-col gap-2 text-sm text-[var(--color-muted)]">
-            <span className="font-semibold text-[var(--color-ink)]">Status</span>
-            <div className="flex flex-wrap gap-2">
-              {statusOptions.map((option) => (
-                <Button
-                  key={option}
-                  type="button"
-                  variant={draft.status === option ? 'primary' : 'outline'}
-                  className="rounded-full px-3 py-1 text-xs"
-                  onClick={() => setDraft((d) => ({ ...d, status: option }))}
+      <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 4 }}>
+        <CardHeader title="New Article" subheader="Bilingual content, scheduling, and category assignment." />
+        <CardContent>
+          <Stack component="form" onSubmit={onCreate} spacing={2.5}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <Input
+                label="Title (EN)"
+                value={draft.titleEn}
+                onChange={(e) => setDraft((d) => ({ ...d, titleEn: e.target.value }))}
+                required
+              />
+              <Input
+                label="Title (BN)"
+                value={draft.titleBn}
+                onChange={(e) => setDraft((d) => ({ ...d, titleBn: e.target.value }))}
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <Input label="Slug" value={draft.slug} onChange={(e) => setDraft((d) => ({ ...d, slug: e.target.value }))} required />
+              <Input
+                label="Featured image URL"
+                value={draft.imageUrl}
+                onChange={(e) => setDraft((d) => ({ ...d, imageUrl: e.target.value }))}
+                helperText="Serve from media library or CDN"
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <Textarea
+                label="Excerpt (EN)"
+                value={draft.excerptEn}
+                onChange={(e) => setDraft((d) => ({ ...d, excerptEn: e.target.value }))}
+                helper="Short dek for card and hero contexts"
+              />
+              <Textarea
+                label="Excerpt (BN)"
+                value={draft.excerptBn}
+                onChange={(e) => setDraft((d) => ({ ...d, excerptBn: e.target.value }))}
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <Textarea
+                label="Content (EN)"
+                value={draft.contentEn}
+                onChange={(e) => setDraft((d) => ({ ...d, contentEn: e.target.value }))}
+                rows={5}
+              />
+              <Textarea
+                label="Content (BN)"
+                value={draft.contentBn}
+                onChange={(e) => setDraft((d) => ({ ...d, contentBn: e.target.value }))}
+                rows={5}
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <FormControl fullWidth>
+                <InputLabel id="category-label">Category</InputLabel>
+                <Select
+                  labelId="category-label"
+                  label="Category"
+                  value={draft.categoryId}
+                  onChange={(e) => setDraft((d) => ({ ...d, categoryId: e.target.value }))}
                 >
-                  {option}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <Button type="submit" className="w-fit px-4">Save article</Button>
-      </form>
+                  <MenuItem value="">Select category</MenuItem>
+                  {categories?.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {typeof category.name === 'string' ? category.name : category.name?.en || category.slug}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Stack spacing={1}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  Status
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  {statusOptions.map((option) => (
+                    <Chip
+                      key={option}
+                      label={option}
+                      color={draft.status === option ? 'primary' : 'default'}
+                      onClick={() => setDraft((d) => ({ ...d, status: option }))}
+                    />
+                  ))}
+                </Stack>
+              </Stack>
+            </Stack>
+            <Button type="submit" sx={{ alignSelf: 'flex-start' }}>
+              Save article
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {articles?.map((article) => (
-          <ArticleCard key={article.id} article={article} />
-        ))}
-      </div>
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+          Recent articles
+        </Typography>
+        {!articles && <LoadingBlock lines={4} />}
+        {articles?.length === 0 && <EmptyState title="No articles yet" description="Create one to get started." />}
+        <Stack spacing={2}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="center">
+            <Chip label="Status" size="small" color="secondary" />
+            <Chip label="Bilingual ready" size="small" color="primary" variant="outlined" />
+          </Stack>
+          <Stack spacing={2} direction="row" flexWrap="wrap">
+            {articles?.map((article) => (
+              <Box key={article.id} sx={{ flex: '1 1 300px', minWidth: 280 }}>
+                <ArticleCard article={article} />
+              </Box>
+            ))}
+          </Stack>
+        </Stack>
+      </Box>
     </AdminShell>
   );
 }

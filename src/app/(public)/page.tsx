@@ -1,11 +1,20 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { alpha, keyframes } from '@mui/material/styles';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { BreakingTicker } from '@/components/news/BreakingTicker';
 import { HeroCarousel } from '@/components/news/HeroCarousel';
 import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/states/EmptyState';
 import { useLanguage } from '@/contexts/language-context';
 import { Article } from '@/lib/types';
 import {
@@ -16,7 +25,6 @@ import {
   useMenuCategories,
   useTrendingArticles,
 } from '@/hooks/api-hooks';
-import { sampleArticles, sampleCategories } from '@/lib/fallbacks';
 import { getLocalizedText } from '@/lib/utils';
 
 export default function HomePage() {
@@ -26,23 +34,36 @@ export default function HomePage() {
   const { data: latest } = useLatestArticles();
   const { data: categories } = useMenuCategories();
   const { language } = useLanguage();
-  const categoryList = categories && categories.length > 0 ? categories : sampleCategories;
-  const latestList = latest && latest.length > 0 ? latest : sampleArticles;
-  const trendingList = trending && trending.length > 0 ? trending : sampleArticles.slice(0, 6);
-  const breakingTicker = breaking && breaking.length > 0 ? breaking : sampleArticles.slice(0, 3);
-  const heroSlides = (featured && featured.length > 0 ? featured : sampleArticles).slice(0, 4);
+  const categoryList = categories ?? [];
+  const latestList = latest ?? [];
+  const trendingList = trending ?? [];
+  const breakingTicker = breaking ?? [];
+  const heroSlides = (featured ?? []).slice(0, 4);
   const gridLatest = latestList.slice(0, 4);
   const stackedLatest = latestList.slice(4, 8);
   const trendingHighlights = trendingList.slice(0, 4);
+  const [captionsEnabled, setCaptionsEnabled] = useState(true);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const heroPrimary = useMemo(() => heroSlides[0], [heroSlides]);
+  const heroPoster = heroPrimary?.featuredImage?.url || heroPrimary?.coverImage;
+
+  const fadeInUp = keyframes`
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  `;
 
   const firstCategorySlug = categoryList?.[0]?.slug;
   const secondCategorySlug = categoryList?.[1]?.slug;
-  const { data: firstCategoryArticles } = useArticles({ category: firstCategorySlug, limit: 3 });
-  const { data: secondCategoryArticles } = useArticles({ category: secondCategorySlug, limit: 3 });
-  const firstCategoryList =
-    firstCategoryArticles && firstCategoryArticles.length > 0 ? firstCategoryArticles : sampleArticles;
-  const secondCategoryList =
-    secondCategoryArticles && secondCategoryArticles.length > 0 ? secondCategoryArticles : sampleArticles;
+  const { data: firstCategoryArticles } = useArticles(
+    firstCategorySlug ? { category: firstCategorySlug, limit: 3 } : undefined,
+    { enabled: !!firstCategorySlug },
+  );
+  const { data: secondCategoryArticles } = useArticles(
+    secondCategorySlug ? { category: secondCategorySlug, limit: 3 } : undefined,
+    { enabled: !!secondCategorySlug },
+  );
+  const firstCategoryList = firstCategoryArticles ?? [];
+  const secondCategoryList = secondCategoryArticles ?? [];
   const firstCategoryFeature = firstCategoryList[0];
   const firstCategoryRest = firstCategoryList.slice(1, 4);
   const secondCategoryGrid = secondCategoryList.slice(0, 4);
@@ -50,148 +71,487 @@ export default function HomePage() {
   const getArticleSummary = (story: Article) => getLocalizedText(story.excerpt, language);
 
   return (
-    <div className="space-y-8">
+    <Stack spacing={4}>
       <BreakingTicker items={breakingTicker} />
       {heroSlides.length > 0 && <HeroCarousel articles={heroSlides} />}
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="rounded-3xl border border-[var(--color-panel-border)] bg-[var(--color-panel-bg)] p-6 shadow-[0_16px_36px_rgba(27,23,22,0.12)]">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="headline text-2xl font-extrabold text-[var(--color-primary)]">Latest headlines</h2>
-            <Link href="/search?sort=date">
-              <Button variant="ghost" className="text-sm text-[var(--color-primary)] hover:text-[var(--color-accent)]">
-                See all
+      {heroSlides.length > 0 && (
+        <Paper
+          variant="outlined"
+          sx={{
+            p: { xs: 2.5, md: 3 },
+            borderRadius: 3,
+            boxShadow: 3,
+            display: 'grid',
+            gap: 2,
+            gridTemplateColumns: { xs: '1fr', md: '1.4fr 1fr' },
+            alignItems: 'stretch',
+            animation: `${fadeInUp} 520ms ease both`,
+          }}
+        >
+          <Box
+            sx={{
+              position: 'relative',
+              borderRadius: 3,
+              overflow: 'hidden',
+              minHeight: { xs: 240, md: 300 },
+              backgroundImage: heroPoster
+                ? `linear-gradient(120deg, ${alpha('#000', 0.62)}, ${alpha('#000', 0.35)}), url(${heroPoster})`
+                : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              color: '#fff',
+              boxShadow: 4,
+              p: { xs: 2, md: 3 },
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-end',
+              gap: 1.5,
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Chip label="Video" color="warning" size="small" sx={{ fontWeight: 800 }} />
+              <Typography variant="overline" sx={{ letterSpacing: 3 }}>
+                04:12
+              </Typography>
+            </Stack>
+            <Typography variant="h5" sx={{ fontWeight: 900, maxWidth: '80%', textShadow: '0 6px 24px rgba(0,0,0,0.4)' }}>
+              {getArticleTitle(heroPrimary || heroSlides[0]) || 'Today’s briefing in 4 minutes'}
+            </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Button variant="secondary" size="small" component={Link as unknown as 'a'} href={`/article/${heroPrimary?.slug || heroSlides[0]?.slug || '#'}`}>
+                Play now
               </Button>
-            </Link>
-          </div>
-          <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {gridLatest.map((article) => (
-                <ArticleCard key={article.id} article={article} />
+              <Button
+                variant="outline"
+                size="small"
+                sx={{
+                  color: '#fff',
+                  borderColor: alpha('#fff', 0.65),
+                  '&:hover': { borderColor: '#fff', backgroundColor: alpha('#fff', 0.12) },
+                }}
+                onClick={() => setCaptionsEnabled((prev) => !prev)}
+              >
+                {captionsEnabled ? 'Captions on' : 'Captions off'}
+              </Button>
+            </Stack>
+          </Box>
+
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              borderRadius: 3,
+              bgcolor: 'background.paper',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+              justifyContent: 'space-between',
+              boxShadow: 1,
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Chip label="Audio" color="primary" size="small" />
+                <Typography variant="overline" sx={{ letterSpacing: 3 }}>
+                  08:45
+                </Typography>
+              </Stack>
+              <Button
+                variant={audioPlaying ? 'secondary' : 'primary'}
+                size="small"
+                onClick={() => setAudioPlaying((prev) => !prev)}
+                sx={{ px: 2.5 }}
+              >
+                {audioPlaying ? 'Pause' : 'Play'}
+              </Button>
+            </Stack>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+              Morning audio briefing: top 5 stories with context
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Hear the headlines with quick expert notes and timestamps to jump to topics.
+            </Typography>
+            <Box
+              sx={{
+                height: 54,
+                borderRadius: 2,
+                bgcolor: alpha('#000', 0.05),
+                display: 'grid',
+                gridTemplateColumns: 'repeat(28, 1fr)',
+                gap: 0.25,
+                alignItems: 'end',
+                p: 1,
+                overflow: 'hidden',
+                '& div': {
+                  borderRadius: 1,
+                  background: (theme) =>
+                    `linear-gradient(180deg, ${alpha(theme.palette.secondary.main, 0.9)}, ${alpha(
+                      theme.palette.primary.main,
+                      0.7,
+                    )})`,
+                  transition: 'height 200ms ease',
+                },
+              }}
+            >
+              {Array.from({ length: 28 }).map((_, idx) => (
+                <Box
+                  key={idx}
+                  component="div"
+                  sx={{
+                    height: `${30 + ((idx * 7) % 40)}%`,
+                    animation: audioPlaying ? `wavePulse 900ms ease-in-out ${idx * 0.02}s infinite alternate` : 'none',
+                    '@keyframes wavePulse': {
+                      from: { transform: 'scaleY(0.75)' },
+                      to: { transform: 'scaleY(1.2)' },
+                    },
+                  }}
+                />
               ))}
-            </div>
-            {stackedLatest.length > 0 && (
-              <div className="rounded-2xl border border-[var(--color-panel-border)] bg-[var(--color-surface)] p-4 shadow-[0_12px_32px_rgba(27,23,22,0.12)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-muted)]">Fresh picks</p>
-                <div className="mt-3 space-y-4">
-                  {stackedLatest.map((story) => (
-                    <Link
-                      key={story.id}
-                      href={`/article/${story.slug}`}
-                      className="block rounded-xl border border-transparent px-3 py-2 transition hover:border-[var(--color-primary)]"
+            </Box>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+              <Button
+                variant="ghost"
+                size="small"
+                component={Link as unknown as 'a'}
+                href={`/article/${heroPrimary?.slug || heroSlides[0]?.slug || '#'}`}
+              >
+                View transcript
+              </Button>
+              <Typography variant="caption" color="text.secondary">
+                Captions {captionsEnabled ? 'enabled' : 'disabled'}
+              </Typography>
+            </Stack>
+          </Paper>
+        </Paper>
+      )}
+
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 3,
+              borderRadius: 3,
+              boxShadow: 3,
+              animation: `${fadeInUp} 560ms ease both`,
+            }}
+          >
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                Latest headlines
+              </Typography>
+              {latestList.length > 0 && (
+                <Button variant="ghost" size="small" component={Link as unknown as 'a'} href="/search?sort=date">
+                  See all
+                </Button>
+              )}
+            </Stack>
+            {latestList.length === 0 ? (
+              <EmptyState title="No headlines yet" description="New stories will appear here once published." />
+            ) : (
+              <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12, lg: 7 }}>
+                  <Grid container spacing={2}>
+                    {gridLatest.map((article) => (
+                      <Grid key={article.id} size={{ xs: 12, sm: 6 }}>
+                        <ArticleCard article={article} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Grid>
+                <Grid size={{ xs: 12, lg: 5 }}>
+                  {stackedLatest.length > 0 && (
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2.5,
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                        boxShadow: 1,
+                      }}
                     >
-                  <p className="font-semibold text-[var(--color-panel-text)]">{getArticleTitle(story)}</p>
-                  {getArticleSummary(story) && (
-                    <p className="text-xs text-[var(--color-muted)]">{getArticleSummary(story)}</p>
+                      <Typography
+                        variant="overline"
+                        sx={{ letterSpacing: 3, fontWeight: 700, color: 'text.secondary' }}
+                      >
+                        Fresh picks
+                      </Typography>
+                      <Stack spacing={2} mt={2}>
+                        {stackedLatest.map((story) => (
+                          <Paper
+                            key={story.id}
+                            variant="outlined"
+                            component={Link}
+                            href={`/article/${story.slug}`}
+                            sx={{
+                              p: 1.5,
+                              borderRadius: 2,
+                              textDecoration: 'none',
+                              color: 'text.primary',
+                              borderColor: 'transparent',
+                              transition: 'border-color 150ms ease, transform 150ms ease',
+                              '&:hover': {
+                                borderColor: 'primary.main',
+                                transform: 'translateY(-2px)',
+                              },
+                            }}
+                          >
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                              {getArticleTitle(story)}
+                            </Typography>
+                            {getArticleSummary(story) && (
+                              <Typography variant="caption" color="text.secondary">
+                                {getArticleSummary(story)}
+                              </Typography>
+                            )}
+                          </Paper>
+                        ))}
+                      </Stack>
+                    </Paper>
                   )}
-                </Link>
-              ))}
-            </div>
-              </div>
+                </Grid>
+              </Grid>
             )}
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div className="rounded-3xl border-l-4 border-[var(--color-primary)] bg-[var(--color-trending-bg)] p-5 text-[var(--color-trending-text)] shadow-[0_14px_32px_rgba(27,23,22,0.15)]">
-            <h3 className="headline mb-3 text-xl font-bold text-[var(--color-trending-text)]">Trending now</h3>
-            <div className="space-y-3">
-              {trendingHighlights.map((story, index) => (
-                <Link
-                  key={story.id}
-                  href={`/article/${story.slug}`}
-                  className="group flex items-start gap-3 rounded-2xl bg-[var(--color-surface)] px-3 py-2 transition hover:bg-[var(--color-panel-bg)]"
-                >
-                  <span className="text-lg font-black text-[var(--color-accent)]">0{index + 1}</span>
-                  <div>
-                    <p className="font-semibold text-[var(--color-panel-text)] group-hover:text-[var(--color-primary)]">
-                      {getArticleTitle(story)}
-                    </p>
-                    {getArticleSummary(story) && (
-                      <p className="text-xs text-[var(--color-muted)]">{getArticleSummary(story)}</p>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-          <AdSlot position="sidebar" page="home" />
-        </div>
-      </div>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Stack spacing={2.5}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                borderRadius: 3,
+                bgcolor: 'background.paper',
+                boxShadow: 3,
+              }}
+            >
+              <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  Trending now
+                </Typography>
+                {trendingHighlights.length > 0 && <Chip label="Live" color="warning" size="small" />}
+              </Stack>
+              {trendingHighlights.length === 0 ? (
+                <EmptyState title="No trending stories" description="Check back soon for popular coverage." />
+              ) : (
+                <Stack spacing={2}>
+                  {trendingHighlights.map((story, index) => (
+                    <Paper
+                      key={story.id}
+                      component={Link}
+                      href={`/article/${story.slug}`}
+                      variant="outlined"
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 2,
+                        display: 'flex',
+                        gap: 1.5,
+                        alignItems: 'flex-start',
+                        textDecoration: 'none',
+                        color: 'text.primary',
+                        borderColor: 'divider',
+                        '&:hover': { borderColor: 'primary.main', boxShadow: 2 },
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ fontWeight: 900, color: 'warning.main' }}>
+                        0{index + 1}
+                      </Typography>
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                          {getArticleTitle(story)}
+                        </Typography>
+                        {getArticleSummary(story) && (
+                          <Typography variant="caption" color="text.secondary">
+                            {getArticleSummary(story)}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Paper>
+                  ))}
+                </Stack>
+              )}
+            </Paper>
+            <AdSlot position="sidebar" page="home" />
+          </Stack>
+        </Grid>
+      </Grid>
 
       <AdSlot position="banner" page="home" />
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <section className="rounded-3xl border border-[var(--color-panel-border)] bg-[var(--color-secondary)] p-5 text-[var(--color-secondary-contrast)] shadow-[0_18px_36px_rgba(35,53,84,0.35)]">
-          <div className="mb-3 flex items-center justify-between text-[var(--color-secondary-contrast)]">
-            <h3 className="headline text-xl font-extrabold">
-              {getLocalizedText(categoryList?.[0]?.name, language) || 'Top stories'}
-            </h3>
-            <Link href={`/category/${firstCategorySlug || 'news'}`} className="text-sm font-semibold text-[var(--color-accent)]">
-              View category
-            </Link>
-          </div>
-          <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
-            {firstCategoryFeature && <ArticleCard key={firstCategoryFeature.id} article={firstCategoryFeature} />}
-            <div className="space-y-3">
-              {firstCategoryRest.map((article) => (
-                <Link
-                  key={article.id}
-                  href={`/article/${article.slug}`}
-                  className="block rounded-2xl bg-[rgba(255,244,239,0.12)] px-3 py-2 text-sm transition hover:bg-[rgba(255,244,239,0.24)]"
-                >
-                  <p className="font-semibold text-[var(--color-secondary-contrast)]">{getArticleTitle(article)}</p>
-                  {getArticleSummary(article) && (
-                    <p className="text-xs text-[rgba(255,244,239,0.8)]">{getArticleSummary(article)}</p>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-        <section className="rounded-3xl border border-[var(--color-panel-border)] bg-[var(--color-panel-bg)] p-5 shadow-[0_12px_28px_rgba(27,23,22,0.12)]">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="headline text-xl font-extrabold text-[var(--color-primary)]">
-              {getLocalizedText(categoryList?.[1]?.name, language) || 'In depth'}
-            </h3>
-            <Link href={`/category/${secondCategorySlug || 'news'}`} className="text-sm font-semibold text-[var(--color-secondary)]">
-              View category
-            </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {secondCategoryGrid.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <section className="card-soft border border-[var(--color-section-bg)] bg-[var(--color-section-bg)] p-6">
-        <div className="flex items-center justify-between">
-          <h3 className="headline text-xl font-extrabold">Sections</h3>
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">Browse by beat</p>
-        </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {categoryList?.map((category, index) => (
-            <Link
-              key={category.id}
-              href={`/category/${category.slug}`}
-              className="group rounded-2xl border border-[var(--color-panel-border)] bg-[var(--color-surface)] px-4 py-3 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg"
+      <Grid container spacing={3}>
+        {firstCategorySlug && firstCategoryList.length > 0 && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                bgcolor: 'secondary.main',
+                color: 'secondary.contrastText',
+                boxShadow: 4,
+                border: `1px solid ${alpha('#ffffff', 0.16)}`,
+              }}
             >
-              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.3em] text-[var(--color-section-muted)]">
-                {String(index + 1).padStart(2, '0')}
-                <span className="text-[var(--color-primary)]">Section</span>
-              </p>
-              <p className="headline text-lg font-bold text-[var(--color-section-text)] group-hover:text-[var(--color-primary)]">
-                {getLocalizedText(category.name, language)}
-              </p>
-              {category.description && (
-                <p className="text-sm text-[var(--color-muted)]">{getLocalizedText(category.description, language)}</p>
-              )}
-              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">Enter →</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-    </div>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  {getLocalizedText(categoryList?.[0]?.name, language) || 'Top stories'}
+                </Typography>
+                <Button
+                  variant="ghost"
+                  size="small"
+                  component={Link as unknown as 'a'}
+                  href={`/category/${firstCategorySlug || 'news'}`}
+                  sx={{ color: 'warning.main' }}
+                >
+                  View category
+                </Button>
+              </Stack>
+              <Grid container spacing={2}>
+                {firstCategoryFeature && (
+                  <Grid size={{ xs: 12, md: 7 }}>
+                    <ArticleCard article={firstCategoryFeature} />
+                  </Grid>
+                )}
+                <Grid size={{ xs: 12, md: 5 }}>
+                  <Stack spacing={1.5}>
+                    {firstCategoryRest.map((article) => (
+                      <Paper
+                        key={article.id}
+                        component={Link}
+                        href={`/article/${article.slug}`}
+                        variant="outlined"
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: alpha('#fff5ef', 0.1),
+                          color: 'secondary.contrastText',
+                          textDecoration: 'none',
+                          '&:hover': {
+                            bgcolor: alpha('#fff5ef', 0.18),
+                          },
+                        }}
+                      >
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                          {getArticleTitle(article)}
+                        </Typography>
+                        {getArticleSummary(article) && (
+                          <Typography variant="caption" sx={{ color: alpha('#fff5ef', 0.8) }}>
+                            {getArticleSummary(article)}
+                          </Typography>
+                        )}
+                      </Paper>
+                    ))}
+                  </Stack>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {secondCategorySlug && secondCategoryGrid.length > 0 && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                boxShadow: 3,
+              }}
+            >
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                  {getLocalizedText(categoryList?.[1]?.name, language) || 'In depth'}
+                </Typography>
+                <Button
+                  variant="ghost"
+                  size="small"
+                  component={Link as unknown as 'a'}
+                  href={`/category/${secondCategorySlug || 'news'}`}
+                  sx={{ color: 'secondary.main' }}
+                >
+                  View category
+                </Button>
+              </Stack>
+              <Grid container spacing={2}>
+                {secondCategoryGrid.map((article) => (
+                  <Grid key={article.id} size={{ xs: 12, sm: 6 }}>
+                    <ArticleCard article={article} />
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+      </Grid>
+
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          boxShadow: 2,
+        }}
+      >
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            Sections
+          </Typography>
+          <Typography variant="overline" sx={{ letterSpacing: 3, color: 'text.secondary' }}>
+            Browse by beat
+          </Typography>
+        </Stack>
+        {categoryList.length === 0 ? (
+          <Box mt={2}>
+            <EmptyState title="No sections available" description="Add categories to populate this grid." />
+          </Box>
+        ) : (
+          <Grid container spacing={2} mt={1}>
+            {categoryList?.map((category, index) => (
+              <Grid key={category.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+                <Paper
+                  component={Link}
+                  href={`/category/${category.slug}`}
+                  variant="outlined"
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    textDecoration: 'none',
+                    color: 'text.primary',
+                    transition: 'transform 150ms ease, box-shadow 150ms ease',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    minHeight: 160,
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                >
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'text.secondary' }}>
+                    <Typography variant="overline" sx={{ letterSpacing: 3 }}>
+                      {String(index + 1).padStart(2, '0')}
+                    </Typography>
+                    <Chip label="Section" size="small" color="primary" variant="outlined" />
+                  </Stack>
+                  <Typography variant="h6" sx={{ fontWeight: 800, mt: 0.5 }}>
+                    {getLocalizedText(category.name, language)}
+                  </Typography>
+                  {category.description && (
+                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                      {getLocalizedText(category.description, language)}
+                    </Typography>
+                  )}
+                  <Typography variant="caption" sx={{ mt: 1, display: 'inline-block', letterSpacing: 2 }}>
+                    Enter →
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Paper>
+    </Stack>
   );
 }

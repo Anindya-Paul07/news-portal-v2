@@ -2,12 +2,17 @@
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
+import Chip from '@mui/material/Chip';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/states/EmptyState';
 import { useCategory, useCategoryArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
-import { sampleArticles, sampleCategories } from '@/lib/fallbacks';
 import { getLocalizedText } from '@/lib/utils';
 
 export default function CategoryPage() {
@@ -22,9 +27,8 @@ export default function CategoryPage() {
     limit: 12,
   });
   const { language } = useLanguage();
-  const fallbackCategory = sampleCategories.find((item) => item.slug === slug) || sampleCategories[0];
-  const categoryData = category || fallbackCategory;
-  const articlesList = articles && articles.length > 0 ? articles : sampleArticles;
+  const categoryData = category;
+  const articlesList = articles ?? [];
   const categoryLabel = getLocalizedText(categoryData?.name, language) || 'Category';
   const categoryDescription = getLocalizedText(categoryData?.description, language);
 
@@ -44,36 +48,52 @@ export default function CategoryPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl bg-[var(--color-surface-elevated)] p-6 shadow-md">
-        <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--color-muted)]">Category</p>
-        <h1 className="headline text-3xl font-extrabold">{categoryLabel}</h1>
-        {categoryDescription && <p className="text-[var(--color-muted)]">{categoryDescription}</p>}
-        <div className="mt-4 flex flex-wrap gap-2">
+    <Stack spacing={3}>
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, boxShadow: 3 }}>
+        <Chip label="Category" size="small" color="secondary" sx={{ mb: 1, fontWeight: 700, letterSpacing: 1 }} />
+        <Typography variant="h3" sx={{ fontWeight: 800 }}>
+          {categoryLabel}
+        </Typography>
+        {categoryDescription && (
+          <Typography variant="body1" color="text.secondary">
+            {categoryDescription}
+          </Typography>
+        )}
+        <Stack direction="row" spacing={1} flexWrap="wrap" mt={2}>
           {filters.map((f) => (
             <Button
               key={f.key}
-              variant={filter === f.key ? 'primary' : 'outline'}
-              className="px-3 py-1 text-xs"
+              variant={filter === f.key ? 'secondary' : 'outline'}
+              size="small"
               onClick={() => selectFilter(f.key)}
             >
               {f.label}
             </Button>
           ))}
-        </div>
-      </div>
+        </Stack>
+      </Paper>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {articlesList?.map((article) => (
-            <ArticleCard key={article.id} article={article} />
-          ))}
-        </div>
-        <div className="space-y-4">
-          <AdSlot position="sidebar" page="category" />
-          <AdSlot position="banner" page="category" />
-        </div>
-      </div>
-    </div>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          {articlesList.length === 0 ? (
+            <EmptyState title="No articles in this category yet" description="Please check back soon." />
+          ) : (
+            <Grid container spacing={2.5}>
+              {articlesList?.map((article) => (
+                <Grid key={article.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <ArticleCard article={article} />
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Grid>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Stack spacing={2.5}>
+            <AdSlot position="sidebar" page="category" />
+            <AdSlot position="banner" page="category" />
+          </Stack>
+        </Grid>
+      </Grid>
+    </Stack>
   );
 }

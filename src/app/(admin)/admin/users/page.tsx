@@ -1,11 +1,25 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Chip from '@mui/material/Chip';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import { AdminShell } from '@/components/layout/AdminShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useSaveUser, useUsers } from '@/hooks/api-hooks';
 import { Role } from '@/lib/types';
+import { EmptyState } from '@/components/states/EmptyState';
+import { LoadingBlock } from '@/components/states/LoadingBlock';
 
 const roles: Role[] = ['super_admin', 'admin', 'journalist', 'reader'];
 
@@ -27,69 +41,87 @@ export default function UsersPage() {
 
   return (
     <AdminShell title="Users" description="Assign roles, toggle activation, and reset credentials.">
-      <form className="grid gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-4" onSubmit={onSubmit}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <Input
-            label="Name"
-            value={draft.name}
-            onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-            required
-          />
-          <Input
-            label="Email"
-            type="email"
-            value={draft.email}
-            onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-            required
-          />
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="flex flex-col gap-2 text-sm text-[var(--color-muted)]">
-            <span className="font-semibold text-[var(--color-ink)]">Role</span>
-            <div className="flex flex-wrap gap-2">
-              {roles.map((role) => (
-                <Button
-                  key={role}
-                  type="button"
-                  variant={draft.role === role ? 'primary' : 'outline'}
-                  className="rounded-full px-3 py-1 text-xs"
-                  onClick={() => setDraft((d) => ({ ...d, role }))}
-                >
-                  {role}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <Input
-            label="Temp password"
-            type="password"
-            value={draft.password}
-            onChange={(e) => setDraft((d) => ({ ...d, password: e.target.value }))}
-          />
-        </div>
-        <Button type="submit" className="w-fit">Save user</Button>
-      </form>
+      <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 3 }}>
+        <CardHeader title="New User" subheader="Create account and assign a role." />
+        <CardContent>
+          <Grid container spacing={2} component="form" onSubmit={onSubmit}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Input
+                label="Name"
+                value={draft.name}
+                onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                required
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Input
+                label="Email"
+                type="email"
+                value={draft.email}
+                onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+                required
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                Role
+              </Typography>
+              <Grid container spacing={1}>
+                {roles.map((role) => (
+                  <Grid key={role} size={{ xs: 'auto' }}>
+                    <Chip
+                      label={role}
+                      color={draft.role === role ? 'primary' : 'default'}
+                      onClick={() => setDraft((d) => ({ ...d, role }))}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Input
+                label="Temp password"
+                type="password"
+                value={draft.password}
+                onChange={(e) => setDraft((d) => ({ ...d, password: e.target.value }))}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Button type="submit">Save user</Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-[rgba(13,59,102,0.06)] text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">
-            <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Role</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users?.map((user) => (
-              <tr key={user.id} className="border-t border-[var(--color-border)]">
-                <td className="px-4 py-3 font-semibold text-[var(--color-ink)]">{user.name}</td>
-                <td className="px-4 py-3 text-[var(--color-muted)]">{user.email}</td>
-                <td className="px-4 py-3 text-[var(--color-primary)]">{user.role}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+        User directory
+      </Typography>
+      {!users && <LoadingBlock lines={3} />}
+      {users?.length === 0 && <EmptyState title="No users" description="Create a user to get started." />}
+      {users && users.length > 0 && (
+        <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 2, boxShadow: 2 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id} hover>
+                  <TableCell sx={{ fontWeight: 700 }}>{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Chip label={user.role} color="secondary" size="small" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+      )}
     </AdminShell>
   );
 }

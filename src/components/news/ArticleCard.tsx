@@ -2,12 +2,21 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
+import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { alpha, useTheme } from '@mui/material/styles';
 import { Article } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { formatDate, getLocalizedText } from '@/lib/utils';
 
 export function ArticleCard({ article }: { article: Article }) {
   const { language } = useLanguage();
+  const theme = useTheme();
   const categoryLabel = getLocalizedText(article.category?.name, language) || 'News';
   const title = getLocalizedText(article.title, language);
   const summary = getLocalizedText(article.excerpt, language);
@@ -15,44 +24,57 @@ export function ArticleCard({ article }: { article: Article }) {
   const imageAlt = getLocalizedText(article.featuredImage?.alt, language) || title;
 
   return (
-    <Link
-      href={`/article/${article.slug}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card-surface,#fff4ef)] shadow-sm transition-transform hover:-translate-y-1 hover:shadow-xl"
+    <Card
+      sx={{
+        height: '100%',
+        borderRadius: 3,
+        border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+        boxShadow: theme.shadows[1],
+        transition: 'transform 200ms ease, box-shadow 200ms ease',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: theme.shadows[6],
+        },
+      }}
     >
-      <div className="relative h-48 w-full overflow-hidden border-b-4 border-[var(--color-primary)] bg-[var(--color-panel-bg)]">
+      <CardActionArea
+        component={Link}
+        href={`/article/${article.slug}`}
+        sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
+      >
         {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={imageAlt}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          <CardMedia sx={{ position: 'relative', width: '100%', height: 200, overflow: 'hidden', borderBottom: 3, borderColor: 'primary.main' }}>
+            <Image
+              src={imageUrl}
+              alt={imageAlt}
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover"
+            />
+          </CardMedia>
         ) : null}
-      </div>
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-card-meta)]">
-          {categoryLabel}
-          {article.isBreaking && (
-            <span className="rounded-full bg-[var(--color-card-breaking-bg)] px-2 py-0.5 text-[var(--color-card-breaking-text)]">
-              Breaking
-            </span>
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+              {categoryLabel}
+            </Typography>
+            {article.isBreaking && <Chip size="small" label="Breaking" color="primary" />}
+            {article.isTrending && <Chip size="small" label="Trending" variant="outlined" color="secondary" />}
+          </Stack>
+          <Typography variant="h6" component="h3" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+            {title}
+          </Typography>
+          {summary && (
+            <Typography variant="body2" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {summary}
+            </Typography>
           )}
-          {article.isTrending && (
-            <span className="rounded-full border border-[var(--color-card-trending-border)] px-2 py-0.5 text-[var(--color-card-trending-text)]">
-              Trending
-            </span>
-          )}
-        </div>
-        <h3 className="headline text-xl font-bold leading-tight text-[var(--color-card-heading)] group-hover:text-[var(--color-card-accent)]">
-          {title}
-        </h3>
-        {summary && <p className="line-clamp-2 text-sm text-[var(--color-card-meta)]">{summary}</p>}
-        <div className="mt-auto flex items-center justify-between text-xs text-[var(--color-card-meta)]">
-          <span>{article.author?.name || 'Staff Desk'}</span>
-          {article.publishedAt && <span>{formatDate(article.publishedAt)}</span>}
-        </div>
-      </div>
-    </Link>
+          <Stack direction="row" justifyContent="space-between" sx={{ mt: 'auto', color: 'text.secondary' }}>
+            <Typography variant="caption">{article.author?.name || 'Staff Desk'}</Typography>
+            {article.publishedAt && <Typography variant="caption">{formatDate(article.publishedAt)}</Typography>}
+          </Stack>
+        </CardContent>
+      </CardActionArea>
+    </Card>
   );
 }

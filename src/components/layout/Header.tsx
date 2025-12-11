@@ -2,14 +2,32 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useMemo, useState, type FormEvent } from 'react';
+import { SyntheticEvent, useMemo, useState, type FormEvent } from 'react';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import TextField from '@mui/material/TextField';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { alpha, useTheme } from '@mui/material/styles';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
 import { useMenuCategories } from '@/hooks/api-hooks';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/Button';
-import { sampleCategories } from '@/lib/fallbacks';
-import { cn, getLocalizedText } from '@/lib/utils';
+import { getLocalizedText } from '@/lib/utils';
 
 export function Header() {
   const { data: menu } = useMenuCategories();
@@ -19,6 +37,8 @@ export function Header() {
   const { language, toggleLanguage } = useLanguage();
   const [keyword, setKeyword] = useState('');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const theme = useTheme();
+  const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
 
   const onSearch = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,7 +48,7 @@ export function Header() {
 
   const navItems = useMemo(() => {
     if (menu && menu.length > 0) return menu;
-    return sampleCategories;
+    return [];
   }, [menu]);
   const dateline = useMemo(() => {
     const now = new Date();
@@ -37,123 +57,274 @@ export function Header() {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
+      timeZone: 'UTC',
     }).format(now);
   }, []);
 
-  const renderNavLinks = (isMobile = false) =>
-    navItems?.map((cat) => (
-      <Link
-        key={cat.id}
-        href={`/category/${cat.slug}`}
-        className={cn(
-          'rounded-full border-b-2 border-transparent px-3 py-1 text-[var(--color-nav-link)] transition-all duration-200 hover:bg-[var(--color-nav-hover-bg)] hover:text-[var(--color-nav-link-active)] hover:shadow-[0_0_12px_rgba(252,186,4,0.35)]',
-          pathname.includes(`/category/${cat.slug}`) && 'border-[var(--color-nav-link-active)] text-[var(--color-nav-link-active)]',
-          isMobile && 'flex w-full justify-between border px-4 py-2 text-base',
-        )}
-        onClick={isMobile ? () => setMobileNavOpen(false) : undefined}
-      >
-        {getLocalizedText(cat.name, language)}
-        {isMobile && <span>→</span>}
-      </Link>
-    ));
+  const navValue = useMemo(() => {
+    const active = navItems?.find((cat) => pathname.includes(`/category/${cat.slug}`));
+    return active ? active.slug : false;
+  }, [navItems, pathname]);
+
+  const handleNavChange = (_: SyntheticEvent | null, slug: string) => {
+    setMobileNavOpen(false);
+    router.push(`/category/${slug}`);
+  };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-header-bg)] text-[var(--color-header-text)] shadow-[0_6px_24px_rgba(27,23,22,0.15)] backdrop-blur transition-colors">
-      <div className="container flex flex-col gap-2 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--color-header-text)]">
-          <span>{dateline}</span>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <Button
-              variant="outline"
-              className="rounded-full border border-[var(--color-border)] bg-[var(--color-header-chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--color-header-chip-text)]"
-              onClick={toggleLanguage}
+    <AppBar
+      position="sticky"
+      color="primary"
+      enableColorOnDark
+      sx={{
+        color: 'primary.contrastText',
+        bgcolor: 'primary.main',
+        backgroundImage: `linear-gradient(125deg, ${alpha(
+          theme.palette.primary.main,
+          0.95,
+        )}, ${alpha(theme.palette.secondary.main, 0.9)})`,
+        boxShadow: `0 12px 30px ${alpha(theme.palette.primary.main, 0.25)}`,
+        backdropFilter: 'blur(14px)',
+        borderBottom: `1px solid ${alpha(theme.palette.common.white, 0.16)}`,
+      }}
+    >
+      <Toolbar disableGutters>
+        <Container maxWidth="lg" sx={{ py: 1 }}>
+          <Stack spacing={1.5}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              flexWrap="wrap"
+              spacing={2}
+              sx={{ color: 'primary.contrastText' }}
             >
-              {language === 'en' ? 'বাংলা' : 'EN'}
-            </Button>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-header-text)] text-xl font-black text-[#c53727] shadow-[0_10px_18px_rgba(0,0,0,0.15)]">
-              CN
-            </div>
-            <div>
-              <p className="headline text-lg font-extrabold leading-tight text-[var(--color-header-text)]">The Contemporary News</p>
-              <p className="mt-1 inline-flex items-center gap-2 rounded-full bg-[var(--color-header-chip-bg)] px-3 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-header-chip-text)]">
-                Clarity over noise
-              </p>
-            </div>
-          </Link>
-          <form onSubmit={onSearch} className="flex flex-1 justify-center">
-            <div className="flex w-full max-w-xl items-center gap-2 rounded-full border border-[var(--color-search-border)] bg-[var(--color-search-bg)] px-4 py-2 text-[var(--color-search-text)] shadow-[0_8px_18px_rgba(27,23,22,0.16)] transition">
-              <span className="text-sm text-[var(--color-primary)]">🔍</span>
-              <input
-                aria-label="Search"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                className="w-full rounded-full bg-[var(--color-surface)] text-sm text-[var(--color-search-text)] placeholder:text-[var(--color-search-placeholder)] focus:outline-none"
-                placeholder="Search news"
-              />
-            </div>
-          </form>
-          <div className="flex items-center gap-2">
-            {user ? (
-              <>
+              <Typography variant="body2" component="span">
+                {dateline}
+              </Typography>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <ThemeToggle />
                 <Button
                   variant="outline"
-                  className="border-[var(--color-secondary)] text-[var(--color-secondary)] hover:text-[var(--color-secondary-contrast)]"
-                  onClick={logout}
+                  size="small"
+                  onClick={toggleLanguage}
+                  sx={{
+                    color: 'primary.contrastText',
+                    borderColor: 'primary.contrastText',
+                    '&:hover': {
+                      borderColor: 'secondary.light',
+                    },
+                  }}
                 >
-                  Logout
+                  {language === 'en' ? 'বাংলা' : 'EN'}
                 </Button>
-                <Button
-                  variant="primary"
-                  className="rounded-xl border border-transparent px-4 py-2 text-xs font-bold"
-                  onClick={() => router.push('/admin')}
-                >
-                  Admin
-                </Button>
-              </>
-            ) : (
-              <Link href="/auth/login">
-                <Button variant="secondary" className="px-4 py-2 text-xs font-bold">
-                  Login
-                </Button>
-              </Link>
-            )}
-            <button
-              type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-header-text)] transition md:hidden"
-              onClick={() => setMobileNavOpen((prev) => !prev)}
-              aria-label="Toggle navigation menu"
-              aria-expanded={mobileNavOpen}
+              </Stack>
+            </Stack>
+
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={2}
+              flexWrap="wrap"
+              justifyContent="space-between"
             >
-              <span className="flex h-4 w-5 flex-col justify-between">
-                <span
-                  className={cn(
-                    'h-0.5 w-full rounded-full bg-current transition-transform',
-                    mobileNavOpen && 'translate-y-1.5 rotate-45',
-                  )}
+              <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      bgcolor: 'primary.contrastText',
+                      color: 'primary.main',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 900,
+                      fontSize: 18,
+                      boxShadow: theme.shadows[3],
+                    }}
+                  >
+                    CN
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1 }}>
+                      The Contemporary News
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label="Clarity over noise"
+                      color="secondary"
+                      sx={{
+                        mt: 0.5,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: 2,
+                        borderRadius: 999,
+                      }}
+                    />
+                  </Box>
+                </Stack>
+              </Link>
+
+              <Box component="form" onSubmit={onSearch} sx={{ flex: 1, minWidth: { xs: '100%', md: 320 } }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search news"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRoundedIcon color="secondary" fontSize="small" />
+                      </InputAdornment>
+                    ),
+                    sx: {
+                      bgcolor: 'background.paper',
+                      borderRadius: 999,
+                    },
+                  }}
+                  sx={{
+                    bgcolor: 'background.paper',
+                    borderRadius: 999,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'secondary.main',
+                    },
+                  }}
+                  inputProps={{ 'aria-label': 'Search news' }}
                 />
-                <span className={cn('h-0.5 w-4 rounded-full bg-current transition', mobileNavOpen && 'opacity-0')} />
-                <span
-                  className={cn(
-                    'h-0.5 w-full rounded-full bg-current transition-transform',
-                    mobileNavOpen && '-translate-y-1.5 -rotate-45',
-                  )}
-                />
-              </span>
-            </button>
-          </div>
-        </div>
-        <nav className="hidden items-center justify-center gap-2 overflow-x-auto border-t border-[var(--color-accent)]/30 pt-2 text-sm font-semibold md:flex">
-          {renderNavLinks()}
-        </nav>
-        <div className={cn('flex flex-col gap-2 border-t border-[var(--color-accent)]/30 pt-2 md:hidden', !mobileNavOpen && 'hidden')}>
-          {renderNavLinks(true)}
-        </div>
-      </div>
-    </header>
+              </Box>
+
+              <Stack direction="row" spacing={1} alignItems="center">
+                {user ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="small"
+                      onClick={logout}
+                      sx={{
+                        borderColor: 'secondary.light',
+                        color: 'primary.contrastText',
+                        '&:hover': { color: 'secondary.contrastText' },
+                      }}
+                    >
+                      Logout
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="small"
+                      onClick={() => router.push('/admin')}
+                      sx={{ px: 2.5 }}
+                    >
+                      Admin
+                    </Button>
+                  </>
+                ) : (
+                  <Link href="/auth/login" style={{ textDecoration: 'none' }}>
+                    <Button variant="secondary" size="small">
+                      Login
+                    </Button>
+                  </Link>
+                )}
+                {!isMdUp && (
+                  <IconButton
+                    color="inherit"
+                    onClick={() => setMobileNavOpen((prev) => !prev)}
+                    aria-label="Toggle navigation menu"
+                    edge="end"
+                  >
+                    {mobileNavOpen ? <CloseRoundedIcon /> : <MenuRoundedIcon />}
+                  </IconButton>
+                )}
+              </Stack>
+            </Stack>
+
+            <Divider sx={{ borderColor: 'primary.contrastText', opacity: 0.2 }} />
+
+            {isMdUp ? (
+              <Tabs
+                value={navValue}
+                onChange={handleNavChange}
+                variant="scrollable"
+                scrollButtons="auto"
+                allowScrollButtonsMobile
+                textColor="inherit"
+                indicatorColor="secondary"
+                sx={{
+                  '.MuiTab-root': {
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    minHeight: 44,
+                    borderRadius: 2,
+                    px: 2,
+                    mx: 0.25,
+                    transition: 'box-shadow 200ms ease, background-color 200ms ease, color 150ms ease',
+                    '&:hover': {
+                      boxShadow: `0 0 14px ${alpha(theme.palette.secondary.light, 0.45)}`,
+                      backgroundColor: alpha(theme.palette.secondary.main, 0.18),
+                    },
+                  },
+                  '.Mui-selected': {
+                    color: 'secondary.contrastText',
+                    backgroundColor: alpha(theme.palette.secondary.main, 0.24),
+                    boxShadow: `0 0 16px ${alpha(theme.palette.secondary.main, 0.55)}`,
+                  },
+                  '.MuiTabs-indicator': {
+                    height: 3,
+                    borderRadius: 2,
+                  },
+                }}
+              >
+                {navItems?.map((cat) => (
+                  <Tab
+                    key={cat.id}
+                    value={cat.slug}
+                    label={getLocalizedText(cat.name, language)}
+                  />
+                ))}
+              </Tabs>
+            ) : null}
+          </Stack>
+        </Container>
+      </Toolbar>
+
+      <Drawer
+        anchor="top"
+        open={mobileNavOpen && !isMdUp}
+        onClose={() => setMobileNavOpen(false)}
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.default',
+            color: 'text.primary',
+            pt: 1,
+          },
+        }}
+      >
+        <Container maxWidth="lg">
+          <Stack spacing={1.25} py={1.5}>
+            {navItems?.map((cat) => (
+              <Button
+                key={cat.id}
+                variant="ghost"
+                onClick={() => handleNavChange(null, cat.slug)}
+                sx={{
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  px: 1.5,
+                }}
+              >
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  {getLocalizedText(cat.name, language)}
+                </Typography>
+              </Button>
+            ))}
+          </Stack>
+        </Container>
+      </Drawer>
+    </AppBar>
   );
 }

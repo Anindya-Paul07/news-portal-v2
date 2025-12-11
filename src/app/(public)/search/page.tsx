@@ -2,21 +2,26 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { EmptyState } from '@/components/states/EmptyState';
 import { useArticles, useMenuCategories, useSearchArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
-import { sampleArticles, sampleCategories } from '@/lib/fallbacks';
 import { getLocalizedText } from '@/lib/utils';
 
 export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6 text-center text-[var(--color-muted)]">
+        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>
           Loading search…
-        </div>
+        </Paper>
       }
     >
       <SearchContent />
@@ -35,10 +40,9 @@ function SearchContent() {
   const { data: results } = useSearchArticles(term, { sort, category });
   const { data: latest } = useArticles({ limit: 4 });
   const { language } = useLanguage();
-  const categoryList = categories && categories.length > 0 ? categories : sampleCategories;
-  const latestList = latest && latest.length > 0 ? latest : sampleArticles.slice(0, 4);
-  const shouldShowPlaceholderResults = !term || results === undefined;
-  const resultItems = shouldShowPlaceholderResults ? sampleArticles.slice(0, 6) : results || [];
+  const categoryList = categories ?? [];
+  const latestList = latest ?? [];
+  const resultItems = results ?? [];
 
   useEffect(() => {
     const query = new URLSearchParams();
@@ -49,63 +53,90 @@ function SearchContent() {
   }, [category, router, sort, term]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-      <div className="space-y-4">
-        <h1 className="headline text-3xl font-extrabold">Search</h1>
-        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-4">
-          <Input
-            label="Keyword"
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Search stories"
-          />
-          <div className="flex flex-wrap gap-2 text-sm">
-            <span className="text-[var(--color-muted)]">Sort:</span>
-            {['relevance', 'date'].map((opt) => (
-              <Button
-                key={opt}
-                variant={sort === opt ? 'primary' : 'outline'}
-                className="px-3 py-1 text-xs"
-                onClick={() => setSort(opt)}
-              >
-                {opt}
-              </Button>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2 text-sm">
-            <span className="text-[var(--color-muted)]">Category:</span>
-            {categoryList?.map((cat) => (
-              <Button
-                key={cat.id}
-                variant={category === cat.slug ? 'primary' : 'outline'}
-                className="px-3 py-1 text-xs"
-                onClick={() =>
-                  router.replace(`/search?query=${encodeURIComponent(term)}&category=${cat.slug}&sort=${sort}`)
-                }
-              >
-                {getLocalizedText(cat.name, language)}
-              </Button>
-            ))}
-          </div>
-        </div>
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12, lg: 8 }}>
+        <Stack spacing={2}>
+          <Typography variant="h3" sx={{ fontWeight: 800 }}>
+            Search
+          </Typography>
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, boxShadow: 2 }}>
+            <Stack spacing={2}>
+              <Input
+                label="Keyword"
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                placeholder="Search stories"
+              />
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                <Typography variant="body2" color="text.secondary">
+                  Sort:
+                </Typography>
+                {['relevance', 'date'].map((opt) => (
+                  <Button
+                    key={opt}
+                    variant={sort === opt ? 'secondary' : 'outline'}
+                    size="small"
+                    onClick={() => setSort(opt)}
+                  >
+                    {opt}
+                  </Button>
+                ))}
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                <Typography variant="body2" color="text.secondary">
+                  Category:
+                </Typography>
+                {categoryList?.map((cat) => (
+                  <Chip
+                    key={cat.id}
+                    label={getLocalizedText(cat.name, language)}
+                    color={category === cat.slug ? 'primary' : 'default'}
+                    variant={category === cat.slug ? 'filled' : 'outlined'}
+                    onClick={() =>
+                      router.replace(`/search?query=${encodeURIComponent(term)}&category=${cat.slug}&sort=${sort}`)
+                    }
+                  />
+                ))}
+              </Stack>
+            </Stack>
+          </Paper>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {resultItems.map((article) => (
-            <ArticleCard key={article.id} article={article} />
-          ))}
-          {results?.length === 0 && (
-            <p className="text-[var(--color-muted)]">No matches yet. Try another keyword.</p>
+          {(!term || term.trim().length === 0) && (
+            <EmptyState title="Start searching" description="Type a keyword to find stories." />
           )}
-        </div>
-      </div>
-      <aside className="space-y-3">
-        <h3 className="headline text-xl font-bold">Latest</h3>
-        <div className="space-y-3">
-          {latestList.map((article) => (
-            <ArticleCard key={article.id} article={article} />
-          ))}
-        </div>
-      </aside>
-    </div>
+
+          {term && term.trim().length > 0 && (
+            <Grid container spacing={2}>
+              {resultItems.map((article) => (
+                <Grid key={article.id} size={{ xs: 12, sm: 6 }}>
+                  <ArticleCard article={article} />
+                </Grid>
+              ))}
+              {results?.length === 0 && (
+                <Grid size={{ xs: 12 }}>
+                  <EmptyState title="No matches" description="Try adjusting keywords or filters." />
+                </Grid>
+              )}
+            </Grid>
+          )}
+        </Stack>
+      </Grid>
+      <Grid size={{ xs: 12, lg: 4 }}>
+        <Stack spacing={2}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            Latest
+          </Typography>
+          {latestList.length === 0 ? (
+            <EmptyState title="No latest stories yet" description="Fresh headlines will appear soon." />
+          ) : (
+            <Stack spacing={1.5}>
+              {latestList.map((article) => (
+                <ArticleCard key={article.id} article={article} />
+              ))}
+            </Stack>
+          )}
+        </Stack>
+      </Grid>
+    </Grid>
   );
 }
