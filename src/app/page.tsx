@@ -1,7 +1,7 @@
 import { SiteShell } from '@/components/layout/SiteShell';
 import PublicPage from './(public)/page';
 
-export default function RootPage(): JSX.Element {
+export default function RootPage() {
   return (
     <SiteShell>
       <PublicPage />
