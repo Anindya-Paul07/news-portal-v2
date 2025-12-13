@@ -14,6 +14,10 @@ import {
   ArticleStatPoint,
   CategoryDistributionPoint,
   TrafficTrendPoint,
+  AuthorActivityPoint,
+  AdPerformancePoint,
+  AnalyticsTrafficPoint,
+  AnalyticsAdsSummary,
   Media,
   MediaUploadPayload,
   User,
@@ -154,6 +158,30 @@ export const useDashboardTrafficTrends = (params?: { days?: number }) =>
   useQuery({
     queryKey: ['dashboard', 'traffic', params],
     queryFn: () => fetcher<TrafficTrendPoint[]>(`/dashboard/traffic/trends${buildQuery(params)}`),
+  });
+
+export const useDashboardAuthorActivity = (params?: { limit?: number; categoryId?: string; days?: number }) =>
+  useQuery({
+    queryKey: ['dashboard', 'users', 'activity', params],
+    queryFn: () => fetcher<AuthorActivityPoint[]>(`/dashboard/users/activity${buildQuery(params)}`),
+  });
+
+export const useAnalyticsTraffic = (params?: { window?: string; interval?: string; categoryId?: string }) =>
+  useQuery({
+    queryKey: ['analytics', 'traffic', params],
+    queryFn: () => fetcher<AnalyticsTrafficPoint[]>(`/analytics/traffic${buildQuery(params)}`),
+  });
+
+export const useAnalyticsAdsSummary = () =>
+  useQuery({
+    queryKey: ['analytics', 'ads', 'summary'],
+    queryFn: () => fetcher<AnalyticsAdsSummary>('/analytics/ads/summary'),
+  });
+
+export const useAnalyticsAdsTop = (params?: { limit?: number; sort?: string; position?: string; categoryId?: string }) =>
+  useQuery({
+    queryKey: ['analytics', 'ads', 'top', params],
+    queryFn: () => fetcher<AdPerformancePoint[]>(`/analytics/ads/top${buildQuery(params)}`),
   });
 
 export const useAdminArticles = (params?: Record<string, string | number | boolean | undefined>) =>

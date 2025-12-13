@@ -1,15 +1,19 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
+import BookmarkBorderRoundedIcon from '@mui/icons-material/BookmarkBorderRounded';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { ArticleCard } from '@/components/news/ArticleCard';
@@ -86,16 +90,26 @@ export default function ArticlePage() {
             {displayArticle.author?.name && (
               <Typography variant="body2">• By {displayArticle.author.name}</Typography>
             )}
+            <Stack direction="row" spacing={1} sx={{ marginLeft: 'auto' }}>
+              <IconButton size="small" aria-label="Share article">
+                <ShareRoundedIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" aria-label="Save article">
+                <BookmarkBorderRoundedIcon fontSize="small" />
+              </IconButton>
+            </Stack>
           </Stack>
 
-          <Typography variant="h3" component="h1" sx={{ fontWeight: 800, mt: 2 }}>
-            {title}
-          </Typography>
-          {summary && (
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 1.5 }}>
-              {summary}
+          <Stack spacing={1.5} sx={{ mt: 2 }}>
+            <Typography variant="h3" component="h1" sx={{ fontWeight: 800 }}>
+              {title}
             </Typography>
-          )}
+            {summary && (
+              <Typography variant="body1" color="text.secondary">
+                {summary}
+              </Typography>
+            )}
+          </Stack>
 
           {featuredImage && (
             <Box
@@ -144,6 +158,19 @@ export default function ArticlePage() {
               {relatedStories.slice(0, 4).map((item) => (
                 <ArticleCard key={item.id} article={item} />
               ))}
+            </Stack>
+          </Paper>
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, boxShadow: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              Explore categories
+            </Typography>
+            <Stack spacing={1} mt={1.5}>
+              <Link href="/category/top" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <Typography variant="body2">Top stories</Typography>
+              </Link>
+              <Link href="/category/politics" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <Typography variant="body2">Politics</Typography>
+              </Link>
             </Stack>
           </Paper>
         </Stack>

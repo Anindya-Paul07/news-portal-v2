@@ -172,6 +172,43 @@ export type TrafficTrendPoint = {
   shares?: number;
 };
 
+export type AuthorActivityPoint = {
+  id: string;
+  name: string;
+  articleCount?: number;
+  views?: number;
+};
+
+export type AdPerformancePoint = {
+  id: string;
+  name?: string;
+  impressions?: number;
+  clicks?: number;
+  ctr?: number;
+};
+
+export type AnalyticsTrafficPoint = {
+  ts: string;
+  pageViews?: number;
+  uniqueUsers?: number;
+};
+
+export type AnalyticsAdsPositionSummary = {
+  position: string;
+  impressions?: number;
+  clicks?: number;
+  ctr?: number;
+};
+
+export type AnalyticsAdsSummary = {
+  totals?: {
+    impressions?: number;
+    clicks?: number;
+    ctr?: number;
+  };
+  byPosition?: AnalyticsAdsPositionSummary[];
+};
+
 export type CategoryPayload = {
   id?: string;
   slug: string;

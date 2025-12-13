@@ -7,6 +7,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import { alpha } from '@mui/material/styles';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -38,7 +39,7 @@ function SearchContent() {
 
   const { data: categories } = useMenuCategories();
   const { data: results } = useSearchArticles(term, { sort, category });
-  const { data: latest } = useArticles({ limit: 4 });
+  const { data: latest } = useArticles({ sort: '-publishedAt', limit: 6 });
   const { language } = useLanguage();
   const categoryList = categories ?? [];
   const latestList = latest ?? [];
@@ -59,7 +60,15 @@ function SearchContent() {
           <Typography variant="h3" sx={{ fontWeight: 800 }}>
             Search
           </Typography>
-          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, boxShadow: 2 }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: { xs: 2, md: 2.5 },
+              borderRadius: 3,
+              boxShadow: 3,
+              backgroundImage: `linear-gradient(120deg, ${alpha('#e21837', 0.08)}, transparent)`,
+            }}
+          >
             <Stack spacing={2}>
               <Input
                 label="Keyword"
@@ -71,14 +80,17 @@ function SearchContent() {
                 <Typography variant="body2" color="text.secondary">
                   Sort:
                 </Typography>
-                {['relevance', 'date'].map((opt) => (
+                {[
+                  { key: 'relevance', label: 'Best match' },
+                  { key: 'date', label: 'Newest first' },
+                ].map((opt) => (
                   <Button
-                    key={opt}
-                    variant={sort === opt ? 'secondary' : 'outline'}
+                    key={opt.key}
+                    variant={sort === opt.key ? 'secondary' : 'outline'}
                     size="small"
-                    onClick={() => setSort(opt)}
+                    onClick={() => setSort(opt.key)}
                   >
-                    {opt}
+                    {opt.label}
                   </Button>
                 ))}
               </Stack>
@@ -86,6 +98,13 @@ function SearchContent() {
                 <Typography variant="body2" color="text.secondary">
                   Category:
                 </Typography>
+                <Button
+                  variant={!category ? 'secondary' : 'outline'}
+                  size="small"
+                  onClick={() => router.replace(`/search?query=${encodeURIComponent(term)}&sort=${sort}`)}
+                >
+                  All
+                </Button>
                 {categoryList?.map((cat) => (
                   <Chip
                     key={cat.id}
@@ -105,20 +124,19 @@ function SearchContent() {
             <EmptyState title="Start searching" description="Type a keyword to find stories." />
           )}
 
-          {term && term.trim().length > 0 && (
-            <Grid container spacing={2}>
-              {resultItems.map((article) => (
-                <Grid key={article.id} size={{ xs: 12, sm: 6 }}>
-                  <ArticleCard article={article} />
-                </Grid>
-              ))}
-              {results?.length === 0 && (
-                <Grid size={{ xs: 12 }}>
-                  <EmptyState title="No matches" description="Try adjusting keywords or filters." />
-                </Grid>
-              )}
-            </Grid>
-          )}
+          {term && term.trim().length > 0 ? (
+            resultItems.length > 0 ? (
+              <Grid container spacing={2.5}>
+                {resultItems.map((article, index) => (
+                  <Grid key={article.id} size={{ xs: 12, sm: index === 0 ? 12 : 6, md: index === 0 ? 12 : 4 }}>
+                    <ArticleCard article={article} />
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <EmptyState title="No matches" description="Try adjusting keywords or filters." />
+            )
+          ) : null}
         </Stack>
       </Grid>
       <Grid size={{ xs: 12, lg: 4 }}>
