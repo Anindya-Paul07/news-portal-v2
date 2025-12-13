@@ -45,7 +45,7 @@ export function Footer() {
                 Keep an eye on our News to get all the news including politics, business, sports, national-international
                 breaking news, analytical and other news.
               </Typography>
-              <Typography variant="caption">© {new Date().getFullYear()} The Contemporary | Powered by Anindya</Typography>
+              <Typography variant="caption">© {new Date().getFullYear()} The Contemporary | Powered by @</Typography>
             </Stack>
           </Box>
 
@@ -85,7 +85,7 @@ export function Footer() {
               >
                 Studios
               </Typography>
-              <Typography variant="body2">Dhaka · Singapore · Remote</Typography>
+              <Typography variant="body2">Chattogram</Typography>
               <Typography variant="body2">newsdesk@thecontemporary.news</Typography>
             </Stack>
             <Stack spacing={1}>
