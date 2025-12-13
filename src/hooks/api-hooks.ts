@@ -11,6 +11,9 @@ import {
   Category,
   CategoryPayload,
   DashboardOverview,
+  ArticleStatPoint,
+  CategoryDistributionPoint,
+  TrafficTrendPoint,
   Media,
   MediaUploadPayload,
   User,
@@ -135,6 +138,24 @@ export const useDashboardOverview = () =>
     queryFn: () => fetcher<DashboardOverview>('/dashboard/overview'),
   });
 
+export const useDashboardArticleStats = (params?: { startDate?: string; endDate?: string }) =>
+  useQuery({
+    queryKey: ['dashboard', 'articles', 'stats', params],
+    queryFn: () => fetcher<ArticleStatPoint[]>(`/dashboard/articles/stats${buildQuery(params)}`),
+  });
+
+export const useDashboardCategoryDistribution = () =>
+  useQuery({
+    queryKey: ['dashboard', 'categories', 'distribution'],
+    queryFn: () => fetcher<CategoryDistributionPoint[]>(`/dashboard/categories/distribution`),
+  });
+
+export const useDashboardTrafficTrends = (params?: { days?: number }) =>
+  useQuery({
+    queryKey: ['dashboard', 'traffic', params],
+    queryFn: () => fetcher<TrafficTrendPoint[]>(`/dashboard/traffic/trends${buildQuery(params)}`),
+  });
+
 export const useAdminArticles = (params?: Record<string, string | number | boolean | undefined>) =>
   useQuery({
     queryKey: ['admin', 'articles', params],
@@ -200,6 +221,39 @@ export const useSaveAd = () => {
       payload.id
         ? apiClient.put<ApiResponse<Advertisement>>(`/advertisements/${payload.id}`, payload)
         : apiClient.post<ApiResponse<Advertisement>>('/advertisements', payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ads'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ads'] });
+    },
+  });
+};
+
+export const useDeleteArticle = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (articleId: string) => apiClient.delete<ApiResponse<null>>(`/articles/${articleId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'articles'] });
+    },
+  });
+};
+
+export const useDeleteCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (categoryId: string) => apiClient.delete<ApiResponse<null>>(`/categories/${categoryId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
+    },
+  });
+};
+
+export const useDeleteAd = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (adId: string) => apiClient.delete<ApiResponse<null>>(`/advertisements/${adId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ads'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'ads'] });

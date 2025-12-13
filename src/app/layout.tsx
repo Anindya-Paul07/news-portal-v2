@@ -18,20 +18,34 @@ const workSans = Work_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "The Contemporary News",
+  title: "The Contemporary",
   description:
     "Fast, bilingual news portal with clear hierarchy, powered by The Contemporary backoffice APIs.",
+  icons: {
+    icon: "/Logo_Canva.jpg",
+    shortcut: "/Logo_Canva.jpg",
+    apple: "/Logo_Canva.jpg",
+  },
   openGraph: {
-    title: "The Contemporary News",
+    title: "The Contemporary",
     description:
       "Live headlines, analysis, and multimedia from The Contemporary newsroom.",
     url: "https://thecontemporary.news",
-    siteName: "The Contemporary News",
+    siteName: "The Contemporary",
+    images: [
+      {
+        url: "/Logo_Canva.jpg",
+        width: 1200,
+        height: 630,
+        alt: "The Contemporary",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Contemporary News",
+    title: "The Contemporary",
     description: "Newsportal experience with a modern Material palette.",
+    images: ["/Logo_Canva.jpg"],
   },
 };
 

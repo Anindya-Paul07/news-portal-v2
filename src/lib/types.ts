@@ -151,6 +151,27 @@ export type DashboardOverview = {
   media?: Record<string, number>;
 };
 
+export type ArticleStatPoint = {
+  date: string;
+  count?: number;
+  views?: number;
+};
+
+export type CategoryDistributionPoint = {
+  categoryId: string;
+  categoryName: LocalizedText;
+  count?: number;
+  totalViews?: number;
+};
+
+export type TrafficTrendPoint = {
+  date: string;
+  articles?: number;
+  views?: number;
+  likes?: number;
+  shares?: number;
+};
+
 export type CategoryPayload = {
   id?: string;
   slug: string;

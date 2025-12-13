@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
@@ -12,6 +12,7 @@ import { alpha, keyframes } from '@mui/material/styles';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { BreakingTicker } from '@/components/news/BreakingTicker';
+import { FbShortsRail, type FbShort } from '@/components/news/FbShortsRail';
 import { HeroCarousel } from '@/components/news/HeroCarousel';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/states/EmptyState';
@@ -39,13 +40,40 @@ export default function HomePage() {
   const trendingList = trending ?? [];
   const breakingTicker = breaking ?? [];
   const heroSlides = (featured ?? []).slice(0, 4);
-  const gridLatest = latestList.slice(0, 4);
-  const stackedLatest = latestList.slice(4, 8);
-  const trendingHighlights = trendingList.slice(0, 4);
-  const [captionsEnabled, setCaptionsEnabled] = useState(true);
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const heroPrimary = useMemo(() => heroSlides[0], [heroSlides]);
-  const heroPoster = heroPrimary?.featuredImage?.url || heroPrimary?.coverImage;
+  const spotlightLead = latestList[0];
+  const spotlightSecondary = latestList.slice(1, 4);
+  const headlines = latestList.slice(4, 16);
+  const trendingHighlights = trendingList.slice(0, 6);
+  const fbShorts = useMemo<FbShort[]>(
+    () => [
+      {
+        id: 'short-1',
+        title: 'Morning brief in 60s',
+        videoUrl: 'https://www.facebook.com/facebookapp/videos/10153231379946729/',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=60',
+        duration: '01:00',
+        postedAt: 'Just now',
+      },
+      {
+        id: 'short-2',
+        title: 'Market pulse recap',
+        videoUrl: 'https://www.facebook.com/FacebookforDevelopers/videos/10152454700553553/',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=600&q=60',
+        duration: '00:52',
+        postedAt: '1h ago',
+      },
+      {
+        id: 'short-3',
+        title: 'City desk on the move',
+        videoUrl: 'https://www.facebook.com/FacebookforBusiness/videos/566237083858067/',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=60',
+        duration: '00:48',
+        postedAt: '3h ago',
+      },
+    ],
+    [],
+  );
+  const [tickerCondensed, setTickerCondensed] = useState(false);
 
   const fadeInUp = keyframes`
     from { opacity: 0; transform: translateY(12px); }
@@ -70,250 +98,230 @@ export default function HomePage() {
   const getArticleTitle = (story: Article) => getLocalizedText(story.title, language);
   const getArticleSummary = (story: Article) => getLocalizedText(story.excerpt, language);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setTickerCondensed(window.scrollY > 120);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <Stack spacing={4}>
-      <BreakingTicker items={breakingTicker} />
+      <BreakingTicker items={breakingTicker} condensed={tickerCondensed} />
       {heroSlides.length > 0 && <HeroCarousel articles={heroSlides} />}
 
-      {heroSlides.length > 0 && (
-        <Paper
-          variant="outlined"
+      {fbShorts.length > 0 && (
+        <Box sx={{ animation: `${fadeInUp} 520ms ease both` }}>
+          <FbShortsRail items={fbShorts} variant="compact" />
+        </Box>
+      )}
+
+      {spotlightLead && (
+        <Box
+          component="section"
           sx={{
-            p: { xs: 2.5, md: 3 },
-            borderRadius: 3,
-            boxShadow: 3,
             display: 'grid',
-            gap: 2,
-            gridTemplateColumns: { xs: '1fr', md: '1.4fr 1fr' },
-            alignItems: 'stretch',
-            animation: `${fadeInUp} 520ms ease both`,
+            gap: { xs: 2.5, md: 3 },
+            gridTemplateColumns: { xs: '1fr', lg: '1.7fr 1fr' },
           }}
         >
-          <Box
+          <Paper
             sx={{
-              position: 'relative',
+              p: { xs: 2.5, md: 3 },
               borderRadius: 3,
-              overflow: 'hidden',
-              minHeight: { xs: 240, md: 300 },
-              backgroundImage: heroPoster
-                ? `linear-gradient(120deg, ${alpha('#000', 0.62)}, ${alpha('#000', 0.35)}), url(${heroPoster})`
-                : undefined,
+              boxShadow: 4,
+              minHeight: 320,
+              backgroundImage: spotlightLead.featuredImage?.url
+                ? `linear-gradient(160deg, rgba(0,0,0,0.4), rgba(0,0,0,0.75)), url(${spotlightLead.featuredImage.url})`
+                : 'linear-gradient(160deg, #2d1c1c, #441b1b)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               color: '#fff',
-              boxShadow: 4,
-              p: { xs: 2, md: 3 },
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'flex-end',
               gap: 1.5,
+              transition: 'transform 200ms ease, box-shadow 200ms ease',
+              '&:hover': { transform: 'translateY(-2px)', boxShadow: 6 },
             }}
+            component={Link as unknown as 'a'}
+            href={`/article/${spotlightLead.slug}`}
           >
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Chip label="Video" color="warning" size="small" sx={{ fontWeight: 800 }} />
-              <Typography variant="overline" sx={{ letterSpacing: 3 }}>
-                04:12
+            <Chip label="Spotlight" color="warning" size="small" sx={{ alignSelf: 'flex-start' }} />
+            <Typography variant="h4" sx={{ fontWeight: 900, lineHeight: 1.1 }}>
+              {getArticleTitle(spotlightLead)}
+            </Typography>
+            {getArticleSummary(spotlightLead) && (
+              <Typography variant="body2" sx={{ maxWidth: 540 }}>
+                {getArticleSummary(spotlightLead)}
               </Typography>
-            </Stack>
-            <Typography variant="h5" sx={{ fontWeight: 900, maxWidth: '80%', textShadow: '0 6px 24px rgba(0,0,0,0.4)' }}>
-              {getArticleTitle(heroPrimary || heroSlides[0]) || 'Today’s briefing in 4 minutes'}
-            </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap">
-              <Button variant="secondary" size="small" component={Link as unknown as 'a'} href={`/article/${heroPrimary?.slug || heroSlides[0]?.slug || '#'}`}>
-                Play now
-              </Button>
-              <Button
-                variant="outline"
-                size="small"
-                sx={{
-                  color: '#fff',
-                  borderColor: alpha('#fff', 0.65),
-                  '&:hover': { borderColor: '#fff', backgroundColor: alpha('#fff', 0.12) },
-                }}
-                onClick={() => setCaptionsEnabled((prev) => !prev)}
-              >
-                {captionsEnabled ? 'Captions on' : 'Captions off'}
-              </Button>
-            </Stack>
-          </Box>
-
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              borderRadius: 3,
-              bgcolor: 'background.paper',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1.5,
-              justifyContent: 'space-between',
-              boxShadow: 1,
-            }}
-          >
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Chip label="Audio" color="primary" size="small" />
-                <Typography variant="overline" sx={{ letterSpacing: 3 }}>
-                  08:45
-                </Typography>
-              </Stack>
-              <Button
-                variant={audioPlaying ? 'secondary' : 'primary'}
-                size="small"
-                onClick={() => setAudioPlaying((prev) => !prev)}
-                sx={{ px: 2.5 }}
-              >
-                {audioPlaying ? 'Pause' : 'Play'}
-              </Button>
-            </Stack>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-              Morning audio briefing: top 5 stories with context
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Hear the headlines with quick expert notes and timestamps to jump to topics.
-            </Typography>
-            <Box
-              sx={{
-                height: 54,
-                borderRadius: 2,
-                bgcolor: alpha('#000', 0.05),
-                display: 'grid',
-                gridTemplateColumns: 'repeat(28, 1fr)',
-                gap: 0.25,
-                alignItems: 'end',
-                p: 1,
-                overflow: 'hidden',
-                '& div': {
-                  borderRadius: 1,
-                  background: (theme) =>
-                    `linear-gradient(180deg, ${alpha(theme.palette.secondary.main, 0.9)}, ${alpha(
-                      theme.palette.primary.main,
-                      0.7,
-                    )})`,
-                  transition: 'height 200ms ease',
-                },
-              }}
-            >
-              {Array.from({ length: 28 }).map((_, idx) => (
-                <Box
-                  key={idx}
-                  component="div"
-                  sx={{
-                    height: `${30 + ((idx * 7) % 40)}%`,
-                    animation: audioPlaying ? `wavePulse 900ms ease-in-out ${idx * 0.02}s infinite alternate` : 'none',
-                    '@keyframes wavePulse': {
-                      from: { transform: 'scaleY(0.75)' },
-                      to: { transform: 'scaleY(1.2)' },
-                    },
-                  }}
-                />
-              ))}
-            </Box>
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-              <Button
-                variant="ghost"
-                size="small"
-                component={Link as unknown as 'a'}
-                href={`/article/${heroPrimary?.slug || heroSlides[0]?.slug || '#'}`}
-              >
-                View transcript
-              </Button>
-              <Typography variant="caption" color="text.secondary">
-                Captions {captionsEnabled ? 'enabled' : 'disabled'}
-              </Typography>
-            </Stack>
+            )}
           </Paper>
-        </Paper>
+
+          <Stack spacing={2}>
+            {spotlightSecondary.map((story) => (
+              <Paper
+                key={story.id}
+                variant="outlined"
+                component={Link}
+                href={`/article/${story.slug}`}
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  textDecoration: 'none',
+                  color: 'text.primary',
+                  transition: 'border-color 150ms ease, transform 150ms ease',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                <Typography variant="overline" sx={{ letterSpacing: 2, color: 'text.secondary' }}>
+                  {story.category?.name ? getLocalizedText(story.category.name, language) : 'Top story'}
+                </Typography>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                  {getArticleTitle(story)}
+                </Typography>
+                {getArticleSummary(story) && (
+                  <Typography variant="caption" color="text.secondary">
+                    {getArticleSummary(story)}
+                  </Typography>
+                )}
+              </Paper>
+            ))}
+          </Stack>
+        </Box>
       )}
+
+      <Box component="section">
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main' }}>
+            Latest headlines
+          </Typography>
+          {headlines.length > 0 && (
+            <Button variant="ghost" size="small" component={Link as unknown as 'a'} href="/search?sort=date">
+              See all
+            </Button>
+          )}
+        </Stack>
+        {headlines.length === 0 ? (
+          <EmptyState title="No headlines yet" description="New stories will appear here once published." />
+        ) : (
+          <Grid container spacing={2.5}>
+            {headlines.map((article) => (
+              <Grid key={article.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+                <ArticleCard article={article} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Box>
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 3,
-              borderRadius: 3,
-              boxShadow: 3,
-              animation: `${fadeInUp} 560ms ease both`,
-            }}
-          >
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                Latest headlines
-              </Typography>
-              {latestList.length > 0 && (
-                <Button variant="ghost" size="small" component={Link as unknown as 'a'} href="/search?sort=date">
-                  See all
-                </Button>
-              )}
-            </Stack>
-            {latestList.length === 0 ? (
-              <EmptyState title="No headlines yet" description="New stories will appear here once published." />
-            ) : (
-              <Grid container spacing={2.5}>
-                <Grid size={{ xs: 12, lg: 7 }}>
-                  <Grid container spacing={2}>
-                    {gridLatest.map((article) => (
-                      <Grid key={article.id} size={{ xs: 12, sm: 6 }}>
-                        <ArticleCard article={article} />
-                      </Grid>
-                    ))}
+          <Stack spacing={3}>
+            {firstCategorySlug && firstCategoryList.length > 0 && (
+              <Paper
+                sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  bgcolor: 'secondary.main',
+                  color: 'secondary.contrastText',
+                  boxShadow: 4,
+                  border: `1px solid ${alpha('#ffffff', 0.16)}`,
+                }}
+              >
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                    {getLocalizedText(categoryList?.[0]?.name, language) || 'Top stories'}
+                  </Typography>
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    component={Link as unknown as 'a'}
+                    href={`/category/${firstCategorySlug || 'news'}`}
+                    sx={{ color: 'warning.main' }}
+                  >
+                    View category
+                  </Button>
+                </Stack>
+                <Grid container spacing={2}>
+                  {firstCategoryFeature && (
+                    <Grid size={{ xs: 12, md: 7 }}>
+                      <ArticleCard article={firstCategoryFeature} />
+                    </Grid>
+                  )}
+                  <Grid size={{ xs: 12, md: 5 }}>
+                    <Stack spacing={1.5}>
+                      {firstCategoryRest.map((article) => (
+                        <Paper
+                          key={article.id}
+                          component={Link}
+                          href={`/article/${article.slug}`}
+                          variant="outlined"
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: alpha('#fff5ef', 0.1),
+                            color: 'secondary.contrastText',
+                            textDecoration: 'none',
+                            '&:hover': {
+                              bgcolor: alpha('#fff5ef', 0.18),
+                            },
+                          }}
+                        >
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            {getArticleTitle(article)}
+                          </Typography>
+                          {getArticleSummary(article) && (
+                            <Typography variant="caption" sx={{ color: alpha('#fff5ef', 0.8) }}>
+                              {getArticleSummary(article)}
+                            </Typography>
+                          )}
+                        </Paper>
+                      ))}
+                    </Stack>
                   </Grid>
                 </Grid>
-                <Grid size={{ xs: 12, lg: 5 }}>
-                  {stackedLatest.length > 0 && (
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        p: 2.5,
-                        borderRadius: 2,
-                        bgcolor: 'background.paper',
-                        boxShadow: 1,
-                      }}
-                    >
-                      <Typography
-                        variant="overline"
-                        sx={{ letterSpacing: 3, fontWeight: 700, color: 'text.secondary' }}
-                      >
-                        Fresh picks
-                      </Typography>
-                      <Stack spacing={2} mt={2}>
-                        {stackedLatest.map((story) => (
-                          <Paper
-                            key={story.id}
-                            variant="outlined"
-                            component={Link}
-                            href={`/article/${story.slug}`}
-                            sx={{
-                              p: 1.5,
-                              borderRadius: 2,
-                              textDecoration: 'none',
-                              color: 'text.primary',
-                              borderColor: 'transparent',
-                              transition: 'border-color 150ms ease, transform 150ms ease',
-                              '&:hover': {
-                                borderColor: 'primary.main',
-                                transform: 'translateY(-2px)',
-                              },
-                            }}
-                          >
-                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                              {getArticleTitle(story)}
-                            </Typography>
-                            {getArticleSummary(story) && (
-                              <Typography variant="caption" color="text.secondary">
-                                {getArticleSummary(story)}
-                              </Typography>
-                            )}
-                          </Paper>
-                        ))}
-                      </Stack>
-                    </Paper>
-                  )}
-                </Grid>
-              </Grid>
+              </Paper>
             )}
-          </Paper>
+
+            {secondCategorySlug && secondCategoryGrid.length > 0 && (
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  boxShadow: 3,
+                }}
+              >
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                    {getLocalizedText(categoryList?.[1]?.name, language) || 'In depth'}
+                  </Typography>
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    component={Link as unknown as 'a'}
+                    href={`/category/${secondCategorySlug || 'news'}`}
+                    sx={{ color: 'secondary.main' }}
+                  >
+                    View category
+                  </Button>
+                </Stack>
+                <Grid container spacing={2}>
+                  {secondCategoryGrid.map((article) => (
+                    <Grid key={article.id} size={{ xs: 12, sm: 6 }}>
+                      <ArticleCard article={article} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Paper>
+            )}
+          </Stack>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
@@ -344,10 +352,10 @@ export default function HomePage() {
                       href={`/article/${story.slug}`}
                       variant="outlined"
                       sx={{
-                        p: 1.5,
+                        p: 1.25,
                         borderRadius: 2,
                         display: 'flex',
-                        gap: 1.5,
+                        gap: 1,
                         alignItems: 'flex-start',
                         textDecoration: 'none',
                         color: 'text.primary',
@@ -356,7 +364,7 @@ export default function HomePage() {
                       }}
                     >
                       <Typography variant="h6" sx={{ fontWeight: 900, color: 'warning.main' }}>
-                        0{index + 1}
+                        {(index + 1).toString().padStart(2, '0')}
                       </Typography>
                       <Box>
                         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
@@ -380,178 +388,6 @@ export default function HomePage() {
 
       <AdSlot position="banner" page="home" />
 
-      <Grid container spacing={3}>
-        {firstCategorySlug && firstCategoryList.length > 0 && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                bgcolor: 'secondary.main',
-                color: 'secondary.contrastText',
-                boxShadow: 4,
-                border: `1px solid ${alpha('#ffffff', 0.16)}`,
-              }}
-            >
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                  {getLocalizedText(categoryList?.[0]?.name, language) || 'Top stories'}
-                </Typography>
-                <Button
-                  variant="ghost"
-                  size="small"
-                  component={Link as unknown as 'a'}
-                  href={`/category/${firstCategorySlug || 'news'}`}
-                  sx={{ color: 'warning.main' }}
-                >
-                  View category
-                </Button>
-              </Stack>
-              <Grid container spacing={2}>
-                {firstCategoryFeature && (
-                  <Grid size={{ xs: 12, md: 7 }}>
-                    <ArticleCard article={firstCategoryFeature} />
-                  </Grid>
-                )}
-                <Grid size={{ xs: 12, md: 5 }}>
-                  <Stack spacing={1.5}>
-                    {firstCategoryRest.map((article) => (
-                      <Paper
-                        key={article.id}
-                        component={Link}
-                        href={`/article/${article.slug}`}
-                        variant="outlined"
-                        sx={{
-                          p: 1.5,
-                          borderRadius: 2,
-                          bgcolor: alpha('#fff5ef', 0.1),
-                          color: 'secondary.contrastText',
-                          textDecoration: 'none',
-                          '&:hover': {
-                            bgcolor: alpha('#fff5ef', 0.18),
-                          },
-                        }}
-                      >
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                          {getArticleTitle(article)}
-                        </Typography>
-                        {getArticleSummary(article) && (
-                          <Typography variant="caption" sx={{ color: alpha('#fff5ef', 0.8) }}>
-                            {getArticleSummary(article)}
-                          </Typography>
-                        )}
-                      </Paper>
-                    ))}
-                  </Stack>
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
-        )}
-
-        {secondCategorySlug && secondCategoryGrid.length > 0 && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                boxShadow: 3,
-              }}
-            >
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                  {getLocalizedText(categoryList?.[1]?.name, language) || 'In depth'}
-                </Typography>
-                <Button
-                  variant="ghost"
-                  size="small"
-                  component={Link as unknown as 'a'}
-                  href={`/category/${secondCategorySlug || 'news'}`}
-                  sx={{ color: 'secondary.main' }}
-                >
-                  View category
-                </Button>
-              </Stack>
-              <Grid container spacing={2}>
-                {secondCategoryGrid.map((article) => (
-                  <Grid key={article.id} size={{ xs: 12, sm: 6 }}>
-                    <ArticleCard article={article} />
-                  </Grid>
-                ))}
-              </Grid>
-            </Paper>
-          </Grid>
-        )}
-      </Grid>
-
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 3,
-          borderRadius: 3,
-          boxShadow: 2,
-        }}
-      >
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            Sections
-          </Typography>
-          <Typography variant="overline" sx={{ letterSpacing: 3, color: 'text.secondary' }}>
-            Browse by beat
-          </Typography>
-        </Stack>
-        {categoryList.length === 0 ? (
-          <Box mt={2}>
-            <EmptyState title="No sections available" description="Add categories to populate this grid." />
-          </Box>
-        ) : (
-          <Grid container spacing={2} mt={1}>
-            {categoryList?.map((category, index) => (
-              <Grid key={category.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                <Paper
-                  component={Link}
-                  href={`/category/${category.slug}`}
-                  variant="outlined"
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    textDecoration: 'none',
-                    color: 'text.primary',
-                    transition: 'transform 150ms ease, box-shadow 150ms ease',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1,
-                    minHeight: 160,
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                >
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'text.secondary' }}>
-                    <Typography variant="overline" sx={{ letterSpacing: 3 }}>
-                      {String(index + 1).padStart(2, '0')}
-                    </Typography>
-                    <Chip label="Section" size="small" color="primary" variant="outlined" />
-                  </Stack>
-                  <Typography variant="h6" sx={{ fontWeight: 800, mt: 0.5 }}>
-                    {getLocalizedText(category.name, language)}
-                  </Typography>
-                  {category.description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-                      {getLocalizedText(category.description, language)}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" sx={{ mt: 1, display: 'inline-block', letterSpacing: 2 }}>
-                    Enter →
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        )}
-      </Paper>
     </Stack>
   );
 }

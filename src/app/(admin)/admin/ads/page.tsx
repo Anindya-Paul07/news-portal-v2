@@ -7,34 +7,41 @@ import CardHeader from '@mui/material/CardHeader';
 import Chip from '@mui/material/Chip';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
+import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import { AdminShell } from '@/components/layout/AdminShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
-import { useAdminAds, useSaveAd } from '@/hooks/api-hooks';
+import { useAdminAds, useSaveAd, useDeleteAd } from '@/hooks/api-hooks';
 import { AdvertisementType } from '@/lib/types';
+import { useAlert } from '@/contexts/alert-context';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
+
+const initialAdDraft = {
+  name: '',
+  type: 'banner' as AdvertisementType,
+  position: 'hero' as 'hero' | 'banner' | 'sidebar' | 'in_content' | 'popup',
+  page: 'home',
+  linkUrl: '',
+  imageUrl: '',
+  imageAltEn: '',
+  imageAltBn: '',
+  startDate: '',
+  endDate: '',
+  isActive: true,
+  priority: 5,
+};
 
 export default function AdsPage() {
   const { data: ads } = useAdminAds();
   const { mutateAsync: saveAd } = useSaveAd();
-  const [draft, setDraft] = useState({
-    name: '',
-    type: 'banner' as AdvertisementType,
-    position: 'hero',
-    page: 'home',
-    linkUrl: '',
-    imageUrl: '',
-    imageAltEn: '',
-    imageAltBn: '',
-    startDate: '',
-    endDate: '',
-    isActive: true,
-    priority: 5,
-  });
+  const { mutateAsync: deleteAd } = useDeleteAd();
+  const { notify } = useAlert();
+  const [draft, setDraft] = useState(initialAdDraft);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const positions: Array<'hero' | 'banner' | 'sidebar' | 'in_content' | 'popup'> = [
     'hero',
     'banner',
@@ -47,6 +54,7 @@ export default function AdsPage() {
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await saveAd({
+      id: editingId || undefined,
       name: draft.name,
       type: draft.type,
       position: draft.position,
@@ -61,20 +69,48 @@ export default function AdsPage() {
       displayPages: draft.page ? [draft.page] : undefined,
       priority: draft.priority,
     });
-    setDraft({
-      name: '',
-      type: 'banner',
-      position: 'hero',
-      page: 'home',
-      linkUrl: '',
-      imageUrl: '',
-      imageAltEn: '',
-      imageAltBn: '',
-      startDate: '',
-      endDate: '',
-      isActive: true,
-      priority: 5,
+    setDraft(initialAdDraft);
+    setEditingId(null);
+    notify({
+      type: 'success',
+      title: editingId ? 'Ad updated' : 'Ad saved',
+      description: 'Placement inventory refreshed.',
     });
+  };
+
+  const handleEdit = (adId: string) => {
+    const ad = ads?.find((item) => item.id === adId);
+    if (!ad) return;
+    setEditingId(ad.id);
+    setDraft({
+      name: ad.name || ad.title || '',
+      type: ad.type,
+      position: (ad.position as typeof draft.position) || 'hero',
+      page: ad.page || ad.displayPages?.[0] || 'home',
+      linkUrl: ad.linkUrl || ad.targetUrl || '',
+      imageUrl: ad.image?.url || ad.imageUrl || '',
+      imageAltEn: typeof ad.image?.alt === 'string' ? ad.image.alt : ad.image?.alt?.en || '',
+      imageAltBn: typeof ad.image?.alt === 'string' ? '' : ad.image?.alt?.bn || '',
+      startDate: ad.startDate || ad.activeFrom || '',
+      endDate: ad.endDate || ad.activeTo || '',
+      isActive: ad.isActive ?? true,
+      priority: ad.priority ?? 5,
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (adId: string) => {
+    if (!window.confirm('Delete this advertisement?')) return;
+    try {
+      await deleteAd(adId);
+      notify({ type: 'success', title: 'Ad deleted' });
+      if (editingId === adId) {
+        setEditingId(null);
+        setDraft(initialAdDraft);
+      }
+    } catch (error) {
+      notify({ type: 'error', title: 'Delete failed', description: error instanceof Error ? error.message : undefined });
+    }
   };
 
   return (
@@ -83,7 +119,17 @@ export default function AdsPage() {
       description="Control placements, priorities, activation windows, and preview banners/sidebars/popup units."
     >
       <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 3 }}>
-        <CardHeader title="New Advertisement" subheader="Configure placement, timing, and creatives." />
+        <CardHeader
+          title={editingId ? 'Edit Advertisement' : 'New Advertisement'}
+          subheader="Configure placement, timing, and creatives."
+          action={
+            editingId ? (
+              <Button variant="ghost" size="small" onClick={() => { setEditingId(null); setDraft(initialAdDraft); }}>
+                Cancel edit
+              </Button>
+            ) : null
+          }
+        />
         <CardContent>
           <form onSubmit={onSubmit}>
             <Grid container spacing={2}>
@@ -199,7 +245,7 @@ export default function AdsPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <Button type="submit">Save advertisement</Button>
+                <Button type="submit">{editingId ? 'Update advertisement' : 'Save advertisement'}</Button>
               </Grid>
             </Grid>
           </form>
@@ -229,6 +275,14 @@ export default function AdsPage() {
                   variant={ad.isActive === false ? 'outlined' : 'filled'}
                   size="small"
                 />
+                <Stack direction="row" spacing={1} mt={2}>
+                  <Button variant="ghost" size="small" onClick={() => handleEdit(ad.id)}>
+                    Edit
+                  </Button>
+                  <Button variant="outline" size="small" color="error" onClick={() => handleDelete(ad.id)}>
+                    Delete
+                  </Button>
+                </Stack>
               </CardContent>
             </Card>
           </Grid>
