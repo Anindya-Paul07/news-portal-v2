@@ -217,7 +217,20 @@ function MediaItemCard({ item, onUpdate, onDelete }: MediaItemCardProps) {
               <Button size="small" variant="ghost" onClick={() => setEditing(true)}>
                 Edit
               </Button>
-              <Button size="small" variant="outline" color="error" onClick={handleDelete} disabled={deleting}>
+              <Button
+                size="small"
+                variant="outline"
+                sx={{
+                  color: 'error.main',
+                  borderColor: 'error.main',
+                  '&:hover': {
+                    borderColor: 'error.dark',
+                    backgroundColor: 'rgba(211,47,47,0.08)',
+                  },
+                }}
+                onClick={handleDelete}
+                disabled={deleting}
+              >
                 {deleting ? 'Deleting...' : 'Delete'}
               </Button>
             </Stack>

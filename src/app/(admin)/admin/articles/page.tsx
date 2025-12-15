@@ -242,7 +242,19 @@ export default function ArticlesAdminPage() {
                     <Button variant="ghost" size="small" onClick={() => handleEdit(article.id)}>
                       Edit
                     </Button>
-                    <Button variant="outline" size="small" color="error" onClick={() => handleDelete(article.id)}>
+                    <Button
+                      variant="outline"
+                      size="small"
+                      sx={{
+                        color: 'error.main',
+                        borderColor: 'error.main',
+                        '&:hover': {
+                          borderColor: 'error.dark',
+                          backgroundColor: 'rgba(211,47,47,0.08)',
+                        },
+                      }}
+                      onClick={() => handleDelete(article.id)}
+                    >
                       Delete
                     </Button>
                   </Stack>

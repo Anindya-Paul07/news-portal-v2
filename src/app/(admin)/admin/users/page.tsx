@@ -164,7 +164,19 @@ export default function UsersPage() {
                     <Button variant="ghost" size="small" onClick={() => handleEdit(user.id)}>
                       Edit
                     </Button>
-                    <Button variant="outline" size="small" color="error" onClick={() => handleDelete(user.id)}>
+                    <Button
+                      variant="outline"
+                      size="small"
+                      sx={{
+                        color: 'error.main',
+                        borderColor: 'error.main',
+                        '&:hover': {
+                          borderColor: 'error.dark',
+                          backgroundColor: 'rgba(211,47,47,0.08)',
+                        },
+                      }}
+                      onClick={() => handleDelete(user.id)}
+                    >
                       Delete
                     </Button>
                   </Stack>

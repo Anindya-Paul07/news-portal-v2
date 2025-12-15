@@ -464,7 +464,7 @@ export default function AdminDashboard() {
                     paddingAngle: 2,
                   },
                 ]}
-                slotProps={{ legend: { position: { vertical: 'bottom', horizontal: 'center' } } }}
+                slotProps={{ legend: { position: { vertical: 'bottom', horizontal: 'middle' } } }}
               />
             )}
           </Card>
