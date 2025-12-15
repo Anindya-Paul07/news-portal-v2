@@ -30,3 +30,13 @@ export function getLocalizedText(value?: LocalizedText | null, language: 'en' | 
   const firstEntry = Object.values(value).find((entry) => typeof entry === 'string' && entry.trim().length > 0);
   return firstEntry || '';
 }
+
+const defaultUploadBase = 'https://backoffice.thecontemporary.news';
+
+export function resolveMediaUrl(url?: string | null) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  const base = process.env.NEXT_PUBLIC_UPLOAD_BASE || defaultUploadBase;
+  const trimmed = url.replace(/^\/+/, '');
+  return `${base.replace(/\/+$/, '')}/${trimmed}`;
+}

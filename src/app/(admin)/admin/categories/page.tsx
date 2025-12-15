@@ -4,8 +4,11 @@ import { useState, type FormEvent } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardHeader from '@mui/material/CardHeader';
+import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
@@ -197,12 +200,25 @@ export default function CategoriesPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Input
-                  label="Parent ID"
-                  value={draft.parentId}
-                  onChange={(e) => setDraft((d) => ({ ...d, parentId: e.target.value }))}
-                  helperText="Leave blank for top level"
-                />
+                <FormControl fullWidth>
+                  <Select
+                    displayEmpty
+                    value={draft.parentId}
+                    onChange={(e) => setDraft((d) => ({ ...d, parentId: e.target.value }))}
+                    renderValue={(value) => {
+                      if (!value) return 'Top level (no parent)';
+                      const parent = categories?.find((cat) => cat.id === value);
+                      return parent ? getLocalizedText(parent.name, language) : 'Select parent';
+                    }}
+                  >
+                    <MenuItem value="">Top level (no parent)</MenuItem>
+                    {categories?.map((cat) => (
+                      <MenuItem key={cat.id} value={cat.id}>
+                        {getLocalizedText(cat.name, language)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
                 <FormControlLabel

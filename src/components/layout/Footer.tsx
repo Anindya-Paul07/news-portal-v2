@@ -15,6 +15,15 @@ const footerNav = [
   { label: 'Contact', href: '/contact' },
 ];
 
+const socialLinks = [
+  { label: 'Facebook', href: 'https://www.facebook.com/share/1E3oE7uaAq/' },
+  { label: 'Instagram', href: 'https://www.instagram.com/thecontemporary.news' },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@the.contemporary.news' },
+  { label: 'YouTube', href: 'https://www.youtube.com/@TheContemporaryNews' },
+  { label: 'X / Twitter', href: 'https://twitter.com/thecontempo' },
+  { label: 'Threads', href: 'https://www.threads.net/@thecontemporarynews' },
+];
+
 export function Footer() {
   return (
     <Box
@@ -105,16 +114,21 @@ export function Footer() {
               >
                 Social
               </Typography>
-              <MuiLink
-                href="https://www.facebook.com/share/1E3oE7uaAq/"
-                underline="hover"
-                color="secondary.main"
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{ fontSize: 14, fontWeight: 600 }}
-              >
-                Facebook
-              </MuiLink>
+              <Stack spacing={0.5}>
+                {socialLinks.map((social) => (
+                  <MuiLink
+                    key={social.label}
+                    href={social.href}
+                    underline="hover"
+                    color="secondary.main"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ fontSize: 14, fontWeight: 600 }}
+                  >
+                    {social.label}
+                  </MuiLink>
+                ))}
+              </Stack>
             </Stack>
           </Box>
         </Box>

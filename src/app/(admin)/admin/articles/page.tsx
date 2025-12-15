@@ -30,7 +30,7 @@ const initialArticleDraft = {
   excerptBn: '',
   contentEn: '',
   contentBn: '',
-  categoryId: '',
+  category: '',
   status: 'draft' as ArticleStatus,
   imageUrl: '',
 };
@@ -54,7 +54,7 @@ export default function ArticlesAdminPage() {
         title: { en: draft.titleEn, bn: draft.titleBn },
         excerpt: { en: draft.excerptEn, bn: draft.excerptBn },
         content: { en: draft.contentEn, bn: draft.contentBn },
-        categoryId: draft.categoryId || undefined,
+        category: draft.category || undefined,
         status: draft.status,
         featuredImage: draft.imageUrl ? { url: draft.imageUrl } : undefined,
       });
@@ -86,7 +86,7 @@ export default function ArticlesAdminPage() {
       contentBn: typeof article.content === 'string'
         ? ''
         : (article.content as Record<string, string | undefined>)?.bn || '',
-      categoryId: article.categoryId || '',
+      category: article.categoryId || '',
       status: article.status || 'draft',
       imageUrl: article.featuredImage?.url || '',
     });
@@ -183,8 +183,8 @@ export default function ArticlesAdminPage() {
                 <Select
                   labelId="category-label"
                   label="Category"
-                  value={draft.categoryId}
-                  onChange={(e) => setDraft((d) => ({ ...d, categoryId: e.target.value }))}
+                  value={draft.category}
+                  onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))}
                 >
                   <MenuItem value="">Select category</MenuItem>
                   {categories?.map((category) => (

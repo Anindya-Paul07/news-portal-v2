@@ -19,6 +19,7 @@ import {
   AnalyticsTrafficPoint,
   AnalyticsAdsSummary,
   Media,
+  MediaUpdatePayload,
   MediaUploadPayload,
   User,
 } from '@/lib/types';
@@ -123,17 +124,10 @@ export const useSearchArticles = (term: string, filters?: Record<string, string 
     queryFn: () => fetcher<Article[]>(`/articles/search/query${buildQuery({ q: term, ...filters })}`),
   });
 
-export const useAds = (position?: string, page?: string) =>
+export const useAds = (params?: { type?: string; position?: string; page?: string }) =>
   useQuery({
-    queryKey: ['ads', 'active', position, page],
-    queryFn: () =>
-      fetcher<Advertisement[]>(
-        `/advertisements/active${buildQuery({
-          type: position === 'sidebar' ? 'sidebar' : 'banner',
-          position,
-          page,
-        })}`,
-      ),
+    queryKey: ['ads', 'active', params],
+    queryFn: () => fetcher<Advertisement[]>(`/advertisements/active${buildQuery(params)}`),
   });
 
 export const useDashboardOverview = () =>
@@ -302,6 +296,16 @@ export const useSaveUser = () => {
   });
 };
 
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => apiClient.delete<ApiResponse<null>>(`/users/${userId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+  });
+};
+
 export const useUploadMedia = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -320,6 +324,27 @@ export const useUploadMedia = () => {
       if (payload.tags?.length) formData.append('tags', payload.tags.join(','));
       return apiClient.post<ApiResponse<Media>>('/media/upload', formData, { formData: true });
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'media'] });
+    },
+  });
+};
+
+export const useUpdateMedia = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: MediaUpdatePayload) =>
+      apiClient.put<ApiResponse<Media>>(`/media/${id}`, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'media'] });
+    },
+  });
+};
+
+export const useDeleteMedia = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (mediaId: string) => apiClient.delete<ApiResponse<null>>(`/media/${mediaId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'media'] });
     },

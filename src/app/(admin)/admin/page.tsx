@@ -390,9 +390,9 @@ export default function AdminDashboard() {
                     slotProps={{ legend: { hidden: true } }}
                   />
                   <Stack spacing={1.5}>
-                    {topAds.map((ad) => (
+                    {topAds.map((ad, index) => (
                       <Stack
-                        key={ad.id}
+                        key={ad.id ?? `${ad.name ?? 'ad'}-${index}`}
                         direction="row"
                         alignItems="center"
                         justifyContent="space-between"

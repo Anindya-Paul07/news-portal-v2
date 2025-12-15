@@ -217,9 +217,12 @@ export function Header() {
 
             <Box
               sx={{
-                transition: 'transform 280ms ease, opacity 200ms ease',
-                transform: navHidden ? 'translateY(-100%)' : 'translateY(0)',
+                transition: 'max-height 280ms ease, opacity 200ms ease',
+                maxHeight: navHidden ? 0 : 120,
                 opacity: navHidden ? 0 : 1,
+                overflow: 'hidden',
+                display: 'flex',
+                justifyContent: 'center',
               }}
             >
                 {isMdUp ? (

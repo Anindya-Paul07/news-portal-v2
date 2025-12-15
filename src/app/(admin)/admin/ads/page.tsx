@@ -19,11 +19,12 @@ import { AdvertisementType } from '@/lib/types';
 import { useAlert } from '@/contexts/alert-context';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
+import { getLocalizedText } from '@/lib/utils';
 
 const initialAdDraft = {
   name: '',
   type: 'banner' as AdvertisementType,
-  position: 'hero' as 'hero' | 'banner' | 'sidebar' | 'in_content' | 'popup',
+  position: 'top' as 'top' | 'bottom' | 'sidebar-bottom' | 'sidebar-top' | 'sidebar-middle' | 'middle',
   page: 'home',
   linkUrl: '',
   imageUrl: '',
@@ -42,14 +43,15 @@ export default function AdsPage() {
   const { notify } = useAlert();
   const [draft, setDraft] = useState(initialAdDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const positions: Array<'hero' | 'banner' | 'sidebar' | 'in_content' | 'popup'> = [
-    'hero',
-    'banner',
-    'sidebar',
-    'in_content',
-    'popup',
+  const positions: Array<'top' | 'bottom' | 'sidebar-bottom' | 'sidebar-top' | 'sidebar-middle' | 'middle'> = [
+    'top',
+    'bottom',
+    'sidebar-bottom',
+    'sidebar-top',
+    'sidebar-middle',
+    'middle',
   ];
-  const adTypes: AdvertisementType[] = ['banner', 'sidebar', 'native', 'popup', 'video'];
+  const adTypes: AdvertisementType[] = ['banner', 'sidebar', 'in_content', 'popup'];
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -85,13 +87,13 @@ export default function AdsPage() {
     setDraft({
       name: ad.name || ad.title || '',
       type: ad.type,
-      position: (ad.position as typeof draft.position) || 'hero',
+      position: (ad.position as typeof draft.position) || 'top',
       page: ad.page || ad.displayPages?.[0] || 'home',
       linkUrl: ad.linkUrl || ad.targetUrl || '',
       imageUrl: ad.image?.url || ad.imageUrl || '',
       imageAltEn: typeof ad.image?.alt === 'string' ? ad.image.alt : ad.image?.alt?.en || '',
       imageAltBn: typeof ad.image?.alt === 'string' ? '' : ad.image?.alt?.bn || '',
-      startDate: ad.startDate || ad.activeFrom || '',
+      startDate: ad.startDate || ad.activeFrom || '', 
       endDate: ad.endDate || ad.activeTo || '',
       isActive: ad.isActive ?? true,
       priority: ad.priority ?? 5,
@@ -258,35 +260,38 @@ export default function AdsPage() {
       {!ads && <LoadingBlock lines={3} />}
       {ads?.length === 0 && <EmptyState title="No ads yet" description="Create an ad to fill placements." />}
       <Grid container spacing={2}>
-        {ads?.map((ad) => (
-          <Grid key={ad.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card variant="outlined" sx={{ borderRadius: 2, boxShadow: 2 }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                  {ad.title || ad.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {ad.position} • priority {ad.priority ?? '-'}
-                </Typography>
-                <Chip
-                  sx={{ mt: 1 }}
-                  label={`${ad.type}${ad.isActive === false ? ' • paused' : ''}`}
-                  color={ad.isActive === false ? 'default' : 'primary'}
-                  variant={ad.isActive === false ? 'outlined' : 'filled'}
-                  size="small"
-                />
-                <Stack direction="row" spacing={1} mt={2}>
-                  <Button variant="ghost" size="small" onClick={() => handleEdit(ad.id)}>
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="small" color="error" onClick={() => handleDelete(ad.id)}>
-                    Delete
-                  </Button>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+        {ads?.map((ad) => {
+          const title = ad.name || getLocalizedText(ad.title) || 'Untitled ad';
+          return (
+            <Grid key={ad.id} size={{ xs: 12, sm: 6, md: 4 }}>
+              <Card variant="outlined" sx={{ borderRadius: 2, boxShadow: 2 }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                    {title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {ad.position} • priority {ad.priority ?? '-'}
+                  </Typography>
+                  <Chip
+                    sx={{ mt: 1 }}
+                    label={`${ad.type}${ad.isActive === false ? ' • paused' : ''}`}
+                    color={ad.isActive === false ? 'default' : 'primary'}
+                    variant={ad.isActive === false ? 'outlined' : 'filled'}
+                    size="small"
+                  />
+                  <Stack direction="row" spacing={1} mt={2}>
+                    <Button variant="ghost" size="small" onClick={() => handleEdit(ad.id)}>
+                      Edit
+                    </Button>
+                    <Button variant="outline" size="small" color="error" onClick={() => handleDelete(ad.id)}>
+                      Delete
+                    </Button>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
       </Grid>
     </AdminShell>
   );

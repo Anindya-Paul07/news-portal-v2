@@ -69,7 +69,7 @@ export type ArticlePayload = {
   title: LocalizedText;
   excerpt?: LocalizedText;
   content?: LocalizedText;
-  categoryId?: string;
+  category?: string;
   status?: ArticleStatus;
   featuredImage?: ImageAsset;
   tags?: LocalizedText[];
@@ -78,9 +78,9 @@ export type ArticlePayload = {
   isTrending?: boolean;
 };
 
-export type AdPlacement = 'hero' | 'banner' | 'sidebar' | 'in_content' | 'popup';
+export type AdPlacement = 'sidebar-middle' | 'sidebar-top' | 'bottom' | 'middle' | 'top' | 'sidebar-bottom';
 
-export type AdvertisementType = 'banner' | 'sidebar' | 'native' | 'popup' | 'video' | 'html';
+export type AdvertisementType = 'banner' | 'sidebar' | 'in_content' | 'popup' ;
 
 export type Advertisement = {
   id: string;
@@ -131,6 +131,13 @@ export type Media = {
 
 export type MediaUploadPayload = {
   file: File;
+  alt?: LocalizedText;
+  folder?: string;
+  tags?: string[];
+};
+
+export type MediaUpdatePayload = {
+  id: string;
   alt?: LocalizedText;
   folder?: string;
   tags?: string[];
