@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -12,65 +12,102 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { ArticleCard } from '@/components/news/ArticleCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { AdminShell } from '@/components/layout/AdminShell';
-import { useAdminArticles, useAdminCategories, useSaveArticle } from '@/hooks/api-hooks';
+import { useAdminArticles, useAdminCategories, useSaveArticle, useDeleteArticle } from '@/hooks/api-hooks';
 import { ArticleStatus } from '@/lib/types';
 import { useAlert } from '@/contexts/alert-context';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
 
+const initialArticleDraft = {
+  titleEn: '',
+  titleBn: '',
+  slug: '',
+  excerptEn: '',
+  excerptBn: '',
+  contentEn: '',
+  contentBn: '',
+  category: '',
+  status: 'draft' as ArticleStatus,
+  imageUrl: '',
+};
+
 export default function ArticlesAdminPage() {
   const { data: articles } = useAdminArticles({ limit: 12 });
   const { data: categories } = useAdminCategories();
   const { mutateAsync: saveArticle } = useSaveArticle();
+  const { mutateAsync: deleteArticle } = useDeleteArticle();
   const { notify } = useAlert();
-  const [draft, setDraft] = useState({
-    titleEn: '',
-    titleBn: '',
-    slug: '',
-    excerptEn: '',
-    excerptBn: '',
-    contentEn: '',
-    contentBn: '',
-    categoryId: '',
-    status: 'draft' as ArticleStatus,
-    imageUrl: '',
-  });
+  const [draft, setDraft] = useState(initialArticleDraft);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const statusOptions: ArticleStatus[] = ['draft', 'published', 'scheduled'];
 
   const onCreate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await saveArticle({
+        id: editingId || undefined,
         slug: draft.slug,
         title: { en: draft.titleEn, bn: draft.titleBn },
         excerpt: { en: draft.excerptEn, bn: draft.excerptBn },
         content: { en: draft.contentEn, bn: draft.contentBn },
-        categoryId: draft.categoryId || undefined,
+        category: draft.category || undefined,
         status: draft.status,
         featuredImage: draft.imageUrl ? { url: draft.imageUrl } : undefined,
       });
-      setDraft({
-        titleEn: '',
-        titleBn: '',
-        slug: '',
-        excerptEn: '',
-        excerptBn: '',
-        contentEn: '',
-        contentBn: '',
-        categoryId: '',
-        status: 'draft',
-        imageUrl: '',
+      setDraft(initialArticleDraft);
+      setEditingId(null);
+      notify({
+        type: 'success',
+        title: editingId ? 'Article updated' : 'Article saved',
+        description: 'Your story is now synced with the newsroom.',
       });
-      notify({ type: 'success', title: 'Article saved', description: 'Your story is now synced with the newsroom.' });
     } catch (error) {
       notify({ type: 'error', title: 'Save failed', description: error instanceof Error ? error.message : undefined });
     }
   };
+
+  const handleEdit = (articleId: string) => {
+    const article = articles?.find((item) => item.id === articleId);
+    if (!article) return;
+    setEditingId(article.id);
+    setDraft({
+      titleEn: typeof article.title === 'string' ? article.title : article.title?.en || '',
+      titleBn: typeof article.title === 'string' ? '' : article.title?.bn || '',
+      slug: article.slug,
+      excerptEn: typeof article.excerpt === 'string' ? article.excerpt : article.excerpt?.en || '',
+      excerptBn: typeof article.excerpt === 'string' ? '' : article.excerpt?.bn || '',
+      contentEn: typeof article.content === 'string'
+        ? article.content
+        : (article.content as Record<string, string | undefined>)?.en || '',
+      contentBn: typeof article.content === 'string'
+        ? ''
+        : (article.content as Record<string, string | undefined>)?.bn || '',
+      category: article.categoryId || '',
+      status: article.status || 'draft',
+      imageUrl: article.featuredImage?.url || '',
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (articleId: string) => {
+    if (!window.confirm('Delete this article permanently?')) return;
+    try {
+      await deleteArticle(articleId);
+      notify({ type: 'success', title: 'Article deleted', description: 'The article has been removed.' });
+      if (editingId === articleId) {
+        setEditingId(null);
+        setDraft(initialArticleDraft);
+      }
+    } catch (error) {
+      notify({ type: 'error', title: 'Delete failed', description: error instanceof Error ? error.message : undefined });
+    }
+  };
+
+  const articleList = useMemo(() => articles ?? [], [articles]);
 
   return (
     <AdminShell
@@ -78,7 +115,17 @@ export default function ArticlesAdminPage() {
       description="Create, schedule, and manage featured/breaking/trending flags with bilingual content."
     >
       <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 4 }}>
-        <CardHeader title="New Article" subheader="Bilingual content, scheduling, and category assignment." />
+        <CardHeader
+          title={editingId ? 'Edit Article' : 'New Article'}
+          subheader="Bilingual content, scheduling, and category assignment."
+          action={
+            editingId ? (
+              <Button variant="ghost" size="small" onClick={() => { setEditingId(null); setDraft(initialArticleDraft); }}>
+                Cancel edit
+              </Button>
+            ) : null
+          }
+        />
         <CardContent>
           <Stack component="form" onSubmit={onCreate} spacing={2.5}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -136,8 +183,8 @@ export default function ArticlesAdminPage() {
                 <Select
                   labelId="category-label"
                   label="Category"
-                  value={draft.categoryId}
-                  onChange={(e) => setDraft((d) => ({ ...d, categoryId: e.target.value }))}
+                  value={draft.category}
+                  onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))}
                 >
                   <MenuItem value="">Select category</MenuItem>
                   {categories?.map((category) => (
@@ -164,7 +211,7 @@ export default function ArticlesAdminPage() {
               </Stack>
             </Stack>
             <Button type="submit" sx={{ alignSelf: 'flex-start' }}>
-              Save article
+              {editingId ? 'Update article' : 'Save article'}
             </Button>
           </Stack>
         </CardContent>
@@ -182,10 +229,37 @@ export default function ArticlesAdminPage() {
             <Chip label="Bilingual ready" size="small" color="primary" variant="outlined" />
           </Stack>
           <Stack spacing={2} direction="row" flexWrap="wrap">
-            {articles?.map((article) => (
-              <Box key={article.id} sx={{ flex: '1 1 300px', minWidth: 280 }}>
-                <ArticleCard article={article} />
-              </Box>
+            {articleList.map((article) => (
+              <Card key={article.id} variant="outlined" sx={{ flex: '1 1 300px', minWidth: 280 }}>
+                <CardContent>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                    {typeof article.title === 'string' ? article.title : article.title?.en || article.slug}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    /{article.slug}
+                  </Typography>
+                  <Stack direction="row" spacing={1} mt={2}>
+                    <Button variant="ghost" size="small" onClick={() => handleEdit(article.id)}>
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="small"
+                      sx={{
+                        color: 'error.main',
+                        borderColor: 'error.main',
+                        '&:hover': {
+                          borderColor: 'error.dark',
+                          backgroundColor: 'rgba(211,47,47,0.08)',
+                        },
+                      }}
+                      onClick={() => handleDelete(article.id)}
+                    >
+                      Delete
+                    </Button>
+                  </Stack>
+                </CardContent>
+              </Card>
             ))}
           </Stack>
         </Stack>

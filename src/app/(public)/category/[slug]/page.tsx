@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 import Chip from '@mui/material/Chip';
@@ -7,6 +8,7 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { alpha } from '@mui/material/styles';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { Button } from '@/components/ui/Button';
@@ -29,6 +31,8 @@ export default function CategoryPage() {
   const { language } = useLanguage();
   const categoryData = category;
   const articlesList = articles ?? [];
+  const heroArticle = articlesList[0];
+  const restArticles = articlesList.slice(1);
   const categoryLabel = getLocalizedText(categoryData?.name, language) || 'Category';
   const categoryDescription = getLocalizedText(categoryData?.description, language);
 
@@ -49,7 +53,7 @@ export default function CategoryPage() {
 
   return (
     <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, boxShadow: 3 }}>
+      <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3, boxShadow: 3 }}>
         <Chip label="Category" size="small" color="secondary" sx={{ mb: 1, fontWeight: 700, letterSpacing: 1 }} />
         <Typography variant="h3" sx={{ fontWeight: 800 }}>
           {categoryLabel}
@@ -78,13 +82,56 @@ export default function CategoryPage() {
           {articlesList.length === 0 ? (
             <EmptyState title="No articles in this category yet" description="Please check back soon." />
           ) : (
-            <Grid container spacing={2.5}>
-              {articlesList?.map((article) => (
-                <Grid key={article.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                  <ArticleCard article={article} />
-                </Grid>
-              ))}
-            </Grid>
+            <Stack spacing={2.5}>
+              {heroArticle && (
+                <Paper
+                  component={Link as unknown as 'a'}
+                  href={`/article/${heroArticle.slug}`}
+                  sx={{
+                    p: { xs: 2.5, md: 3 },
+                    borderRadius: 3,
+                    minHeight: 260,
+                    backgroundImage: heroArticle.featuredImage?.url
+                      ? `linear-gradient(150deg, ${alpha('#000', 0.3)}, ${alpha('#000', 0.75)}), url(${heroArticle.featuredImage.url})`
+                      : `linear-gradient(150deg, ${alpha('#d3182d', 0.15)}, ${alpha('#3b1f20', 0.8)})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    color: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-end',
+                    gap: 1,
+                    textDecoration: 'none',
+                    boxShadow: 5,
+                    transition: 'transform 200ms ease, box-shadow 200ms ease',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: 7,
+                    },
+                  }}
+                >
+                  <Typography variant="overline" sx={{ letterSpacing: 3 }}>
+                    {heroArticle.category?.name ? getLocalizedText(heroArticle.category.name, language) : categoryLabel}
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 900, lineHeight: 1.15, maxWidth: 640 }}>
+                    {getLocalizedText(heroArticle.title, language)}
+                  </Typography>
+                  {heroArticle.excerpt && (
+                    <Typography variant="body2" sx={{ maxWidth: 520, color: alpha('#fff', 0.8) }}>
+                      {getLocalizedText(heroArticle.excerpt, language)}
+                    </Typography>
+                  )}
+                </Paper>
+              )}
+
+              <Grid container spacing={2.5}>
+                {restArticles?.map((article) => (
+                  <Grid key={article.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <ArticleCard article={article} />
+                  </Grid>
+                ))}
+              </Grid>
+            </Stack>
           )}
         </Grid>
         <Grid size={{ xs: 12, lg: 4 }}>

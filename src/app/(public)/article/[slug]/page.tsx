@@ -1,19 +1,22 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
+import BookmarkBorderRoundedIcon from '@mui/icons-material/BookmarkBorderRounded';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { ArticleCard } from '@/components/news/ArticleCard';
-import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useArticle, useRelatedArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
@@ -26,9 +29,6 @@ export default function ArticlePage() {
   const categoryIdForRelated = article?.categoryId;
   const { data: related } = useRelatedArticles(categoryIdForRelated);
   const { language } = useLanguage();
-  const [lang, setLang] = useState<'en' | 'bn'>('en');
-  const [readingMode, setReadingMode] = useState(false);
-  const [largeText, setLargeText] = useState(false);
   const theme = useTheme();
   const displayArticle = article;
   const relatedStories =
@@ -40,15 +40,18 @@ export default function ArticlePage() {
   const summary = displayArticle ? getLocalizedText(displayArticle.excerpt, language) : '';
   const featuredImage = displayArticle?.featuredImage?.url || displayArticle?.coverImage;
   const featuredAlt = displayArticle ? getLocalizedText(displayArticle.featuredImage?.alt, language) || title : '';
-  const bodyContent =
-    displayArticle && typeof displayArticle.content === 'string'
-      ? displayArticle.content
-      : displayArticle?.content
-        ? (displayArticle.content as Record<string, string | undefined>)[lang] ||
-          (displayArticle.content as Record<string, string | undefined>).en ||
-          summary ||
-          ''
-        : summary || '';
+  const bodyContent = useMemo(() => {
+    if (!displayArticle) return summary || '';
+    if (typeof displayArticle.content === 'string') return displayArticle.content;
+    if (displayArticle.content) {
+      const localized = (displayArticle.content as Record<string, string | undefined>)[language];
+      if (localized) return localized;
+      if ((displayArticle.content as Record<string, string | undefined>).en) {
+        return (displayArticle.content as Record<string, string | undefined>).en as string;
+      }
+    }
+    return summary || '';
+  }, [displayArticle, language, summary]);
 
   if (!displayArticle) {
     return (
@@ -65,13 +68,10 @@ export default function ArticlePage() {
         <Paper
           variant="outlined"
           sx={{
-            p: { xs: 2.5, md: readingMode ? 3.5 : 3 },
-            borderRadius: readingMode ? 3.5 : 3,
-            boxShadow: readingMode ? 1 : 3,
-            bgcolor: readingMode
-              ? alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.94 : 0.98)
-              : 'background.paper',
-            borderColor: readingMode ? alpha(theme.palette.primary.main, 0.15) : undefined,
+            p: { xs: 2.5, md: 3 },
+            borderRadius: 3,
+            boxShadow: 3,
+            bgcolor: 'background.paper',
           }}
         >
           <Stack spacing={1.5} direction="row" flexWrap="wrap" alignItems="center" sx={{ color: 'text.secondary' }}>
@@ -81,44 +81,35 @@ export default function ArticlePage() {
               size="small"
               sx={{ fontWeight: 700, letterSpacing: 1, bgcolor: alpha(theme.palette.warning.main, 0.18) }}
             />
-            {displayArticle.publishedAt && <Typography variant="body2">{formatDate(displayArticle.publishedAt)}</Typography>}
+            {displayArticle.publishedAt && (
+              <Typography variant="body2">{formatDate(displayArticle.publishedAt)}</Typography>
+            )}
             {displayArticle.readingTime && (
               <Typography variant="body2">• {displayArticle.readingTime} min read</Typography>
             )}
-            <Stack direction="row" spacing={1}>
-              <Button variant={lang === 'en' ? 'secondary' : 'outline'} size="small" onClick={() => setLang('en')}>
-                EN
-              </Button>
-              <Button variant={lang === 'bn' ? 'secondary' : 'outline'} size="small" onClick={() => setLang('bn')}>
-                বাংলা
-              </Button>
-            </Stack>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant={readingMode ? 'secondary' : 'outline'}
-                size="small"
-                onClick={() => setReadingMode((prev) => !prev)}
-              >
-                {readingMode ? 'Reading mode on' : 'Reading mode'}
-              </Button>
-              <Button
-                variant={largeText ? 'secondary' : 'outline'}
-                size="small"
-                onClick={() => setLargeText((prev) => !prev)}
-              >
-                {largeText ? 'Text: Large' : 'Text: Default'}
-              </Button>
+            {displayArticle.author?.name && (
+              <Typography variant="body2">• By {displayArticle.author.name}</Typography>
+            )}
+            <Stack direction="row" spacing={1} sx={{ marginLeft: 'auto' }}>
+              <IconButton size="small" aria-label="Share article">
+                <ShareRoundedIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" aria-label="Save article">
+                <BookmarkBorderRoundedIcon fontSize="small" />
+              </IconButton>
             </Stack>
           </Stack>
 
-          <Typography variant="h3" component="h1" sx={{ fontWeight: 800, mt: 2 }}>
-            {title}
-          </Typography>
-          {summary && (
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 1.5 }}>
-              {summary}
+          <Stack spacing={1.5} sx={{ mt: 2 }}>
+            <Typography variant="h3" component="h1" sx={{ fontWeight: 800 }}>
+              {title}
             </Typography>
-          )}
+            {summary && (
+              <Typography variant="body1" color="text.secondary">
+                {summary}
+              </Typography>
+            )}
+          </Stack>
 
           {featuredImage && (
             <Box
@@ -141,10 +132,8 @@ export default function ArticlePage() {
           <Box
             sx={{
               color: 'text.primary',
-              lineHeight: readingMode ? 1.9 : 1.7,
-              fontSize: largeText ? '1.08rem' : '1rem',
-              maxWidth: readingMode ? 760 : '100%',
-              mx: readingMode ? 'auto' : undefined,
+              lineHeight: 1.8,
+              fontSize: '1rem',
               '& p': { mb: 2 },
             }}
             className="article-content"
@@ -169,6 +158,19 @@ export default function ArticlePage() {
               {relatedStories.slice(0, 4).map((item) => (
                 <ArticleCard key={item.id} article={item} />
               ))}
+            </Stack>
+          </Paper>
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, boxShadow: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              Explore categories
+            </Typography>
+            <Stack spacing={1} mt={1.5}>
+              <Link href="/category/top" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <Typography variant="body2">Top stories</Typography>
+              </Link>
+              <Link href="/category/politics" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <Typography variant="body2">Politics</Typography>
+              </Link>
             </Stack>
           </Paper>
         </Stack>

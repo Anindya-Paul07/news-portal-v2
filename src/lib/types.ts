@@ -69,7 +69,7 @@ export type ArticlePayload = {
   title: LocalizedText;
   excerpt?: LocalizedText;
   content?: LocalizedText;
-  categoryId?: string;
+  category?: string;
   status?: ArticleStatus;
   featuredImage?: ImageAsset;
   tags?: LocalizedText[];
@@ -78,9 +78,9 @@ export type ArticlePayload = {
   isTrending?: boolean;
 };
 
-export type AdPlacement = 'hero' | 'banner' | 'sidebar' | 'in_content' | 'popup';
+export type AdPlacement = 'sidebar-middle' | 'sidebar-top' | 'bottom' | 'middle' | 'top' | 'sidebar-bottom';
 
-export type AdvertisementType = 'banner' | 'sidebar' | 'native' | 'popup' | 'video' | 'html';
+export type AdvertisementType = 'banner' | 'sidebar' | 'in_content' | 'popup' ;
 
 export type Advertisement = {
   id: string;
@@ -136,6 +136,13 @@ export type MediaUploadPayload = {
   tags?: string[];
 };
 
+export type MediaUpdatePayload = {
+  id: string;
+  alt?: LocalizedText;
+  folder?: string;
+  tags?: string[];
+};
+
 export type User = {
   id: string;
   name: string;
@@ -149,6 +156,64 @@ export type DashboardOverview = {
   users?: Record<string, number>;
   ads?: Record<string, number>;
   media?: Record<string, number>;
+};
+
+export type ArticleStatPoint = {
+  date: string;
+  count?: number;
+  views?: number;
+};
+
+export type CategoryDistributionPoint = {
+  categoryId: string;
+  categoryName: LocalizedText;
+  count?: number;
+  totalViews?: number;
+};
+
+export type TrafficTrendPoint = {
+  date: string;
+  articles?: number;
+  views?: number;
+  likes?: number;
+  shares?: number;
+};
+
+export type AuthorActivityPoint = {
+  id: string;
+  name: string;
+  articleCount?: number;
+  views?: number;
+};
+
+export type AdPerformancePoint = {
+  id: string;
+  name?: string;
+  impressions?: number;
+  clicks?: number;
+  ctr?: number;
+};
+
+export type AnalyticsTrafficPoint = {
+  ts: string;
+  pageViews?: number;
+  uniqueUsers?: number;
+};
+
+export type AnalyticsAdsPositionSummary = {
+  position: string;
+  impressions?: number;
+  clicks?: number;
+  ctr?: number;
+};
+
+export type AnalyticsAdsSummary = {
+  totals?: {
+    impressions?: number;
+    clicks?: number;
+    ctr?: number;
+  };
+  byPosition?: AnalyticsAdsPositionSummary[];
 };
 
 export type CategoryPayload = {

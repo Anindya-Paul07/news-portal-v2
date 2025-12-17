@@ -9,7 +9,12 @@ import { Article } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { getLocalizedText } from '@/lib/utils';
 
-export function BreakingTicker({ items }: { items: Article[] }) {
+type BreakingTickerProps = {
+  items: Article[];
+  condensed?: boolean;
+};
+
+export function BreakingTicker({ items, condensed = false }: BreakingTickerProps) {
   const { language } = useLanguage();
   const theme = useTheme();
   if (!items?.length) return null;
@@ -20,22 +25,29 @@ export function BreakingTicker({ items }: { items: Article[] }) {
     title: getLocalizedText(item.title, language),
   }));
 
+  const borderRadius =
+    typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius * (condensed ? 1.4 : 2) : theme.shape.borderRadius;
+
   return (
     <Paper
       variant="outlined"
       sx={{
-        mb: 3,
-        px: 2.5,
-        py: 1.5,
-        borderColor: 'primary.main',
-        bgcolor: alpha(theme.palette.primary.light, theme.palette.mode === 'dark' ? 0.12 : 0.06),
+        mb: condensed ? 2 : 3,
+        px: condensed ? 1.5 : 2.5,
+        py: condensed ? 0.9 : 1.4,
+        borderColor: alpha(theme.palette.primary.main, 0.4),
+        bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.16 : 0.08),
         color: 'text.primary',
         display: 'flex',
         alignItems: 'center',
-        gap: 2,
-        borderRadius:
-          typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius * 2 : theme.shape.borderRadius,
-        boxShadow: theme.shadows[3],
+        gap: condensed ? 1 : 2,
+        borderRadius,
+        boxShadow: condensed ? theme.shadows[1] : theme.shadows[3],
+        position: 'sticky',
+        top: condensed ? theme.spacing(1.5) : theme.spacing(2.5),
+        zIndex: 5,
+        backdropFilter: 'blur(6px)',
+        transition: 'all 200ms ease',
       }}
     >
       <Chip
@@ -43,10 +55,11 @@ export function BreakingTicker({ items }: { items: Article[] }) {
         color="primary"
         size="small"
         sx={{
-          fontWeight: 800,
-          letterSpacing: 2,
+          fontWeight: 700,
+          letterSpacing: condensed ? 1 : 2,
           textTransform: 'uppercase',
           borderRadius: 999,
+          px: condensed ? 0.5 : 1,
         }}
       />
 
@@ -94,7 +107,7 @@ export function BreakingTicker({ items }: { items: Article[] }) {
                     bgcolor: 'primary.main',
                   }}
                 />
-                <Typography variant="body2">{item.title}</Typography>
+                <Typography variant={condensed ? 'caption' : 'body2'}>{item.title}</Typography>
               </Stack>
             ))}
           </Stack>
@@ -121,7 +134,7 @@ export function BreakingTicker({ items }: { items: Article[] }) {
                     bgcolor: 'primary.main',
                   }}
                 />
-                <Typography variant="body2">{item.title}</Typography>
+                <Typography variant={condensed ? 'caption' : 'body2'}>{item.title}</Typography>
               </Stack>
             ))}
           </Stack>

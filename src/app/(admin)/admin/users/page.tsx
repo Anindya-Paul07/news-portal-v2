@@ -7,6 +7,7 @@ import CardHeader from '@mui/material/CardHeader';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -16,7 +17,7 @@ import Typography from '@mui/material/Typography';
 import { AdminShell } from '@/components/layout/AdminShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { useSaveUser, useUsers } from '@/hooks/api-hooks';
+import { useSaveUser, useUsers, useDeleteUser } from '@/hooks/api-hooks';
 import { Role } from '@/lib/types';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
@@ -26,23 +27,64 @@ const roles: Role[] = ['super_admin', 'admin', 'journalist', 'reader'];
 export default function UsersPage() {
   const { data: users } = useUsers();
   const { mutateAsync: saveUser } = useSaveUser();
+  const { mutateAsync: deleteUser } = useDeleteUser();
   const [draft, setDraft] = useState<{ name: string; email: string; role: Role; password: string }>({
     name: '',
     email: '',
     role: 'journalist',
     password: '',
   });
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await saveUser(draft);
+    const payload = { ...draft, id: editingId || undefined };
+    if (!payload.password) {
+      delete (payload as Partial<typeof payload>).password;
+    }
+    await saveUser(payload);
     setDraft({ name: '', email: '', role: 'journalist' as const, password: '' });
+    setEditingId(null);
+  };
+
+  const handleEdit = (userId: string) => {
+    const user = users?.find((item) => item.id === userId);
+    if (!user) return;
+    setEditingId(user.id);
+    setDraft({ name: user.name, email: user.email, role: user.role, password: '' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (userId: string) => {
+    if (!window.confirm('Delete this user?')) return;
+    await deleteUser(userId);
+    if (editingId === userId) {
+      setEditingId(null);
+      setDraft({ name: '', email: '', role: 'journalist' as const, password: '' });
+    }
   };
 
   return (
     <AdminShell title="Users" description="Assign roles, toggle activation, and reset credentials.">
       <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 3 }}>
-        <CardHeader title="New User" subheader="Create account and assign a role." />
+        <CardHeader
+          title={editingId ? 'Edit User' : 'New User'}
+          subheader="Create accounts, assign roles, or update credentials."
+          action={
+            editingId ? (
+              <Button
+                variant="ghost"
+                size="small"
+                onClick={() => {
+                  setEditingId(null);
+                  setDraft({ name: '', email: '', role: 'journalist', password: '' });
+                }}
+              >
+                Cancel edit
+              </Button>
+            ) : null
+          }
+        />
         <CardContent>
           <Grid container spacing={2} component="form" onSubmit={onSubmit}>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -87,7 +129,7 @@ export default function UsersPage() {
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Button type="submit">Save user</Button>
+              <Button type="submit">{editingId ? 'Update user' : 'Save user'}</Button>
             </Grid>
           </Grid>
         </CardContent>
@@ -106,6 +148,7 @@ export default function UsersPage() {
                 <TableCell>Name</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Role</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -116,10 +159,32 @@ export default function UsersPage() {
                   <TableCell>
                     <Chip label={user.role} color="secondary" size="small" />
                   </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                <TableCell align="right">
+                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                    <Button variant="ghost" size="small" onClick={() => handleEdit(user.id)}>
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="small"
+                      sx={{
+                        color: 'error.main',
+                        borderColor: 'error.main',
+                        '&:hover': {
+                          borderColor: 'error.dark',
+                          backgroundColor: 'rgba(211,47,47,0.08)',
+                        },
+                      }}
+                      onClick={() => handleDelete(user.id)}
+                    >
+                      Delete
+                    </Button>
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
         </Paper>
       )}
     </AdminShell>

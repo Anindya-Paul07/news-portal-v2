@@ -11,7 +11,15 @@ import {
   Category,
   CategoryPayload,
   DashboardOverview,
+  ArticleStatPoint,
+  CategoryDistributionPoint,
+  TrafficTrendPoint,
+  AuthorActivityPoint,
+  AdPerformancePoint,
+  AnalyticsTrafficPoint,
+  AnalyticsAdsSummary,
   Media,
+  MediaUpdatePayload,
   MediaUploadPayload,
   User,
 } from '@/lib/types';
@@ -116,23 +124,58 @@ export const useSearchArticles = (term: string, filters?: Record<string, string 
     queryFn: () => fetcher<Article[]>(`/articles/search/query${buildQuery({ q: term, ...filters })}`),
   });
 
-export const useAds = (position?: string, page?: string) =>
+export const useAds = (params?: { type?: string; position?: string; page?: string }) =>
   useQuery({
-    queryKey: ['ads', 'active', position, page],
-    queryFn: () =>
-      fetcher<Advertisement[]>(
-        `/advertisements/active${buildQuery({
-          type: position === 'sidebar' ? 'sidebar' : 'banner',
-          position,
-          page,
-        })}`,
-      ),
+    queryKey: ['ads', 'active', params],
+    queryFn: () => fetcher<Advertisement[]>(`/advertisements/active${buildQuery(params)}`),
   });
 
 export const useDashboardOverview = () =>
   useQuery({
     queryKey: ['dashboard', 'overview'],
     queryFn: () => fetcher<DashboardOverview>('/dashboard/overview'),
+  });
+
+export const useDashboardArticleStats = (params?: { startDate?: string; endDate?: string }) =>
+  useQuery({
+    queryKey: ['dashboard', 'articles', 'stats', params],
+    queryFn: () => fetcher<ArticleStatPoint[]>(`/dashboard/articles/stats${buildQuery(params)}`),
+  });
+
+export const useDashboardCategoryDistribution = () =>
+  useQuery({
+    queryKey: ['dashboard', 'categories', 'distribution'],
+    queryFn: () => fetcher<CategoryDistributionPoint[]>(`/dashboard/categories/distribution`),
+  });
+
+export const useDashboardTrafficTrends = (params?: { days?: number }) =>
+  useQuery({
+    queryKey: ['dashboard', 'traffic', params],
+    queryFn: () => fetcher<TrafficTrendPoint[]>(`/dashboard/traffic/trends${buildQuery(params)}`),
+  });
+
+export const useDashboardAuthorActivity = (params?: { limit?: number; categoryId?: string; days?: number }) =>
+  useQuery({
+    queryKey: ['dashboard', 'users', 'activity', params],
+    queryFn: () => fetcher<AuthorActivityPoint[]>(`/dashboard/users/activity${buildQuery(params)}`),
+  });
+
+export const useAnalyticsTraffic = (params?: { window?: string; interval?: string; categoryId?: string }) =>
+  useQuery({
+    queryKey: ['analytics', 'traffic', params],
+    queryFn: () => fetcher<AnalyticsTrafficPoint[]>(`/analytics/traffic${buildQuery(params)}`),
+  });
+
+export const useAnalyticsAdsSummary = () =>
+  useQuery({
+    queryKey: ['analytics', 'ads', 'summary'],
+    queryFn: () => fetcher<AnalyticsAdsSummary>('/analytics/ads/summary'),
+  });
+
+export const useAnalyticsAdsTop = (params?: { limit?: number; sort?: string; position?: string; categoryId?: string }) =>
+  useQuery({
+    queryKey: ['analytics', 'ads', 'top', params],
+    queryFn: () => fetcher<AdPerformancePoint[]>(`/analytics/ads/top${buildQuery(params)}`),
   });
 
 export const useAdminArticles = (params?: Record<string, string | number | boolean | undefined>) =>
@@ -207,6 +250,39 @@ export const useSaveAd = () => {
   });
 };
 
+export const useDeleteArticle = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (articleId: string) => apiClient.delete<ApiResponse<null>>(`/articles/${articleId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'articles'] });
+    },
+  });
+};
+
+export const useDeleteCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (categoryId: string) => apiClient.delete<ApiResponse<null>>(`/categories/${categoryId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
+    },
+  });
+};
+
+export const useDeleteAd = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (adId: string) => apiClient.delete<ApiResponse<null>>(`/advertisements/${adId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ads'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ads'] });
+    },
+  });
+};
+
 export const useSaveUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -214,6 +290,16 @@ export const useSaveUser = () => {
       payload.id
         ? apiClient.put<ApiResponse<User>>(`/users/${payload.id}`, payload)
         : apiClient.post<ApiResponse<User>>('/users', payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+  });
+};
+
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => apiClient.delete<ApiResponse<null>>(`/users/${userId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
     },
@@ -238,6 +324,27 @@ export const useUploadMedia = () => {
       if (payload.tags?.length) formData.append('tags', payload.tags.join(','));
       return apiClient.post<ApiResponse<Media>>('/media/upload', formData, { formData: true });
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'media'] });
+    },
+  });
+};
+
+export const useUpdateMedia = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: MediaUpdatePayload) =>
+      apiClient.put<ApiResponse<Media>>(`/media/${id}`, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'media'] });
+    },
+  });
+};
+
+export const useDeleteMedia = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (mediaId: string) => apiClient.delete<ApiResponse<null>>(`/media/${mediaId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'media'] });
     },

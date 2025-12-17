@@ -1,19 +1,19 @@
 import { PaletteMode, Theme, alpha, createTheme, responsiveFontSizes } from '@mui/material/styles';
 
 const lightPalette = {
-  primary: { main: '#b5543a', contrastText: '#fff7f2' },
-  secondary: { main: '#22344d', contrastText: '#eef3ff' },
-  background: { default: '#fdf7f2', paper: '#f6e9df' },
-  text: { primary: '#1b120f', secondary: '#60433a' },
-  divider: '#e0c3b3',
+  primary: { main: '#e21837', contrastText: '#fff9f5' },
+  secondary: { main: '#5b5f63', contrastText: '#f6f7fb' },
+  background: { default: '#fff8f5', paper: '#fff1ec' },
+  text: { primary: '#1f1315', secondary: '#6b585d' },
+  divider: '#f1d9d3',
 };
 
 const darkPalette = {
-  primary: { main: '#ffbdb0', contrastText: '#1a0705' },
-  secondary: { main: '#a9c2ef', contrastText: '#0f1a2b' },
-  background: { default: '#250001', paper: '#32100d' },
-  text: { primary: '#ffefe9', secondary: '#dcb1a3' },
-  divider: '#a45b4c',
+  primary: { main: '#ff6b81', contrastText: '#1a0f12' },
+  secondary: { main: '#a7abb0', contrastText: '#141013' },
+  background: { default: '#1a1013', paper: '#23151a' },
+  text: { primary: '#fff2ed', secondary: '#d5bdc0' },
+  divider: '#3d232a',
 };
 
 export function getTheme(mode: PaletteMode): Theme {
@@ -21,7 +21,7 @@ export function getTheme(mode: PaletteMode): Theme {
     palette: {
       mode,
       ...(mode === 'light' ? lightPalette : darkPalette),
-      warning: { main: '#ffb703' },
+      warning: { main: '#ff9a7f' },
     },
     shape: {
       borderRadius: 12,
@@ -112,7 +112,7 @@ export function getTheme(mode: PaletteMode): Theme {
             fontWeight: 700,
             borderRadius: radius,
             textTransform: 'none',
-            minHeight: 44,
+            minHeight: 38,
           },
         },
       },

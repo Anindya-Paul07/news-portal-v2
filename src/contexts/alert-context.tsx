@@ -45,7 +45,7 @@ export function AlertProvider({ children }: { children: ReactNode }) {
   return (
     <AlertContext.Provider value={contextValue}>
       {children}
-      {typeof document !== 'undefined'
+      {alerts.length > 0 && typeof document !== 'undefined'
         ? createPortal(
             <div className="pointer-events-none fixed right-4 top-4 z-[200] flex w-full max-w-xs flex-col gap-3">
               {alerts.map((alert) => (

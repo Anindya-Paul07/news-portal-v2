@@ -12,17 +12,31 @@ import { apiClient } from '@/lib/api-client';
 import { sampleAds } from '@/lib/fallbacks';
 import { useLanguage } from '@/contexts/language-context';
 import { getLocalizedText } from '@/lib/utils';
+import { AdvertisementType } from '@/lib/types';
 
-const slotHeights: Record<string, number> = {
-  hero: 320,
-  banner: 160,
-  sidebar: 360,
-  in_content: 260,
-  popup: 220,
+type SlotConfig = { height: number; type: AdvertisementType; apiPosition?: string; sizes: string };
+
+const slotConfig: Record<string, SlotConfig> = {
+  hero: { height: 320, type: 'banner', apiPosition: 'top', sizes: '(max-width: 600px) 100vw, 1200px' },
+  banner: { height: 160, type: 'banner', apiPosition: 'middle', sizes: '(max-width: 600px) 100vw, 1200px' },
+  sidebar: { height: 360, type: 'sidebar', apiPosition: 'sidebar', sizes: '(max-width: 600px) 100vw, 360px' },
+  in_content: { height: 260, type: 'in_content', apiPosition: 'middle', sizes: '(max-width: 600px) 100vw, 600px' },
+  popup: { height: 220, type: 'popup', apiPosition: 'middle', sizes: '(max-width: 600px) 100vw, 480px' },
 };
 
 export function AdSlot({ position, page }: { position: string; page?: string }) {
-  const { data } = useAds(position, page);
+  const slot = slotConfig[position] || {
+    height: 200,
+    type: 'banner',
+    apiPosition: undefined,
+    sizes: '(max-width: 600px) 100vw, 600px',
+  };
+  const { data } = useAds({
+    type: slot.type,
+    position: slot.apiPosition,
+    page,
+  });
+  const isFallbackAd = !data || data.length === 0;
   const fallbackAd = sampleAds.find((item) => item.position === position) || sampleAds[0];
   const ad = data?.[0] || fallbackAd;
   const adTitle = ad.title || ad.name || 'Sponsored placement';
@@ -32,11 +46,17 @@ export function AdSlot({ position, page }: { position: string; page?: string }) 
   const theme = useTheme();
 
   useEffect(() => {
-    if (!ad?.id) return;
+    if (!ad?.id || isFallbackAd) return;
     apiClient.post(`/advertisements/${ad.id}/impression`).catch(() => {});
-  }, [ad?.id]);
+  }, [ad?.id, isFallbackAd]);
 
-  const height = slotHeights[position] || 200;
+  const handleAdClick = () => {
+    if (!ad?.id || isFallbackAd) return;
+    apiClient.post(`/advertisements/${ad.id}/click`).catch(() => {});
+  };
+
+  const height = slot.height;
+  const imageSizes = slot.sizes;
 
   return (
     <Paper
@@ -58,10 +78,10 @@ export function AdSlot({ position, page }: { position: string; page?: string }) 
           href={ad.linkUrl || ad.targetUrl || '#'}
           target="_blank"
           rel="noreferrer"
-          onClick={() => apiClient.post(`/advertisements/${ad.id}/click`).catch(() => {})}
+          onClick={handleAdClick}
           sx={{ display: 'block', position: 'relative', width: '100%', height: '100%' }}
         >
-          <Image src={imageUrl} alt={imageAlt} fill className="object-cover" sizes="100vw" />
+          <Image src={imageUrl} alt={imageAlt} fill className="object-cover" sizes={imageSizes} />
         </Box>
       ) : (
         <Box

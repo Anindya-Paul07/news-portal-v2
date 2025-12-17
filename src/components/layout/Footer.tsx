@@ -15,6 +15,15 @@ const footerNav = [
   { label: 'Contact', href: '/contact' },
 ];
 
+const socialLinks = [
+  { label: 'Facebook', href: 'https://www.facebook.com/share/1E3oE7uaAq/' },
+  { label: 'Instagram', href: 'https://www.instagram.com/thecontemporary.news' },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@the.contemporary.news' },
+  { label: 'YouTube', href: 'https://www.youtube.com/@TheContemporaryNews' },
+  { label: 'X / Twitter', href: 'https://twitter.com/thecontempo' },
+  { label: 'Threads', href: 'https://www.threads.net/@thecontemporarynews' },
+];
+
 export function Footer() {
   return (
     <Box
@@ -45,7 +54,7 @@ export function Footer() {
                 Keep an eye on our News to get all the news including politics, business, sports, national-international
                 breaking news, analytical and other news.
               </Typography>
-              <Typography variant="caption">© {new Date().getFullYear()} The Contemporary | Powered by Anindya</Typography>
+              <Typography variant="caption">© {new Date().getFullYear()} The Contemporary | Powered by @</Typography>
             </Stack>
           </Box>
 
@@ -85,7 +94,7 @@ export function Footer() {
               >
                 Studios
               </Typography>
-              <Typography variant="body2">Dhaka · Singapore · Remote</Typography>
+              <Typography variant="body2">Chattogram</Typography>
               <Typography variant="body2">newsdesk@thecontemporary.news</Typography>
             </Stack>
             <Stack spacing={1}>
@@ -105,16 +114,21 @@ export function Footer() {
               >
                 Social
               </Typography>
-              <MuiLink
-                href="https://www.facebook.com/share/1E3oE7uaAq/"
-                underline="hover"
-                color="secondary.main"
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{ fontSize: 14, fontWeight: 600 }}
-              >
-                Facebook
-              </MuiLink>
+              <Stack spacing={0.5}>
+                {socialLinks.map((social) => (
+                  <MuiLink
+                    key={social.label}
+                    href={social.href}
+                    underline="hover"
+                    color="secondary.main"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ fontSize: 14, fontWeight: 600 }}
+                  >
+                    {social.label}
+                  </MuiLink>
+                ))}
+              </Stack>
             </Stack>
           </Box>
         </Box>

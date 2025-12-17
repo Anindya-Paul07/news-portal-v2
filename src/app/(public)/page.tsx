@@ -1,557 +1,580 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { alpha, keyframes } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import { AdSlot } from '@/components/ads/AdSlot';
-import { ArticleCard } from '@/components/news/ArticleCard';
 import { BreakingTicker } from '@/components/news/BreakingTicker';
-import { HeroCarousel } from '@/components/news/HeroCarousel';
-import { Button } from '@/components/ui/Button';
-import { EmptyState } from '@/components/states/EmptyState';
 import { useLanguage } from '@/contexts/language-context';
 import { Article } from '@/lib/types';
-import {
-  useArticles,
-  useBreakingTicker,
-  useFeaturedArticles,
-  useLatestArticles,
-  useMenuCategories,
-  useTrendingArticles,
-} from '@/hooks/api-hooks';
+import { useBreakingTicker, useLatestArticles, useTrendingArticles } from '@/hooks/api-hooks';
 import { getLocalizedText } from '@/lib/utils';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+
+// --- CONSTANTS ---
+const CNN_RED = '#CC0000';
+
+type TileVariant = 'hero' | 'wide' | 'tall' | 'standard';
+
+const mosaicPattern: TileVariant[] = ['hero', 'standard', 'standard', 'tall', 'standard', 'wide', 'standard', 'standard'];
+const previewLengthByVariant: Record<TileVariant, number> = {
+  hero: 260,
+  wide: 200,
+  tall: 170,
+  standard: 130,
+};
+
+const getTileVariant = (index: number): TileVariant => mosaicPattern[index % mosaicPattern.length];
+
+const getTileGridStyles = (variant: TileVariant) => {
+  const baseColumns = { xs: 'span 1', sm: 'span 1', md: 'span 2', lg: 'span 2' };
+  const styles: Record<string, unknown> = {
+    gridColumn: baseColumns,
+    gridRow: { xs: 'auto', md: 'auto' },
+  };
+
+  if (variant === 'wide') {
+    styles.gridColumn = { xs: 'span 1', sm: 'span 2', md: 'span 4', lg: 'span 3' };
+  }
+  if (variant === 'hero') {
+    styles.gridColumn = { xs: 'span 1', sm: 'span 2', md: 'span 4', lg: 'span 4' };
+    styles.gridRow = { xs: 'auto', md: 'span 2', lg: 'span 2' };
+  }
+  if (variant === 'tall') {
+    styles.gridRow = { xs: 'auto', md: 'span 2', lg: 'span 2' };
+  }
+
+  return styles;
+};
 
 export default function HomePage() {
-  const { data: featured } = useFeaturedArticles();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  
+  // Dynamic Colors based on Theme Mode
+  const colors = {
+    bg: isDark ? '#121212' : '#FFFFFF',
+    bgSecondary: isDark ? '#1E1E1E' : '#F5F5F5',
+    textMain: isDark ? '#FFFFFF' : '#111111',
+    textMuted: isDark ? '#B0B0B0' : '#555555',
+    divider: isDark ? '#333333' : '#E0E0E0',
+    shortsBg: '#000000',
+  };
+
+  // --- DATA HOOKS ---
   const { data: breaking } = useBreakingTicker();
   const { data: trending } = useTrendingArticles();
   const { data: latest } = useLatestArticles();
-  const { data: categories } = useMenuCategories();
   const { language } = useLanguage();
-  const categoryList = categories ?? [];
+  const readMoreLabel = language === 'bn' ? 'আরও পড়ুন' : 'Read more';
+
   const latestList = latest ?? [];
   const trendingList = trending ?? [];
   const breakingTicker = breaking ?? [];
-  const heroSlides = (featured ?? []).slice(0, 4);
-  const gridLatest = latestList.slice(0, 4);
-  const stackedLatest = latestList.slice(4, 8);
-  const trendingHighlights = trendingList.slice(0, 4);
-  const [captionsEnabled, setCaptionsEnabled] = useState(true);
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const heroPrimary = useMemo(() => heroSlides[0], [heroSlides]);
-  const heroPoster = heroPrimary?.featuredImage?.url || heroPrimary?.coverImage;
 
-  const fadeInUp = keyframes`
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  `;
+  // --- LAYOUT LOGIC ---
+  const heroArticles = latestList.slice(0, 6);
+  const heroCount = heroArticles.length;
+  const [heroIndex, setHeroIndex] = useState(0);
+  useEffect(() => {
+    if (heroCount <= 1) return undefined;
+    const id = window.setInterval(() => {
+      setHeroIndex((prev) => prev + 1);
+    }, 8000);
+    return () => window.clearInterval(id);
+  }, [heroCount]);
+  const normalizedHeroIndex = heroCount > 0 ? ((heroIndex % heroCount) + heroCount) % heroCount : 0;
+  const heroArticle = heroArticles[normalizedHeroIndex] || latestList[0];
+  const handleHeroNavigate = (direction: 'prev' | 'next') => {
+    if (heroCount === 0) return;
+    setHeroIndex((prev) => (direction === 'next' ? prev + 1 : prev - 1));
+  };
+  const heroProgressLabel = heroCount > 0 ? `${normalizedHeroIndex + 1} / ${heroCount}` : '';
+  // We take 4 items for the sidebar list
+  const spotlightSecondary = heroArticles.filter((_, idx) => idx !== normalizedHeroIndex).slice(0, 4);
+  
+  const headlines = latestList.slice(heroArticles.length, heroArticles.length + 15);
+  const trendingHighlights = trendingList.slice(0, 8);
 
-  const firstCategorySlug = categoryList?.[0]?.slug;
-  const secondCategorySlug = categoryList?.[1]?.slug;
-  const { data: firstCategoryArticles } = useArticles(
-    firstCategorySlug ? { category: firstCategorySlug, limit: 3 } : undefined,
-    { enabled: !!firstCategorySlug },
-  );
-  const { data: secondCategoryArticles } = useArticles(
-    secondCategorySlug ? { category: secondCategorySlug, limit: 3 } : undefined,
-    { enabled: !!secondCategorySlug },
-  );
-  const firstCategoryList = firstCategoryArticles ?? [];
-  const secondCategoryList = secondCategoryArticles ?? [];
-  const firstCategoryFeature = firstCategoryList[0];
-  const firstCategoryRest = firstCategoryList.slice(1, 4);
-  const secondCategoryGrid = secondCategoryList.slice(0, 4);
+  // Shorts Data
+  const fbShorts = useMemo(() => [
+    { id: '1', title: 'Morning brief in 60s', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80', dur: '01:00' },
+    { id: '2', title: 'Market pulse recap', img: 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=400&q=80', dur: '00:52' },
+    { id: '3', title: 'City desk on the move', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80', dur: '00:48' },
+    { id: '4', title: 'Global trade updates', img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80', dur: '01:15' },
+    { id: '5', title: 'Tech summit', img: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80', dur: '02:00' },
+  ], []);
+
+  const [tickerCondensed, setTickerCondensed] = useState(false);
   const getArticleTitle = (story: Article) => getLocalizedText(story.title, language);
-  const getArticleSummary = (story: Article) => getLocalizedText(story.excerpt, language);
+  
+  useEffect(() => {
+    const handleScroll = () => setTickerCondensed(window.scrollY > 120);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <Stack spacing={4}>
-      <BreakingTicker items={breakingTicker} />
-      {heroSlides.length > 0 && <HeroCarousel articles={heroSlides} />}
+    <Box
+      sx={{
+        fontFamily: 'var(--font-family-sans, Arial)',
+        bgcolor: colors.bg,
+        color: colors.textMain,
+      }}
+    >
+      {/* 1. TICKER */}
+      <Box sx={{ borderBottom: `2px solid ${CNN_RED}` }}>
+        <BreakingTicker items={breakingTicker} condensed={tickerCondensed} />
+      </Box>
 
-      {heroSlides.length > 0 && (
-        <Paper
-          variant="outlined"
-          sx={{
-            p: { xs: 2.5, md: 3 },
-            borderRadius: 3,
-            boxShadow: 3,
-            display: 'grid',
-            gap: 2,
-            gridTemplateColumns: { xs: '1fr', md: '1.4fr 1fr' },
-            alignItems: 'stretch',
-            animation: `${fadeInUp} 520ms ease both`,
-          }}
-        >
-          <Box
-            sx={{
-              position: 'relative',
-              borderRadius: 3,
-              overflow: 'hidden',
-              minHeight: { xs: 240, md: 300 },
-              backgroundImage: heroPoster
-                ? `linear-gradient(120deg, ${alpha('#000', 0.62)}, ${alpha('#000', 0.35)}), url(${heroPoster})`
-                : undefined,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              color: '#fff',
-              boxShadow: 4,
-              p: { xs: 2, md: 3 },
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-              gap: 1.5,
-            }}
-          >
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Chip label="Video" color="warning" size="small" sx={{ fontWeight: 800 }} />
-              <Typography variant="overline" sx={{ letterSpacing: 3 }}>
-                04:12
-              </Typography>
-            </Stack>
-            <Typography variant="h5" sx={{ fontWeight: 900, maxWidth: '80%', textShadow: '0 6px 24px rgba(0,0,0,0.4)' }}>
-              {getArticleTitle(heroPrimary || heroSlides[0]) || 'Today’s briefing in 4 minutes'}
-            </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap">
-              <Button variant="secondary" size="small" component={Link as unknown as 'a'} href={`/article/${heroPrimary?.slug || heroSlides[0]?.slug || '#'}`}>
-                Play now
-              </Button>
-              <Button
-                variant="outline"
-                size="small"
-                sx={{
-                  color: '#fff',
-                  borderColor: alpha('#fff', 0.65),
-                  '&:hover': { borderColor: '#fff', backgroundColor: alpha('#fff', 0.12) },
-                }}
-                onClick={() => setCaptionsEnabled((prev) => !prev)}
-              >
-                {captionsEnabled ? 'Captions on' : 'Captions off'}
-              </Button>
-            </Stack>
-          </Box>
-
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              borderRadius: 3,
-              bgcolor: 'background.paper',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1.5,
-              justifyContent: 'space-between',
-              boxShadow: 1,
-            }}
-          >
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Chip label="Audio" color="primary" size="small" />
-                <Typography variant="overline" sx={{ letterSpacing: 3 }}>
-                  08:45
-                </Typography>
-              </Stack>
-              <Button
-                variant={audioPlaying ? 'secondary' : 'primary'}
-                size="small"
-                onClick={() => setAudioPlaying((prev) => !prev)}
-                sx={{ px: 2.5 }}
-              >
-                {audioPlaying ? 'Pause' : 'Play'}
-              </Button>
-            </Stack>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-              Morning audio briefing: top 5 stories with context
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Hear the headlines with quick expert notes and timestamps to jump to topics.
-            </Typography>
-            <Box
-              sx={{
-                height: 54,
-                borderRadius: 2,
-                bgcolor: alpha('#000', 0.05),
-                display: 'grid',
-                gridTemplateColumns: 'repeat(28, 1fr)',
-                gap: 0.25,
-                alignItems: 'end',
-                p: 1,
-                overflow: 'hidden',
-                '& div': {
-                  borderRadius: 1,
-                  background: (theme) =>
-                    `linear-gradient(180deg, ${alpha(theme.palette.secondary.main, 0.9)}, ${alpha(
-                      theme.palette.primary.main,
-                      0.7,
-                    )})`,
-                  transition: 'height 200ms ease',
-                },
-              }}
-            >
-              {Array.from({ length: 28 }).map((_, idx) => (
-                <Box
-                  key={idx}
-                  component="div"
-                  sx={{
-                    height: `${30 + ((idx * 7) % 40)}%`,
-                    animation: audioPlaying ? `wavePulse 900ms ease-in-out ${idx * 0.02}s infinite alternate` : 'none',
-                    '@keyframes wavePulse': {
-                      from: { transform: 'scaleY(0.75)' },
-                      to: { transform: 'scaleY(1.2)' },
-                    },
-                  }}
-                />
-              ))}
-            </Box>
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-              <Button
-                variant="ghost"
-                size="small"
-                component={Link as unknown as 'a'}
-                href={`/article/${heroPrimary?.slug || heroSlides[0]?.slug || '#'}`}
-              >
-                View transcript
-              </Button>
-              <Typography variant="caption" color="text.secondary">
-                Captions {captionsEnabled ? 'enabled' : 'disabled'}
-              </Typography>
-            </Stack>
-          </Paper>
-        </Paper>
-      )}
-
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 3,
-              borderRadius: 3,
-              boxShadow: 3,
-              animation: `${fadeInUp} 560ms ease both`,
-            }}
-          >
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                Latest headlines
-              </Typography>
-              {latestList.length > 0 && (
-                <Button variant="ghost" size="small" component={Link as unknown as 'a'} href="/search?sort=date">
-                  See all
-                </Button>
-              )}
-            </Stack>
-            {latestList.length === 0 ? (
-              <EmptyState title="No headlines yet" description="New stories will appear here once published." />
-            ) : (
-              <Grid container spacing={2.5}>
-                <Grid size={{ xs: 12, lg: 7 }}>
-                  <Grid container spacing={2}>
-                    {gridLatest.map((article) => (
-                      <Grid key={article.id} size={{ xs: 12, sm: 6 }}>
-                        <ArticleCard article={article} />
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Grid>
-                <Grid size={{ xs: 12, lg: 5 }}>
-                  {stackedLatest.length > 0 && (
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        p: 2.5,
-                        borderRadius: 2,
-                        bgcolor: 'background.paper',
-                        boxShadow: 1,
-                      }}
-                    >
-                      <Typography
-                        variant="overline"
-                        sx={{ letterSpacing: 3, fontWeight: 700, color: 'text.secondary' }}
-                      >
-                        Fresh picks
-                      </Typography>
-                      <Stack spacing={2} mt={2}>
-                        {stackedLatest.map((story) => (
-                          <Paper
-                            key={story.id}
-                            variant="outlined"
-                            component={Link}
-                            href={`/article/${story.slug}`}
-                            sx={{
-                              p: 1.5,
-                              borderRadius: 2,
-                              textDecoration: 'none',
-                              color: 'text.primary',
-                              borderColor: 'transparent',
-                              transition: 'border-color 150ms ease, transform 150ms ease',
-                              '&:hover': {
-                                borderColor: 'primary.main',
-                                transform: 'translateY(-2px)',
-                              },
-                            }}
-                          >
-                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                              {getArticleTitle(story)}
-                            </Typography>
-                            {getArticleSummary(story) && (
-                              <Typography variant="caption" color="text.secondary">
-                                {getArticleSummary(story)}
-                              </Typography>
-                            )}
-                          </Paper>
-                        ))}
-                      </Stack>
-                    </Paper>
-                  )}
-                </Grid>
-              </Grid>
-            )}
-          </Paper>
-        </Grid>
-
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Stack spacing={2.5}>
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                borderRadius: 3,
-                bgcolor: 'background.paper',
-                boxShadow: 3,
-              }}
-            >
-              <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                  Trending now
-                </Typography>
-                {trendingHighlights.length > 0 && <Chip label="Live" color="warning" size="small" />}
-              </Stack>
-              {trendingHighlights.length === 0 ? (
-                <EmptyState title="No trending stories" description="Check back soon for popular coverage." />
-              ) : (
-                <Stack spacing={2}>
-                  {trendingHighlights.map((story, index) => (
-                    <Paper
-                      key={story.id}
+      <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
+        <Stack spacing={{ xs: 4, md: 6 }}>
+          {/* 2. HERO SECTION (Responsive split) */}
+          {heroArticle && (
+            <Box component="section">
+              <Grid container spacing={{ xs: 3, md: 4 }}>
+                {/* LEFT: Dominant carousel */}
+                <Grid size={{ xs: 12, md: 7, lg: 8 }} sx={{ minWidth: 0 }}>
+                  <Box sx={{ position: 'relative', width: '100%', height: { xs: 320, sm: 380, md: 540, lg: 620 } }}>
+                    <Box
                       component={Link}
-                      href={`/article/${story.slug}`}
-                      variant="outlined"
+                      href={`/article/${heroArticle.slug}`}
                       sx={{
-                        p: 1.5,
-                        borderRadius: 2,
-                        display: 'flex',
-                        gap: 1.5,
-                        alignItems: 'flex-start',
+                        display: 'block',
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                        bgcolor: colors.bgSecondary,
+                        borderRadius: { xs: 2, md: 3 },
+                        overflow: 'hidden',
                         textDecoration: 'none',
-                        color: 'text.primary',
-                        borderColor: 'divider',
-                        '&:hover': { borderColor: 'primary.main', boxShadow: 2 },
                       }}
                     >
-                      <Typography variant="h6" sx={{ fontWeight: 900, color: 'warning.main' }}>
-                        0{index + 1}
-                      </Typography>
-                      <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                          {getArticleTitle(story)}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          inset: 0,
+                          backgroundImage: heroArticle.featuredImage?.url
+                            ? `url(${heroArticle.featuredImage.url})`
+                            : 'linear-gradient(160deg, #222, #444)',
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          transition: 'transform 0.5s ease',
+                          '&:hover': { transform: 'scale(1.02)' },
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.35) 60%, transparent 100%)',
+                          p: { xs: 2, md: 4 },
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'flex-end',
+                          gap: 1.5,
+                        }}
+                      >
+                        <Chip
+                          label="Spotlight"
+                          size="small"
+                          sx={{
+                            bgcolor: CNN_RED,
+                            color: '#fff',
+                            fontWeight: 700,
+                            borderRadius: 0,
+                            width: 'fit-content',
+                          }}
+                        />
+                        <Typography
+                          variant="h3"
+                          sx={{
+                            color: '#fff',
+                            fontWeight: 900,
+                            lineHeight: 1.1,
+                            fontSize: { xs: '1.75rem', md: '2.75rem', lg: '3.5rem' },
+                            fontFamily: 'Georgia, serif',
+                            textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                            maxWidth: '90%',
+                          }}
+                        >
+                          {getArticleTitle(heroArticle)}
                         </Typography>
-                        {getArticleSummary(story) && (
-                          <Typography variant="caption" color="text.secondary">
-                            {getArticleSummary(story)}
+                        {heroArticle.excerpt && (
+                          <Typography variant="body1" sx={{ color: '#f3f3f3', maxWidth: '80%' }}>
+                            {getLocalizedText(heroArticle.excerpt, language)}
                           </Typography>
                         )}
                       </Box>
-                    </Paper>
-                  ))}
-                </Stack>
-              )}
-            </Paper>
-            <AdSlot position="sidebar" page="home" />
-          </Stack>
-        </Grid>
-      </Grid>
+                    </Box>
+                    {heroArticles.length > 1 && (
+                      <>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 16,
+                            right: 16,
+                            bgcolor: 'rgba(0,0,0,0.6)',
+                            color: '#fff',
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: 999,
+                            fontWeight: 700,
+                            fontSize: 12,
+                            letterSpacing: 1,
+                          }}
+                        >
+                          {heroProgressLabel}
+                        </Box>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{
+                            position: 'absolute',
+                            bottom: 16,
+                            right: 16,
+                            bgcolor: 'rgba(0,0,0,0.45)',
+                            borderRadius: 999,
+                            p: 0.5,
+                          }}
+                        >
+                          <IconButton size="small" sx={{ color: '#fff' }} onClick={() => handleHeroNavigate('prev')} aria-label="Previous story">
+                            <ChevronLeftIcon />
+                          </IconButton>
+                          <IconButton size="small" sx={{ color: '#fff' }} onClick={() => handleHeroNavigate('next')} aria-label="Next story">
+                            <ChevronRightIcon />
+                          </IconButton>
+                        </Stack>
+                      </>
+                    )}
+                  </Box>
+                </Grid>
 
-      <AdSlot position="banner" page="home" />
-
-      <Grid container spacing={3}>
-        {firstCategorySlug && firstCategoryList.length > 0 && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                bgcolor: 'secondary.main',
-                color: 'secondary.contrastText',
-                boxShadow: 4,
-                border: `1px solid ${alpha('#ffffff', 0.16)}`,
-              }}
-            >
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                  {getLocalizedText(categoryList?.[0]?.name, language) || 'Top stories'}
-                </Typography>
-                <Button
-                  variant="ghost"
-                  size="small"
-                  component={Link as unknown as 'a'}
-                  href={`/category/${firstCategorySlug || 'news'}`}
-                  sx={{ color: 'warning.main' }}
-                >
-                  View category
-                </Button>
-              </Stack>
-              <Grid container spacing={2}>
-                {firstCategoryFeature && (
-                  <Grid size={{ xs: 12, md: 7 }}>
-                    <ArticleCard article={firstCategoryFeature} />
-                  </Grid>
-                )}
-                <Grid size={{ xs: 12, md: 5 }}>
-                  <Stack spacing={1.5}>
-                    {firstCategoryRest.map((article) => (
-                      <Paper
-                        key={article.id}
-                        component={Link}
-                        href={`/article/${article.slug}`}
-                        variant="outlined"
+                {/* RIGHT: Top Stories */}
+                <Grid size={{ xs: 12, md: 5, lg: 4 }} sx={{ minWidth: 0 }}>
+                  <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderBottom: `2px solid ${colors.divider}`,
+                        pb: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="h6"
                         sx={{
-                          p: 1.5,
-                          borderRadius: 2,
-                          bgcolor: alpha('#fff5ef', 0.1),
-                          color: 'secondary.contrastText',
-                          textDecoration: 'none',
-                          '&:hover': {
-                            bgcolor: alpha('#fff5ef', 0.18),
-                          },
+                          fontWeight: 800,
+                          color: CNN_RED,
+                          textTransform: 'uppercase',
+                          letterSpacing: 1,
+                          fontSize: { xs: '0.9rem', md: '1rem' },
                         }}
                       >
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                          {getArticleTitle(article)}
-                        </Typography>
-                        {getArticleSummary(article) && (
-                          <Typography variant="caption" sx={{ color: alpha('#fff5ef', 0.8) }}>
-                            {getArticleSummary(article)}
-                          </Typography>
-                        )}
-                      </Paper>
-                    ))}
-                  </Stack>
+                        Top Stories
+                      </Typography>
+                    </Box>
+
+                    <Stack spacing={2.5}>
+                      {spotlightSecondary.map((story) => (
+                        <Box
+                          key={story.id}
+                          component={Link}
+                          href={`/article/${story.slug}`}
+                          sx={{
+                            display: 'flex',
+                            gap: 2,
+                            textDecoration: 'none',
+                            alignItems: 'flex-start',
+                          }}
+                        >
+                          {story.featuredImage && (
+                            <Box
+                              component="img"
+                              src={story.featuredImage.url}
+                              alt=""
+                              sx={{
+                                width: { xs: 80, md: 100 },
+                                height: { xs: 60, md: 72 },
+                                objectFit: 'cover',
+                                flexShrink: 0,
+                                bgcolor: colors.bgSecondary,
+                                borderRadius: 1,
+                              }}
+                            />
+                          )}
+
+                          <Box>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{
+                                fontWeight: 700,
+                                lineHeight: 1.3,
+                                color: colors.textMain,
+                                fontSize: { xs: '0.95rem', md: '1rem' },
+                                '&:hover': { color: CNN_RED, textDecoration: 'underline' },
+                              }}
+                            >
+                              {getArticleTitle(story)}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: colors.textMuted,
+                                mt: 0.5,
+                                display: 'block',
+                                textTransform: 'uppercase',
+                                fontWeight: 600,
+                                fontSize: '0.7rem',
+                              }}
+                            >
+                              {story.category?.name ? getLocalizedText(story.category.name, language) : 'News'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Box>
                 </Grid>
               </Grid>
-            </Paper>
-          </Grid>
-        )}
+            </Box>
+          )}
 
-        {secondCategorySlug && secondCategoryGrid.length > 0 && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper
-              variant="outlined"
+          {/* 3. SHORTS SECTION (now fully responsive) */}
+          {fbShorts.length > 0 && (
+            <Box
+              component="section"
               sx={{
-                p: 3,
-                borderRadius: 3,
-                boxShadow: 3,
+                bgcolor: colors.shortsBg,
+                borderRadius: { xs: 2, md: 3 },
+                p: { xs: 2.5, md: 4 },
+                color: '#fff',
               }}
             >
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                  {getLocalizedText(categoryList?.[1]?.name, language) || 'In depth'}
+              <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2} mb={3}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box sx={{ width: 4, height: 24, bgcolor: CNN_RED }} />
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    Must Watch
+                  </Typography>
+                </Stack>
+                <Typography variant="body2" sx={{ color: '#d0d0d0' }}>
+                  Quick clips and explainers from the newsroom.
                 </Typography>
-                <Button
-                  variant="ghost"
-                  size="small"
-                  component={Link as unknown as 'a'}
-                  href={`/category/${secondCategorySlug || 'news'}`}
-                  sx={{ color: 'secondary.main' }}
-                >
-                  View category
-                </Button>
               </Stack>
-              <Grid container spacing={2}>
-                {secondCategoryGrid.map((article) => (
-                  <Grid key={article.id} size={{ xs: 12, sm: 6 }}>
-                    <ArticleCard article={article} />
-                  </Grid>
-                ))}
-              </Grid>
-            </Paper>
-          </Grid>
-        )}
-      </Grid>
 
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 3,
-          borderRadius: 3,
-          boxShadow: 2,
-        }}
-      >
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            Sections
-          </Typography>
-          <Typography variant="overline" sx={{ letterSpacing: 3, color: 'text.secondary' }}>
-            Browse by beat
-          </Typography>
-        </Stack>
-        {categoryList.length === 0 ? (
-          <Box mt={2}>
-            <EmptyState title="No sections available" description="Add categories to populate this grid." />
-          </Box>
-        ) : (
-          <Grid container spacing={2} mt={1}>
-            {categoryList?.map((category, index) => (
-              <Grid key={category.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                <Paper
-                  component={Link}
-                  href={`/category/${category.slug}`}
-                  variant="outlined"
+              <Box
+                sx={{
+                  display: 'flex',
+                  overflowX: 'auto',
+                  gap: 2,
+                  pb: 1,
+                  scrollSnapType: 'x mandatory',
+                  '&::-webkit-scrollbar': { height: 6 },
+                  '&::-webkit-scrollbar-thumb': { bgcolor: '#555', borderRadius: 999 },
+                }}
+              >
+                {fbShorts.map((short) => (
+                  <Box
+                    key={short.id}
+                    sx={{
+                      flex: '0 0 auto',
+                      width: { xs: 150, sm: 180, md: 220 },
+                      aspectRatio: '9 / 16',
+                      position: 'relative',
+                      borderRadius: 2,
+                      backgroundImage: `url(${short.img})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      cursor: 'pointer',
+                      scrollSnapAlign: 'start',
+                      overflow: 'hidden',
+                      '&:hover .play-btn': { transform: 'scale(1.1)' },
+                    }}
+                  >
+                    <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.85))' }} />
+                    <Box className="play-btn" sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', transition: 'transform 0.2s' }}>
+                      <PlayCircleOutlineIcon sx={{ color: '#fff', fontSize: 40 }} />
+                    </Box>
+                    <Box sx={{ position: 'absolute', bottom: 0, p: 1.5 }}>
+                      <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.2, fontSize: '0.9rem' }}>
+                        {short.title}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#aaa' }}>
+                        {short.dur}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          )}
+
+          {/* 4. THE RIVER (Responsive Columns) */}
+          <Box component="section">
+            <Box sx={{ borderBottom: `2px solid ${colors.textMain}`, mb: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 900, pb: 1, textTransform: 'uppercase' }}>
+                Latest News
+              </Typography>
+            </Box>
+
+            <Grid container spacing={{ xs: 3, lg: 4 }}>
+              {/* Main Feed */}
+              <Grid
+                size={{ xs: 12, lg: 8 }}
+                sx={{
+                  pr: { lg: 4 },
+                  borderRight: { lg: `1px solid ${colors.divider}` },
+                }}
+              >
+                <Box
                   sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    textDecoration: 'none',
-                    color: 'text.primary',
-                    transition: 'transform 150ms ease, box-shadow 150ms ease',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1,
-                    minHeight: 160,
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: 4,
+                    display: 'grid',
+                    gap: 3,
+                    gridTemplateColumns: {
+                      xs: 'repeat(1, minmax(0, 1fr))',
+                      sm: 'repeat(2, minmax(0, 1fr))',
+                      md: 'repeat(4, minmax(0, 1fr))',
+                      lg: 'repeat(6, minmax(0, 1fr))',
                     },
                   }}
                 >
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'text.secondary' }}>
-                    <Typography variant="overline" sx={{ letterSpacing: 3 }}>
-                      {String(index + 1).padStart(2, '0')}
-                    </Typography>
-                    <Chip label="Section" size="small" color="primary" variant="outlined" />
-                  </Stack>
-                  <Typography variant="h6" sx={{ fontWeight: 800, mt: 0.5 }}>
-                    {getLocalizedText(category.name, language)}
-                  </Typography>
-                  {category.description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-                      {getLocalizedText(category.description, language)}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" sx={{ mt: 1, display: 'inline-block', letterSpacing: 2 }}>
-                    Enter →
-                  </Typography>
-                </Paper>
+                  {headlines.map((article, index) => {
+                    const variant = getTileVariant(index);
+                    const previewLimit = previewLengthByVariant[variant];
+                    const articleHref = `/article/${article.slug}`;
+                    const excerptText = article.excerpt ? getLocalizedText(article.excerpt, language) : '';
+                    const preview =
+                      previewLimit && excerptText.length > previewLimit
+                        ? `${excerptText.slice(0, Math.max(0, previewLimit - 3)).trim()}...`
+                        : excerptText;
+                    return (
+                      <Box
+                        key={article.id}
+                        component="article"
+                        sx={{
+                          textDecoration: 'none',
+                          color: colors.textMain,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 1.25,
+                          p: { xs: 1.5, md: 2 },
+                          borderRadius: 2,
+                          border: `1px solid ${colors.divider}`,
+                          bgcolor: colors.bgSecondary,
+                          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                          '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+                          },
+                          ...getTileGridStyles(variant),
+                        }}
+                      >
+                        {article.featuredImage && (
+                          <Box
+                            component={Link}
+                            href={articleHref}
+                            sx={{
+                              display: 'block',
+                              borderRadius: 1.5,
+                              overflow: 'hidden',
+                              lineHeight: 0,
+                            }}
+                          >
+                            <Box
+                              component="img"
+                              src={article.featuredImage.url}
+                              alt=""
+                              sx={{
+                                width: '100%',
+                                height: variant === 'hero' ? 320 : variant === 'tall' ? 280 : 200,
+                                objectFit: 'cover',
+                              }}
+                            />
+                          </Box>
+                        )}
+                        <Box>
+                          <Typography variant="caption" sx={{ color: CNN_RED, fontWeight: 700, textTransform: 'uppercase' }}>
+                            {article.category?.name ? getLocalizedText(article.category.name, language) : 'News'}
+                          </Typography>
+                          <Link href={articleHref} style={{ textDecoration: 'none' }}>
+                            <Typography
+                              variant={variant === 'hero' ? 'h5' : 'h6'}
+                              sx={{
+                                fontWeight: 700,
+                                lineHeight: 1.3,
+                                fontSize: variant === 'hero' ? '1.4rem' : '1rem',
+                                color: colors.textMain,
+                                '&:hover': { color: CNN_RED },
+                              }}
+                            >
+                              {getArticleTitle(article)}
+                            </Typography>
+                          </Link>
+                          {preview && (
+                            <Typography variant="body2" sx={{ color: colors.textMuted, mt: 1 }}>
+                              {preview}
+                            </Typography>
+                          )}
+                          <Button
+                            component={Link}
+                            href={articleHref}
+                            variant="contained"
+                            size="small"
+                            sx={{ mt: 1.5, borderRadius: 999, alignSelf: 'flex-start' }}
+                          >
+                            {readMoreLabel}
+                          </Button>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
               </Grid>
-            ))}
-          </Grid>
-        )}
-      </Paper>
-    </Stack>
+
+              {/* Right Sidebar */}
+              <Grid size={{ xs: 12, lg: 4 }} sx={{ pl: { lg: 4 } }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, fontSize: '0.9rem', textTransform: 'uppercase' }}>
+                  Trending Now
+                </Typography>
+                <Stack spacing={2}>
+                  {trendingHighlights.map((story, i) => (
+                    <Box
+                      key={story.id}
+                      component={Link}
+                      href={`/article/${story.slug}`}
+                      sx={{ display: 'flex', gap: 2, textDecoration: 'none', alignItems: 'flex-start' }}
+                    >
+                      <Typography variant="h4" sx={{ color: '#d1d1d1', fontWeight: 900, lineHeight: 1, minWidth: '30px' }}>
+                        {i + 1}
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ color: colors.textMain, fontWeight: 600, lineHeight: 1.3, '&:hover': { color: CNN_RED } }}>
+                        {getArticleTitle(story)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+                <Box sx={{ mt: 4 }}>
+                  <AdSlot position="sidebar" page="home" />
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <AdSlot position="banner" page="home" />
+        </Stack>
+      </Container>
+    </Box>
   );
 }
