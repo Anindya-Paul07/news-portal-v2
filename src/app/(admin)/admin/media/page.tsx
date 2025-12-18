@@ -18,8 +18,10 @@ import { LoadingBlock } from '@/components/states/LoadingBlock';
 import { resolveMediaUrl } from '@/lib/utils';
 import { LocalizedText, Media } from '@/lib/types';
 import { useAlert } from '@/contexts/alert-context';
+import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
 export default function MediaPage() {
+  useAdminAreaGuard('media');
   const { data: media } = useMediaLibrary({ limit: 20 });
   const { mutateAsync: upload } = useUploadMedia();
   const { mutateAsync: updateMedia } = useUpdateMedia();

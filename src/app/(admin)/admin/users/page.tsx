@@ -21,17 +21,19 @@ import { useSaveUser, useUsers, useDeleteUser } from '@/hooks/api-hooks';
 import { Role } from '@/lib/types';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
+import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
-const roles: Role[] = ['super_admin', 'admin', 'journalist', 'reader'];
+const roles: Role[] = ['super_admin', 'admin', 'editorial', 'journalist', 'reader'];
 
 export default function UsersPage() {
+  useAdminAreaGuard('users');
   const { data: users } = useUsers();
   const { mutateAsync: saveUser } = useSaveUser();
   const { mutateAsync: deleteUser } = useDeleteUser();
   const [draft, setDraft] = useState<{ name: string; email: string; role: Role; password: string }>({
     name: '',
     email: '',
-    role: 'journalist',
+    role: 'editorial',
     password: '',
   });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function UsersPage() {
       delete (payload as Partial<typeof payload>).password;
     }
     await saveUser(payload);
-    setDraft({ name: '', email: '', role: 'journalist' as const, password: '' });
+    setDraft({ name: '', email: '', role: 'editorial' as const, password: '' });
     setEditingId(null);
   };
 
@@ -60,7 +62,7 @@ export default function UsersPage() {
     await deleteUser(userId);
     if (editingId === userId) {
       setEditingId(null);
-      setDraft({ name: '', email: '', role: 'journalist' as const, password: '' });
+      setDraft({ name: '', email: '', role: 'editorial' as const, password: '' });
     }
   };
 
@@ -77,7 +79,7 @@ export default function UsersPage() {
                 size="small"
                 onClick={() => {
                   setEditingId(null);
-                  setDraft({ name: '', email: '', role: 'journalist', password: '' });
+                  setDraft({ name: '', email: '', role: 'editorial', password: '' });
                 }}
               >
                 Cancel edit

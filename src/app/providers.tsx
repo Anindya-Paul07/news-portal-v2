@@ -9,7 +9,9 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { LanguageProvider } from '@/contexts/language-context';
 import { AlertProvider } from '@/contexts/alert-context';
 import { useThemeMode } from '@/contexts/theme-context';
+import { RouteTransitionProvider } from '@/contexts/route-transition-context';
 import { getTheme } from '@/theme';
+import { RouteTransitionOverlay } from '@/components/states/RouteTransitionOverlay';
 
 function ThemeBridge({ children }: { children: ReactNode }) {
   const { theme } = useThemeMode();
@@ -42,7 +44,12 @@ export function Providers({ children }: { children: ReactNode }) {
         <ThemeBridge>
           <AlertProvider>
             <LanguageProvider>
-              <AuthProvider>{children}</AuthProvider>
+              <AuthProvider>
+                <RouteTransitionProvider>
+                  {children}
+                  <RouteTransitionOverlay />
+                </RouteTransitionProvider>
+              </AuthProvider>
             </LanguageProvider>
           </AlertProvider>
         </ThemeBridge>

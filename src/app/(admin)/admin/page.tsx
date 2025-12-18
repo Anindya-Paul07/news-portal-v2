@@ -38,6 +38,7 @@ import { LoadingBlock } from '@/components/states/LoadingBlock';
 import { useLanguage } from '@/contexts/language-context';
 import { getLocalizedText } from '@/lib/utils';
 import { useTheme } from '@mui/material/styles';
+import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
 function StatTile({ label, value }: { label: string; value: number | string }) {
   return (
@@ -142,6 +143,7 @@ function SparklineMetricCard({ label, value, change, data, loading, emptyMessage
 type TrafficWindow = '24h' | '7d' | '30d';
 
 export default function AdminDashboard() {
+  useAdminAreaGuard('dashboard');
   const { language } = useLanguage();
   const [days, setDays] = useState(7);
   const [deskFilter, setDeskFilter] = useState<string>('all');

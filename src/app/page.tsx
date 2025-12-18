@@ -3,7 +3,7 @@ import PublicPage from './(public)/page';
 
 export default function RootPage() {
   return (
-    <SiteShell>
+    <SiteShell disableMainContainer>
       <PublicPage />
     </SiteShell>
   );

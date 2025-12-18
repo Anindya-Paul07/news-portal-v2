@@ -28,6 +28,7 @@ import { useMenuCategories } from '@/hooks/api-hooks';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/Button';
 import { getLocalizedText } from '@/lib/utils';
+import { canAccessAdmin } from '@/lib/rbac';
 
 export function Header() {
   const { data: menu } = useMenuCategories();
@@ -43,6 +44,7 @@ export function Header() {
   const lastScroll = useRef(0);
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
+  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
 
   const onSearch = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -114,97 +116,236 @@ export function Header() {
       <Toolbar disableGutters>
         <Container maxWidth="lg" sx={{ py: compact ? 0.25 : 1, transition: 'padding 200ms ease' }}>
           <Stack spacing={compact ? 1 : 1.25}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.5}>
-              <Stack direction="row" spacing={0.5} alignItems="center">
-                <IconButton
-                  aria-label="Open search"
-                  onClick={() => setSearchOpen(true)}
-                  sx={{ color: 'primary.contrastText' }}
-                >
-                  <SearchRoundedIcon />
-                </IconButton>
-                <IconButton
-                  aria-label="Toggle navigation menu"
-                  onClick={() => setMobileNavOpen(true)}
-                  sx={{ color: 'primary.contrastText' }}
-                >
-                  {mobileNavOpen ? <CloseRoundedIcon /> : <MenuRoundedIcon />}
-                </IconButton>
-              </Stack>
+            {isSmUp ? (
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={1.5}
+                sx={{ flexWrap: 'wrap', rowGap: 1 }}
+              >
+                <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flex: '0 0 auto' }}>
+                  <IconButton
+                    aria-label="Open search"
+                    onClick={() => setSearchOpen(true)}
+                    sx={{ color: 'primary.contrastText' }}
+                  >
+                    <SearchRoundedIcon />
+                  </IconButton>
+                  <IconButton
+                    aria-label="Toggle navigation menu"
+                    onClick={() => setMobileNavOpen(true)}
+                    sx={{ color: 'primary.contrastText' }}
+                  >
+                    {mobileNavOpen ? <CloseRoundedIcon /> : <MenuRoundedIcon />}
+                  </IconButton>
+                </Stack>
 
-              <Stack spacing={0.25} alignItems="center">
-                <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Box
-                      sx={{
-                        width: compact ? 34 : 48,
-                        height: compact ? 34 : 48,
-                        borderRadius: 2,
-                        bgcolor: 'primary.contrastText',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: theme.shadows[3],
-                        overflow: 'hidden',
-                        transition: 'all 200ms ease',
-                      }}
-                    >
-                      <Image
-                        src="/Logo_Canva.jpg"
-                        alt="The Contemporary logo"
-                        width={52}
-                        height={52}
-                        priority
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </Box>
-                    <Typography variant={compact ? 'body1' : 'h6'} sx={{ fontWeight: 800, letterSpacing: compact ? 0.5 : 0 }}>
-                      The Contemporary
-                    </Typography>
-                  </Stack>
-                </Link>
-                <Typography variant="caption" sx={{ letterSpacing: 1.5, color: 'primary.contrastText', opacity: compact ? 0.85 : 1 }}>
-                  {dateline}
-                </Typography>
-              </Stack>
+                <Stack spacing={0.25} alignItems="center" sx={{ flex: '1 1 260px', minWidth: 0 }}>
+                  <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                      <Box
+                        sx={{
+                          width: compact ? 40 : 56,
+                          height: compact ? 40 : 56,
+                          borderRadius: 0,
+                          bgcolor: 'transparent',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: 'none',
+                          overflow: 'visible',
+                          transition: 'all 200ms ease',
+                          flex: '0 0 auto',
+                        }}
+                      >
+                        <Image
+                          src="/logo.png"
+                          alt="The Contemporary logo"
+                          width={128}
+                          height={128}
+                          priority
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                      </Box>
+                      <Typography
+                        variant={compact ? 'body1' : 'h6'}
+                        sx={{
+                          fontWeight: 800,
+                          letterSpacing: compact ? 0.5 : 0,
+                          minWidth: 0,
+                          textAlign: 'center',
+                          display: '-webkit-box',
+                          WebkitBoxOrient: 'vertical',
+                          WebkitLineClamp: 1,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        The Contemporary
+                      </Typography>
+                    </Stack>
+                  </Link>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      letterSpacing: 1.5,
+                      color: 'primary.contrastText',
+                      opacity: compact ? 0.85 : 1,
+                      textAlign: 'center',
+                      px: 1,
+                    }}
+                  >
+                    {dateline}
+                  </Typography>
+                </Stack>
 
-              <Stack direction="row" spacing={1} alignItems="center">
-                <ThemeToggle />
-                <Button
-                  variant="outline"
-                  size="small"
-                  onClick={toggleLanguage}
-                  sx={{
-                    color: 'primary.contrastText',
-                    borderColor: alpha(theme.palette.primary.contrastText, 0.5),
-                    '&:hover': { borderColor: 'secondary.light' },
-                  }}
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  justifyContent="flex-end"
+                  sx={{ flex: '0 0 auto', flexWrap: 'wrap', rowGap: 1 }}
                 >
-                  {language === 'en' ? 'বাংলা' : 'EN'}
-                </Button>
-                {user ? (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="small"
-                      onClick={logout}
+                  <ThemeToggle />
+                  <Button
+                    variant="outline"
+                    size="small"
+                    onClick={toggleLanguage}
+                    sx={{
+                      color: 'primary.contrastText',
+                      borderColor: alpha(theme.palette.primary.contrastText, 0.5),
+                      '&:hover': { borderColor: 'secondary.light' },
+                    }}
+                  >
+                    {language === 'en' ? 'বাংলা' : 'EN'}
+                  </Button>
+                  {user ? (
+                    <>
+                      <Button variant="ghost" size="small" onClick={logout} sx={{ color: 'primary.contrastText' }}>
+                        Logout
+                      </Button>
+                      {canAccessAdmin(user.role) && (
+                        <Button variant="secondary" size="small" onClick={() => router.push('/admin')}>
+                          Admin
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <Link href="/auth/login" style={{ textDecoration: 'none' }}>
+                      <Button variant="secondary" size="small">
+                        Login
+                      </Button>
+                    </Link>
+                  )}
+                </Stack>
+              </Stack>
+            ) : (
+              <Stack spacing={1}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    <IconButton
+                      aria-label="Open search"
+                      onClick={() => setSearchOpen(true)}
                       sx={{ color: 'primary.contrastText' }}
                     >
-                      Logout
+                      <SearchRoundedIcon />
+                    </IconButton>
+                    <IconButton
+                      aria-label="Toggle navigation menu"
+                      onClick={() => setMobileNavOpen(true)}
+                      sx={{ color: 'primary.contrastText' }}
+                    >
+                      {mobileNavOpen ? <CloseRoundedIcon /> : <MenuRoundedIcon />}
+                    </IconButton>
+                  </Stack>
+
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <ThemeToggle />
+                    <Button
+                      variant="outline"
+                      size="small"
+                      onClick={toggleLanguage}
+                      sx={{
+                        color: 'primary.contrastText',
+                        borderColor: alpha(theme.palette.primary.contrastText, 0.5),
+                        '&:hover': { borderColor: 'secondary.light' },
+                      }}
+                    >
+                      {language === 'en' ? 'বাংলা' : 'EN'}
                     </Button>
-                    <Button variant="secondary" size="small" onClick={() => router.push('/admin')}>
-                      Admin
-                    </Button>
-                  </>
-                ) : (
-                  <Link href="/auth/login" style={{ textDecoration: 'none' }}>
-                    <Button variant="secondary" size="small">
-                      Login
-                    </Button>
+                    {user ? (
+                      <>
+                        <Button variant="ghost" size="small" onClick={logout} sx={{ color: 'primary.contrastText' }}>
+                          Logout
+                        </Button>
+                        {canAccessAdmin(user.role) && (
+                          <Button variant="secondary" size="small" onClick={() => router.push('/admin')}>
+                            Admin
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <Link href="/auth/login" style={{ textDecoration: 'none' }}>
+                        <Button variant="secondary" size="small">
+                          Login
+                        </Button>
+                      </Link>
+                    )}
+                  </Stack>
+                </Stack>
+
+                <Stack spacing={0.25} alignItems="center">
+                  <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Box
+                        sx={{
+                          width: compact ? 36 : 48,
+                          height: compact ? 36 : 48,
+                          borderRadius: 0,
+                          bgcolor: 'transparent',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: 'none',
+                          overflow: 'visible',
+                          transition: 'all 200ms ease',
+                        }}
+                      >
+                        <Image
+                          src="/logo.png"
+                          alt="The Contemporary logo"
+                          width={128}
+                          height={128}
+                          priority
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                      </Box>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 800,
+                          textAlign: 'center',
+                        }}
+                      >
+                        The Contemporary
+                      </Typography>
+                    </Stack>
                   </Link>
-                )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      letterSpacing: 1.25,
+                      color: 'primary.contrastText',
+                      opacity: compact ? 0.85 : 1,
+                      textAlign: 'center',
+                      px: 1,
+                    }}
+                  >
+                    {dateline}
+                  </Typography>
+                </Stack>
               </Stack>
-            </Stack>
+            )}
 
             <Box
               sx={{

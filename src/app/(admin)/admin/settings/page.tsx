@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/contexts/auth-context';
 import { ErrorState } from '@/components/states/ErrorState';
+import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
 export default function SettingsPage() {
+  useAdminAreaGuard('settings');
   const { changePassword } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

@@ -1,4 +1,4 @@
-export type Role = 'super_admin' | 'admin' | 'journalist' | 'reader';
+export type Role = 'super_admin' | 'admin' | 'editorial' | 'journalist' | 'reader';
 
 export type Pagination = {
   page: number;
@@ -121,6 +121,8 @@ export type AdvertisementPayload = {
 
 export type Media = {
   id: string;
+  name?: string;
+  filename?: string;
   url: string;
   alt?: LocalizedText;
   caption?: string;

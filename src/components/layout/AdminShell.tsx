@@ -20,15 +20,16 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/Button';
+import { canAccessAdminArea, type AdminArea } from '@/lib/rbac';
 
-const nav = [
-  { label: 'Dashboard', href: '/admin' },
-  { label: 'Articles', href: '/admin/articles' },
-  { label: 'Categories', href: '/admin/categories' },
-  { label: 'Advertisements', href: '/admin/ads' },
-  { label: 'Media Library', href: '/admin/media' },
-  { label: 'Users', href: '/admin/users' },
-  { label: 'Settings', href: '/admin/settings' },
+const nav: Array<{ label: string; href: string; area: AdminArea }> = [
+  { label: 'Dashboard', href: '/admin', area: 'dashboard' },
+  { label: 'Articles', href: '/admin/articles', area: 'articles' },
+  { label: 'Categories', href: '/admin/categories', area: 'categories' },
+  { label: 'Advertisements', href: '/admin/ads', area: 'ads' },
+  { label: 'Media Library', href: '/admin/media', area: 'media' },
+  { label: 'Users', href: '/admin/users', area: 'users' },
+  { label: 'Settings', href: '/admin/settings', area: 'settings' },
 ];
 
 export function AdminShell({ children, title, description }: { children: ReactNode; title: string; description?: string }) {
@@ -51,7 +52,9 @@ export function AdminShell({ children, title, description }: { children: ReactNo
   const navList = useMemo(
     () => (
       <List dense sx={{ p: 0 }}>
-        {nav.map((item) => {
+        {nav
+          .filter((item) => canAccessAdminArea(user?.role, item.area))
+          .map((item) => {
           const selected = pathname === item.href;
           return (
             <ListItemButton
@@ -75,7 +78,7 @@ export function AdminShell({ children, title, description }: { children: ReactNo
         })}
       </List>
     ),
-    [pathname],
+    [pathname, user?.role],
   );
 
   return (

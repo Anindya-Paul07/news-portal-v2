@@ -116,6 +116,13 @@ export function getTheme(mode: PaletteMode): Theme {
           },
         },
       },
+      MuiTypography: {
+        styleOverrides: {
+          root: {
+            overflowWrap: 'anywhere',
+          },
+        },
+      },
       MuiOutlinedInput: {
         styleOverrides: {
           root: {

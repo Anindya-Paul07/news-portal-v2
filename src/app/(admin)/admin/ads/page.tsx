@@ -20,6 +20,7 @@ import { useAlert } from '@/contexts/alert-context';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
 import { getLocalizedText } from '@/lib/utils';
+import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
 const initialAdDraft = {
   name: '',
@@ -37,6 +38,7 @@ const initialAdDraft = {
 };
 
 export default function AdsPage() {
+  useAdminAreaGuard('ads');
   const { data: ads } = useAdminAds();
   const { mutateAsync: saveAd } = useSaveAd();
   const { mutateAsync: deleteAd } = useDeleteAd();

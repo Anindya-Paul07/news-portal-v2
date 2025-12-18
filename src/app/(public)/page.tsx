@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
@@ -8,6 +7,7 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
+import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
@@ -17,6 +17,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { Article } from '@/lib/types';
 import { useBreakingTicker, useLatestArticles, useTrendingArticles } from '@/hooks/api-hooks';
 import { getLocalizedText } from '@/lib/utils';
+import { TransitionLink } from '@/components/navigation/TransitionLink';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -57,6 +58,39 @@ const getTileGridStyles = (variant: TileVariant) => {
   return styles;
 };
 
+function HomeHeroSkeleton({ colors }: { colors: { bgSecondary: string; divider: string } }) {
+  return (
+    <Grid container spacing={{ xs: 3, md: 4 }}>
+      <Grid size={{ xs: 12, md: 7, lg: 8 }} sx={{ minWidth: 0 }}>
+        <Box sx={{ position: 'relative', width: '100%', height: { xs: 320, sm: 380, md: 540, lg: 620 } }}>
+          <Skeleton
+            variant="rounded"
+            sx={{ width: '100%', height: '100%', bgcolor: colors.bgSecondary, borderRadius: { xs: 2, md: 3 } }}
+          />
+        </Box>
+      </Grid>
+      <Grid size={{ xs: 12, md: 5, lg: 4 }} sx={{ minWidth: 0 }}>
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `2px solid ${colors.divider}`, pb: 1 }}>
+            <Skeleton width={140} />
+          </Box>
+          <Stack spacing={2.5}>
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <Stack key={idx} direction="row" spacing={2} alignItems="flex-start">
+                <Skeleton variant="rounded" width={100} height={72} />
+                <Box sx={{ flex: 1 }}>
+                  <Skeleton width="85%" />
+                  <Skeleton width="55%" />
+                </Box>
+              </Stack>
+            ))}
+          </Stack>
+        </Box>
+      </Grid>
+    </Grid>
+  );
+}
+
 export default function HomePage() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -72,15 +106,15 @@ export default function HomePage() {
   };
 
   // --- DATA HOOKS ---
-  const { data: breaking } = useBreakingTicker();
-  const { data: trending } = useTrendingArticles();
-  const { data: latest } = useLatestArticles();
+  const breakingQuery = useBreakingTicker();
+  const trendingQuery = useTrendingArticles();
+  const latestQuery = useLatestArticles();
   const { language } = useLanguage();
   const readMoreLabel = language === 'bn' ? 'আরও পড়ুন' : 'Read more';
 
-  const latestList = latest ?? [];
-  const trendingList = trending ?? [];
-  const breakingTicker = breaking ?? [];
+  const latestList = latestQuery.data ?? [];
+  const trendingList = trendingQuery.data ?? [];
+  const breakingTicker = breakingQuery.data ?? [];
 
   // --- LAYOUT LOGIC ---
   const heroArticles = latestList.slice(0, 6);
@@ -134,20 +168,53 @@ export default function HomePage() {
     >
       {/* 1. TICKER */}
       <Box sx={{ borderBottom: `2px solid ${CNN_RED}` }}>
-        <BreakingTicker items={breakingTicker} condensed={tickerCondensed} />
+        <BreakingTicker
+          items={breakingTicker}
+          loading={breakingQuery.isLoading}
+          error={breakingQuery.isError}
+          condensed={tickerCondensed}
+        />
       </Box>
 
       <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
         <Stack spacing={{ xs: 4, md: 6 }}>
           {/* 2. HERO SECTION (Responsive split) */}
-          {heroArticle && (
+          {latestQuery.isLoading ? (
+            <Box component="section">
+              <HomeHeroSkeleton colors={colors} />
+            </Box>
+          ) : latestQuery.isError && latestList.length === 0 ? (
+            <Box
+              component="section"
+              sx={{
+                border: `1px solid ${colors.divider}`,
+                bgcolor: colors.bgSecondary,
+                borderRadius: { xs: 2, md: 3 },
+                p: { xs: 2, md: 3 },
+              }}
+            >
+              <Stack spacing={1.25} direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between">
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                    Latest stories unavailable
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: colors.textMuted }}>
+                    Please check your connection and try again.
+                  </Typography>
+                </Box>
+                <Button variant="contained" onClick={() => latestQuery.refetch()} sx={{ borderRadius: 999 }}>
+                  Retry
+                </Button>
+              </Stack>
+            </Box>
+          ) : heroArticle ? (
             <Box component="section">
               <Grid container spacing={{ xs: 3, md: 4 }}>
                 {/* LEFT: Dominant carousel */}
                 <Grid size={{ xs: 12, md: 7, lg: 8 }} sx={{ minWidth: 0 }}>
                   <Box sx={{ position: 'relative', width: '100%', height: { xs: 320, sm: 380, md: 540, lg: 620 } }}>
                     <Box
-                      component={Link}
+                      component={TransitionLink}
                       href={`/article/${heroArticle.slug}`}
                       sx={{
                         display: 'block',
@@ -205,13 +272,27 @@ export default function HomePage() {
                             fontSize: { xs: '1.75rem', md: '2.75rem', lg: '3.5rem' },
                             fontFamily: 'Georgia, serif',
                             textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                            maxWidth: '90%',
+                            maxWidth: '100%',
+                            display: '-webkit-box',
+                            WebkitBoxOrient: 'vertical',
+                            WebkitLineClamp: { xs: 3, md: 2, lg: 2 },
+                            overflow: 'hidden',
                           }}
                         >
                           {getArticleTitle(heroArticle)}
                         </Typography>
                         {heroArticle.excerpt && (
-                          <Typography variant="body1" sx={{ color: '#f3f3f3', maxWidth: '80%' }}>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: '#f3f3f3',
+                              maxWidth: '100%',
+                              display: '-webkit-box',
+                              WebkitBoxOrient: 'vertical',
+                              WebkitLineClamp: { xs: 3, md: 3, lg: 3 },
+                              overflow: 'hidden',
+                            }}
+                          >
                             {getLocalizedText(heroArticle.excerpt, language)}
                           </Typography>
                         )}
@@ -290,7 +371,7 @@ export default function HomePage() {
                       {spotlightSecondary.map((story) => (
                         <Box
                           key={story.id}
-                          component={Link}
+                          component={TransitionLink}
                           href={`/article/${story.slug}`}
                           sx={{
                             display: 'flex',
@@ -349,7 +430,7 @@ export default function HomePage() {
                 </Grid>
               </Grid>
             </Box>
-          )}
+          ) : null}
 
           {/* 3. SHORTS SECTION (now fully responsive) */}
           {fbShorts.length > 0 && (
@@ -450,7 +531,61 @@ export default function HomePage() {
                     },
                   }}
                 >
-                  {headlines.map((article, index) => {
+                  {latestQuery.isLoading
+                    ? Array.from({ length: 10 }).map((_, index) => {
+                        const variant = getTileVariant(index);
+                        return (
+                          <Box
+                            key={`skeleton-${index}`}
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 1.25,
+                              p: { xs: 1.5, md: 2 },
+                              borderRadius: 2,
+                              border: `1px solid ${colors.divider}`,
+                              bgcolor: colors.bgSecondary,
+                              ...getTileGridStyles(variant),
+                            }}
+                          >
+                            <Skeleton
+                              variant="rounded"
+                              sx={{
+                                width: '100%',
+                                height: variant === 'hero' ? 320 : variant === 'tall' ? 280 : 200,
+                                borderRadius: 1.5,
+                              }}
+                            />
+                            <Skeleton width="45%" />
+                            <Skeleton width="90%" />
+                            <Skeleton width="75%" />
+                            <Skeleton width="60%" />
+                          </Box>
+                        );
+                      })
+                    : latestQuery.isError && headlines.length === 0
+                      ? (
+                        <Box
+                          sx={{
+                            gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 4', lg: 'span 6' },
+                            border: `1px solid ${colors.divider}`,
+                            bgcolor: colors.bgSecondary,
+                            borderRadius: 2,
+                            p: { xs: 2, md: 2.5 },
+                          }}
+                        >
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            Unable to load news
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: colors.textMuted, mt: 0.5 }}>
+                            Please try again in a moment.
+                          </Typography>
+                          <Button variant="contained" size="small" onClick={() => latestQuery.refetch()} sx={{ mt: 1.5, borderRadius: 999 }}>
+                            Retry
+                          </Button>
+                        </Box>
+                      )
+                      : headlines.map((article, index) => {
                     const variant = getTileVariant(index);
                     const previewLimit = previewLengthByVariant[variant];
                     const articleHref = `/article/${article.slug}`;
@@ -483,7 +618,7 @@ export default function HomePage() {
                       >
                         {article.featuredImage && (
                           <Box
-                            component={Link}
+                            component={TransitionLink}
                             href={articleHref}
                             sx={{
                               display: 'block',
@@ -508,7 +643,7 @@ export default function HomePage() {
                           <Typography variant="caption" sx={{ color: CNN_RED, fontWeight: 700, textTransform: 'uppercase' }}>
                             {article.category?.name ? getLocalizedText(article.category.name, language) : 'News'}
                           </Typography>
-                          <Link href={articleHref} style={{ textDecoration: 'none' }}>
+                          <TransitionLink href={articleHref} style={{ textDecoration: 'none' }}>
                             <Typography
                               variant={variant === 'hero' ? 'h5' : 'h6'}
                               sx={{
@@ -521,14 +656,14 @@ export default function HomePage() {
                             >
                               {getArticleTitle(article)}
                             </Typography>
-                          </Link>
+                          </TransitionLink>
                           {preview && (
                             <Typography variant="body2" sx={{ color: colors.textMuted, mt: 1 }}>
                               {preview}
                             </Typography>
                           )}
                           <Button
-                            component={Link}
+                            component={TransitionLink}
                             href={articleHref}
                             variant="contained"
                             size="small"
@@ -549,21 +684,61 @@ export default function HomePage() {
                   Trending Now
                 </Typography>
                 <Stack spacing={2}>
-                  {trendingHighlights.map((story, i) => (
-                    <Box
-                      key={story.id}
-                      component={Link}
-                      href={`/article/${story.slug}`}
-                      sx={{ display: 'flex', gap: 2, textDecoration: 'none', alignItems: 'flex-start' }}
-                    >
-                      <Typography variant="h4" sx={{ color: '#d1d1d1', fontWeight: 900, lineHeight: 1, minWidth: '30px' }}>
-                        {i + 1}
-                      </Typography>
-                      <Typography variant="subtitle1" sx={{ color: colors.textMain, fontWeight: 600, lineHeight: 1.3, '&:hover': { color: CNN_RED } }}>
-                        {getArticleTitle(story)}
-                      </Typography>
-                    </Box>
-                  ))}
+                  {trendingQuery.isLoading
+                    ? Array.from({ length: 6 }).map((_, idx) => (
+                        <Stack key={`trend-skeleton-${idx}`} direction="row" spacing={2} alignItems="flex-start">
+                          <Skeleton variant="text" width={28} />
+                          <Box sx={{ flex: 1 }}>
+                            <Skeleton width="92%" />
+                            <Skeleton width="70%" />
+                          </Box>
+                        </Stack>
+                      ))
+                    : trendingQuery.isError && trendingHighlights.length === 0
+                      ? (
+                        <Box
+                          sx={{
+                            border: `1px solid ${colors.divider}`,
+                            bgcolor: colors.bgSecondary,
+                            borderRadius: 2,
+                            p: 2,
+                          }}
+                        >
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            Trending unavailable
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: colors.textMuted, mt: 0.5 }}>
+                            Please try again.
+                          </Typography>
+                          <Button variant="contained" size="small" onClick={() => trendingQuery.refetch()} sx={{ mt: 1.25, borderRadius: 999 }}>
+                            Retry
+                          </Button>
+                        </Box>
+                      )
+                      : trendingHighlights.map((story, i) => (
+                        <Box
+                          key={story.id}
+                          component={TransitionLink}
+                          href={`/article/${story.slug}`}
+                          sx={{ display: 'flex', gap: 2, textDecoration: 'none', alignItems: 'flex-start' }}
+                        >
+                          <Typography variant="h4" sx={{ color: '#d1d1d1', fontWeight: 900, lineHeight: 1, minWidth: '30px' }}>
+                            {i + 1}
+                          </Typography>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              color: colors.textMain,
+                              fontWeight: 600,
+                              lineHeight: 1.3,
+                              transition: 'color 150ms ease',
+                              '&:hover': { color: CNN_RED },
+                            }}
+                          >
+                            {getArticleTitle(story)}
+                          </Typography>
+                        </Box>
+                      ))}
                 </Stack>
                 <Box sx={{ mt: 4 }}>
                   <AdSlot position="sidebar" page="home" />

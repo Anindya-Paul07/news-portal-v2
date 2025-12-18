@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type FormEvent } from 'react';
+import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -11,16 +12,22 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { AdminShell } from '@/components/layout/AdminShell';
-import { useAdminArticles, useAdminCategories, useSaveArticle, useDeleteArticle } from '@/hooks/api-hooks';
+import { useAdminArticles, useAdminCategories, useDeleteArticle, useMediaLibrary, useSaveArticle } from '@/hooks/api-hooks';
+import { resolveMediaUrl } from '@/lib/utils';
 import { ArticleStatus } from '@/lib/types';
 import { useAlert } from '@/contexts/alert-context';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
+import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
+import { useAuth } from '@/contexts/auth-context';
+import { canDeleteArticle } from '@/lib/rbac';
+import type { Media } from '@/lib/types';
 
 const initialArticleDraft = {
   titleEn: '',
@@ -35,15 +42,73 @@ const initialArticleDraft = {
   imageUrl: '',
 };
 
+type MediaOption = {
+  id: string;
+  url: string;
+  label: string;
+  previewUrl: string;
+};
+
+const getFilenameFromUrl = (url: string) => {
+  try {
+    const path = url.split('?')[0];
+    const filename = path.split('/').filter(Boolean).pop() || '';
+    return decodeURIComponent(filename);
+  } catch {
+    return url;
+  }
+};
+
+const isLikelyImage = (item: Media) => {
+  const type = item.type?.toLowerCase();
+  if (type && type.startsWith('image')) return true;
+  const url = item.url.toLowerCase();
+  return ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif', '.svg'].some((ext) => url.includes(ext));
+};
+
 export default function ArticlesAdminPage() {
+  useAdminAreaGuard('articles');
+  const { user } = useAuth();
   const { data: articles } = useAdminArticles({ limit: 12 });
   const { data: categories } = useAdminCategories();
+  const mediaQuery = useMediaLibrary({ limit: 50 });
   const { mutateAsync: saveArticle } = useSaveArticle();
   const { mutateAsync: deleteArticle } = useDeleteArticle();
   const { notify } = useAlert();
   const [draft, setDraft] = useState(initialArticleDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const statusOptions: ArticleStatus[] = ['draft', 'published', 'scheduled'];
+
+  const mediaOptions = useMemo<MediaOption[]>(() => {
+    const raw = (mediaQuery.data ?? []).filter(isLikelyImage);
+    const options = raw.map((item) => {
+      const filename = item.filename || item.name || getFilenameFromUrl(item.url);
+      const label = filename || item.caption || 'Image';
+      return {
+        id: item.id || item.url,
+        url: item.url,
+        label,
+        previewUrl: resolveMediaUrl(item.url),
+      };
+    });
+
+    if (draft.imageUrl && !options.some((opt) => opt.url === draft.imageUrl)) {
+      const filename = getFilenameFromUrl(draft.imageUrl);
+      options.unshift({
+        id: `current:${draft.imageUrl}`,
+        url: draft.imageUrl,
+        label: filename ? `Current: ${filename}` : 'Current image',
+        previewUrl: resolveMediaUrl(draft.imageUrl),
+      });
+    }
+
+    return options;
+  }, [draft.imageUrl, mediaQuery.data]);
+
+  const selectedMedia = useMemo(
+    () => mediaOptions.find((opt) => opt.url === draft.imageUrl) ?? null,
+    [draft.imageUrl, mediaOptions],
+  );
 
   const onCreate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -94,6 +159,10 @@ export default function ArticlesAdminPage() {
   };
 
   const handleDelete = async (articleId: string) => {
+    if (!canDeleteArticle(user?.role)) {
+      notify({ type: 'error', title: 'Not allowed', description: 'You do not have permission to delete articles.' });
+      return;
+    }
     if (!window.confirm('Delete this article permanently?')) return;
     try {
       await deleteArticle(articleId);
@@ -143,11 +212,65 @@ export default function ArticlesAdminPage() {
             </Stack>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <Input label="Slug" value={draft.slug} onChange={(e) => setDraft((d) => ({ ...d, slug: e.target.value }))} required />
-              <Input
-                label="Featured image URL"
-                value={draft.imageUrl}
-                onChange={(e) => setDraft((d) => ({ ...d, imageUrl: e.target.value }))}
-                helperText="Serve from media library or CDN"
+              <Autocomplete
+                fullWidth
+                options={mediaOptions}
+                value={selectedMedia}
+                onChange={(_, option) => setDraft((d) => ({ ...d, imageUrl: option?.url ?? '' }))}
+                isOptionEqualToValue={(option, value) => option.url === value.url}
+                getOptionLabel={(option) => option.label}
+                loading={mediaQuery.isLoading}
+                noOptionsText={
+                  mediaQuery.isError ? 'Unable to load media library.' : 'No uploaded images found.'
+                }
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id}>
+                    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ py: 0.5 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={option.previewUrl}
+                        alt=""
+                        width={32}
+                        height={32}
+                        style={{ borderRadius: 6, objectFit: 'cover', flex: '0 0 auto' }}
+                      />
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {option.label}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                          {option.url}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Featured image"
+                    placeholder="Select from media library"
+                    helperText={mediaQuery.isError ? 'Media service unavailable.' : 'Pick an uploaded image (URL is sent to backend).'}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <>
+                          {selectedMedia?.previewUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={selectedMedia.previewUrl}
+                              alt=""
+                              width={28}
+                              height={28}
+                              style={{ borderRadius: 6, objectFit: 'cover', marginRight: 8 }}
+                            />
+                          ) : null}
+                          {params.InputProps.startAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
               />
             </Stack>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -242,21 +365,23 @@ export default function ArticlesAdminPage() {
                     <Button variant="ghost" size="small" onClick={() => handleEdit(article.id)}>
                       Edit
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="small"
-                      sx={{
-                        color: 'error.main',
-                        borderColor: 'error.main',
-                        '&:hover': {
-                          borderColor: 'error.dark',
-                          backgroundColor: 'rgba(211,47,47,0.08)',
-                        },
-                      }}
-                      onClick={() => handleDelete(article.id)}
-                    >
-                      Delete
-                    </Button>
+                    {canDeleteArticle(user?.role) && (
+                      <Button
+                        variant="outline"
+                        size="small"
+                        sx={{
+                          color: 'error.main',
+                          borderColor: 'error.main',
+                          '&:hover': {
+                            borderColor: 'error.dark',
+                            backgroundColor: 'rgba(211,47,47,0.08)',
+                          },
+                        }}
+                        onClick={() => handleDelete(article.id)}
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </Stack>
                 </CardContent>
               </Card>

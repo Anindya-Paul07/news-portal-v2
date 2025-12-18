@@ -22,8 +22,10 @@ import { useAlert } from '@/contexts/alert-context';
 import { getLocalizedText } from '@/lib/utils';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
+import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
 export default function CategoriesPage() {
+  useAdminAreaGuard('categories');
   const { data: categories } = useAdminCategories();
   const { data: tree } = useCategoryTree();
   const { mutateAsync: saveCategory } = useSaveCategory();

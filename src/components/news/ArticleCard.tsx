@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import Card from '@mui/material/Card';
 import CardActionArea from '@mui/material/CardActionArea';
 import CardContent from '@mui/material/CardContent';
@@ -13,6 +12,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { Article } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { formatDate, getLocalizedText } from '@/lib/utils';
+import { TransitionLink } from '@/components/navigation/TransitionLink';
 
 export function ArticleCard({ article }: { article: Article }) {
   const { language } = useLanguage();
@@ -38,7 +38,7 @@ export function ArticleCard({ article }: { article: Article }) {
       }}
     >
       <CardActionArea
-        component={Link}
+        component={TransitionLink}
         href={`/article/${article.slug}`}
         sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
       >
