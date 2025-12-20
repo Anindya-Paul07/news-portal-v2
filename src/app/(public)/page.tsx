@@ -16,7 +16,7 @@ import { BreakingTicker } from '@/components/news/BreakingTicker';
 import { useLanguage } from '@/contexts/language-context';
 import { Article } from '@/lib/types';
 import { useBreakingTicker, useLatestArticles, useTrendingArticles } from '@/hooks/api-hooks';
-import { getLocalizedText } from '@/lib/utils';
+import { getLocalizedText, resolveMediaUrl } from '@/lib/utils';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -129,6 +129,7 @@ export default function HomePage() {
   }, [heroCount]);
   const normalizedHeroIndex = heroCount > 0 ? ((heroIndex % heroCount) + heroCount) % heroCount : 0;
   const heroArticle = heroArticles[normalizedHeroIndex] || latestList[0];
+  const heroImageUrl = heroArticle ? resolveMediaUrl(heroArticle.featuredImage?.url || heroArticle.coverImage) : '';
   const handleHeroNavigate = (direction: 'prev' | 'next') => {
     if (heroCount === 0) return;
     setHeroIndex((prev) => (direction === 'next' ? prev + 1 : prev - 1));
@@ -151,6 +152,7 @@ export default function HomePage() {
 
   const [tickerCondensed, setTickerCondensed] = useState(false);
   const getArticleTitle = (story: Article) => getLocalizedText(story.title, language);
+  const getArticleHref = (story: Article) => `/article/${story.slug || story.id}`;
   
   useEffect(() => {
     const handleScroll = () => setTickerCondensed(window.scrollY > 120);
@@ -215,7 +217,7 @@ export default function HomePage() {
                   <Box sx={{ position: 'relative', width: '100%', height: { xs: 320, sm: 380, md: 540, lg: 620 } }}>
                     <Box
                       component={TransitionLink}
-                      href={`/article/${heroArticle.slug}`}
+                      href={getArticleHref(heroArticle)}
                       sx={{
                         display: 'block',
                         position: 'relative',
@@ -231,8 +233,8 @@ export default function HomePage() {
                         sx={{
                           position: 'absolute',
                           inset: 0,
-                          backgroundImage: heroArticle.featuredImage?.url
-                            ? `url(${heroArticle.featuredImage.url})`
+                          backgroundImage: heroImageUrl
+                            ? `url(${heroImageUrl})`
                             : 'linear-gradient(160deg, #222, #444)',
                           backgroundSize: 'cover',
                           backgroundPosition: 'center',
@@ -372,7 +374,7 @@ export default function HomePage() {
                         <Box
                           key={story.id}
                           component={TransitionLink}
-                          href={`/article/${story.slug}`}
+                          href={getArticleHref(story)}
                           sx={{
                             display: 'flex',
                             gap: 2,
@@ -383,7 +385,7 @@ export default function HomePage() {
                           {story.featuredImage && (
                             <Box
                               component="img"
-                              src={story.featuredImage.url}
+                              src={resolveMediaUrl(story.featuredImage.url)}
                               alt=""
                               sx={{
                                 width: { xs: 80, md: 100 },
@@ -588,7 +590,7 @@ export default function HomePage() {
                       : headlines.map((article, index) => {
                     const variant = getTileVariant(index);
                     const previewLimit = previewLengthByVariant[variant];
-                    const articleHref = `/article/${article.slug}`;
+                    const articleHref = getArticleHref(article);
                     const excerptText = article.excerpt ? getLocalizedText(article.excerpt, language) : '';
                     const preview =
                       previewLimit && excerptText.length > previewLimit
@@ -629,7 +631,7 @@ export default function HomePage() {
                           >
                             <Box
                               component="img"
-                              src={article.featuredImage.url}
+                              src={resolveMediaUrl(article.featuredImage.url)}
                               alt=""
                               sx={{
                                 width: '100%',
@@ -719,7 +721,7 @@ export default function HomePage() {
                         <Box
                           key={story.id}
                           component={TransitionLink}
-                          href={`/article/${story.slug}`}
+                          href={getArticleHref(story)}
                           sx={{ display: 'flex', gap: 2, textDecoration: 'none', alignItems: 'flex-start' }}
                         >
                           <Typography variant="h4" sx={{ color: '#d1d1d1', fontWeight: 900, lineHeight: 1, minWidth: '30px' }}>

@@ -42,7 +42,7 @@ export const TransitionLink = forwardRef<HTMLAnchorElement, TransitionLinkProps>
       // View Transitions API (Chrome) for a premium feel.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const startViewTransition = (document as any).startViewTransition as undefined | ((cb: () => void) => void);
-      if (startViewTransition) startViewTransition(navigate);
+      if (startViewTransition) startViewTransition.call(document, navigate);
       else navigate();
     });
   };

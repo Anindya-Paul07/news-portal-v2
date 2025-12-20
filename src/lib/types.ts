@@ -78,16 +78,16 @@ export type ArticlePayload = {
   isTrending?: boolean;
 };
 
-export type AdPlacement = 'sidebar-middle' | 'sidebar-top' | 'bottom' | 'middle' | 'top' | 'sidebar-bottom';
+export type AdPlacement = 'top' | 'middle' | 'bottom' | 'sidebar_top' | 'sidebar_middle' | 'sidebar_bottom';
 
-export type AdvertisementType = 'banner' | 'sidebar' | 'in_content' | 'popup' ;
+export type AdvertisementType = 'banner' | 'sidebar' | 'in_content' | 'popup';
 
 export type Advertisement = {
   id: string;
   name?: string;
   title?: string;
   type: AdvertisementType;
-  position: string;
+  position: AdPlacement;
   page?: string;
   image?: ImageAsset;
   imageUrl?: string;
@@ -108,7 +108,7 @@ export type AdvertisementPayload = {
   id?: string;
   name: string;
   type: AdvertisementType;
-  position: string;
+  position: AdPlacement;
   page?: string;
   image?: ImageAsset;
   linkUrl?: string;

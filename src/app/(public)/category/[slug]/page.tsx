@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useCategory, useCategoryArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
-import { getLocalizedText } from '@/lib/utils';
+import { getLocalizedText, resolveMediaUrl } from '@/lib/utils';
 
 export default function CategoryPage() {
   const params = useParams<{ slug: string }>();
@@ -32,9 +32,11 @@ export default function CategoryPage() {
   const categoryData = category;
   const articlesList = articles ?? [];
   const heroArticle = articlesList[0];
+  const heroImageUrl = heroArticle ? resolveMediaUrl(heroArticle.featuredImage?.url || heroArticle.coverImage) : '';
   const restArticles = articlesList.slice(1);
   const categoryLabel = getLocalizedText(categoryData?.name, language) || 'Category';
   const categoryDescription = getLocalizedText(categoryData?.description, language);
+  const heroHref = heroArticle ? `/article/${heroArticle.slug || heroArticle.id}` : '';
 
   const filters = useMemo(
     () => [
@@ -86,13 +88,13 @@ export default function CategoryPage() {
               {heroArticle && (
                 <Paper
                   component={Link as unknown as 'a'}
-                  href={`/article/${heroArticle.slug}`}
+                  href={heroHref}
                   sx={{
                     p: { xs: 2.5, md: 3 },
                     borderRadius: 3,
                     minHeight: 260,
-                    backgroundImage: heroArticle.featuredImage?.url
-                      ? `linear-gradient(150deg, ${alpha('#000', 0.3)}, ${alpha('#000', 0.75)}), url(${heroArticle.featuredImage.url})`
+                    backgroundImage: heroImageUrl
+                      ? `linear-gradient(150deg, ${alpha('#000', 0.3)}, ${alpha('#000', 0.75)}), url(${heroImageUrl})`
                       : `linear-gradient(150deg, ${alpha('#d3182d', 0.15)}, ${alpha('#3b1f20', 0.8)})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',

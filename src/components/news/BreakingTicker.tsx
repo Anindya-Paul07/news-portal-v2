@@ -24,7 +24,7 @@ export function BreakingTicker({ items, condensed = false, loading = false, erro
 
   const headlines = items.map((item) => ({
     id: item.id,
-    slug: item.slug,
+    identifier: item.slug || item.id,
     title: getLocalizedText(item.title, language),
   }));
 
@@ -106,7 +106,7 @@ export function BreakingTicker({ items, condensed = false, loading = false, erro
                   spacing={1}
                   alignItems="center"
                   component={TransitionLink}
-                  href={`/article/${item.slug}`}
+                  href={`/article/${item.identifier}`}
                   sx={{
                     color: 'text.primary',
                     textDecoration: 'none',
@@ -133,7 +133,7 @@ export function BreakingTicker({ items, condensed = false, loading = false, erro
                   spacing={1}
                   alignItems="center"
                   component={TransitionLink}
-                  href={`/article/${item.slug}`}
+                  href={`/article/${item.identifier}`}
                   sx={{
                     color: 'text.primary',
                     textDecoration: 'none',

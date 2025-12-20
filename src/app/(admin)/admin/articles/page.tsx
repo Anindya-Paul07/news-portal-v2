@@ -40,6 +40,9 @@ const initialArticleDraft = {
   category: '',
   status: 'draft' as ArticleStatus,
   imageUrl: '',
+  isFeatured: false,
+  isBreaking: false,
+  isTrending: false,
 };
 
 type MediaOption = {
@@ -121,6 +124,9 @@ export default function ArticlesAdminPage() {
         content: { en: draft.contentEn, bn: draft.contentBn },
         category: draft.category || undefined,
         status: draft.status,
+        isFeatured: draft.isFeatured,
+        isBreaking: draft.isBreaking,
+        isTrending: draft.isTrending,
         featuredImage: draft.imageUrl ? { url: draft.imageUrl } : undefined,
       });
       setDraft(initialArticleDraft);
@@ -154,6 +160,9 @@ export default function ArticlesAdminPage() {
       category: article.categoryId || '',
       status: article.status || 'draft',
       imageUrl: article.featuredImage?.url || '',
+      isFeatured: !!article.isFeatured,
+      isBreaking: !!article.isBreaking,
+      isTrending: !!article.isTrending,
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -331,6 +340,31 @@ export default function ArticlesAdminPage() {
                     />
                   ))}
                 </Stack>
+              </Stack>
+            </Stack>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                Flags
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                <Chip
+                  label="Featured"
+                  color={draft.isFeatured ? 'secondary' : 'default'}
+                  variant={draft.isFeatured ? 'filled' : 'outlined'}
+                  onClick={() => setDraft((d) => ({ ...d, isFeatured: !d.isFeatured }))}
+                />
+                <Chip
+                  label="Breaking"
+                  color={draft.isBreaking ? 'primary' : 'default'}
+                  variant={draft.isBreaking ? 'filled' : 'outlined'}
+                  onClick={() => setDraft((d) => ({ ...d, isBreaking: !d.isBreaking }))}
+                />
+                <Chip
+                  label="Trending"
+                  color={draft.isTrending ? 'warning' : 'default'}
+                  variant={draft.isTrending ? 'filled' : 'outlined'}
+                  onClick={() => setDraft((d) => ({ ...d, isTrending: !d.isTrending }))}
+                />
               </Stack>
             </Stack>
             <Button type="submit" sx={{ alignSelf: 'flex-start' }}>

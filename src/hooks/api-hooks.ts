@@ -5,6 +5,8 @@ import { apiClient } from '@/lib/api-client';
 import {
   Advertisement,
   AdvertisementPayload,
+  AdvertisementType,
+  AdPlacement,
   ApiResponse,
   Article,
   ArticlePayload,
@@ -124,7 +126,7 @@ export const useSearchArticles = (term: string, filters?: Record<string, string 
     queryFn: () => fetcher<Article[]>(`/articles/search/query${buildQuery({ q: term, ...filters })}`),
   });
 
-export const useAds = (params?: { type?: string; position?: string; page?: string }) =>
+export const useAds = (params?: { type?: AdvertisementType; position?: AdPlacement; page?: string }) =>
   useQuery({
     queryKey: ['ads', 'active', params],
     queryFn: () => fetcher<Advertisement[]>(`/advertisements/active${buildQuery(params)}`),

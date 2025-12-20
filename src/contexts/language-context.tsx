@@ -15,7 +15,7 @@ const STORAGE_KEY = 'newsportal:language';
 const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<SupportedLanguage>('en');
+  const [language, setLanguage] = useState<SupportedLanguage>('bn');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

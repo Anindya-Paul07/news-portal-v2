@@ -21,7 +21,7 @@ import { ArticleCard } from '@/components/news/ArticleCard';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useArticle, useRelatedArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
-import { formatDate, getLocalizedText } from '@/lib/utils';
+import { formatDate, getLocalizedText, resolveMediaUrl } from '@/lib/utils';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
 
 export default function ArticlePage() {
@@ -42,7 +42,7 @@ export default function ArticlePage() {
   const categoryLabel = displayArticle ? getLocalizedText(displayArticle.category?.name, language) || 'News' : 'News';
   const title = displayArticle ? getLocalizedText(displayArticle.title, language) : '';
   const summary = displayArticle ? getLocalizedText(displayArticle.excerpt, language) : '';
-  const featuredImage = displayArticle?.featuredImage?.url || displayArticle?.coverImage;
+  const featuredImage = resolveMediaUrl(displayArticle?.featuredImage?.url || displayArticle?.coverImage);
   const featuredAlt = displayArticle ? getLocalizedText(displayArticle.featuredImage?.alt, language) || title : '';
   const bodyContent = useMemo(() => {
     if (!displayArticle) return summary || '';

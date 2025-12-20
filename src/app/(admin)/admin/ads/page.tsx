@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { useAdminAds, useSaveAd, useDeleteAd } from '@/hooks/api-hooks';
-import { AdvertisementType } from '@/lib/types';
+import { AdPlacement, AdvertisementType } from '@/lib/types';
 import { useAlert } from '@/contexts/alert-context';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
@@ -25,7 +25,7 @@ import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 const initialAdDraft = {
   name: '',
   type: 'banner' as AdvertisementType,
-  position: 'top' as 'top' | 'bottom' | 'sidebar-bottom' | 'sidebar-top' | 'sidebar-middle' | 'middle',
+  position: 'top' as AdPlacement,
   page: 'home',
   linkUrl: '',
   imageUrl: '',
@@ -45,13 +45,13 @@ export default function AdsPage() {
   const { notify } = useAlert();
   const [draft, setDraft] = useState(initialAdDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const positions: Array<'top' | 'bottom' | 'sidebar-bottom' | 'sidebar-top' | 'sidebar-middle' | 'middle'> = [
+  const positions: AdPlacement[] = [
     'top',
-    'bottom',
-    'sidebar-bottom',
-    'sidebar-top',
-    'sidebar-middle',
     'middle',
+    'bottom',
+    'sidebar_top',
+    'sidebar_middle',
+    'sidebar_bottom',
   ];
   const adTypes: AdvertisementType[] = ['banner', 'sidebar', 'in_content', 'popup'];
 
@@ -169,7 +169,7 @@ export default function AdsPage() {
                   {positions.map((pos) => (
                     <Grid key={pos} size={{ xs: 'auto' }}>
                       <Chip
-                        label={pos.replace('_', ' ')}
+                        label={pos.replace(/[-_]/g, ' ')}
                         color={draft.position === pos ? 'secondary' : 'default'}
                         onClick={() => setDraft((d) => ({ ...d, position: pos }))}
                       />

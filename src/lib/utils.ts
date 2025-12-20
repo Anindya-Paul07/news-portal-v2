@@ -33,10 +33,47 @@ export function getLocalizedText(value?: LocalizedText | null, language: 'en' | 
 
 const defaultUploadBase = 'https://backoffice.thecontemporary.news';
 
+const stripApiPrefix = (value: string) => value.replace(/^api\/v\d+\//i, '');
+
 export function resolveMediaUrl(url?: string | null) {
   if (!url) return '';
-  if (/^https?:\/\//i.test(url)) return url;
-  const base = process.env.NEXT_PUBLIC_UPLOAD_BASE || defaultUploadBase;
-  const trimmed = url.replace(/^\/+/, '');
-  return `${base.replace(/\/+$/, '')}/${trimmed}`;
+
+  const uploadBase = (process.env.NEXT_PUBLIC_UPLOAD_BASE || defaultUploadBase).replace(/\/+$/, '');
+  const apiBase = (process.env.NEXT_PUBLIC_API_BASE || defaultUploadBase).replace(/\/+$/, '');
+
+  const buildFromPath = (path: string) => {
+    const withoutSlashes = path.replace(/^\/+/, '');
+    const normalized = stripApiPrefix(withoutSlashes);
+    return normalized ? `${uploadBase}/${normalized}` : uploadBase;
+  };
+
+  if (!/^https?:\/\//i.test(url)) {
+    return buildFromPath(url);
+  }
+
+  try {
+    const parsed = new URL(url);
+    const allowedOrigins: string[] = [];
+    try {
+      allowedOrigins.push(new URL(uploadBase).origin);
+    } catch {
+      /* no-op */
+    }
+    try {
+      const origin = new URL(apiBase).origin;
+      if (!allowedOrigins.includes(origin)) {
+        allowedOrigins.push(origin);
+      }
+    } catch {
+      /* no-op */
+    }
+
+    if (allowedOrigins.includes(parsed.origin)) {
+      return buildFromPath(parsed.pathname);
+    }
+  } catch {
+    // Ignore parsing errors and fall through to returning the original URL.
+  }
+
+  return url;
 }

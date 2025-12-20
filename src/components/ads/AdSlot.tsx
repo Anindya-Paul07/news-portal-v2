@@ -12,14 +12,14 @@ import { apiClient } from '@/lib/api-client';
 import { sampleAds } from '@/lib/fallbacks';
 import { useLanguage } from '@/contexts/language-context';
 import { getLocalizedText } from '@/lib/utils';
-import { AdvertisementType } from '@/lib/types';
+import { AdPlacement, AdvertisementType } from '@/lib/types';
 
-type SlotConfig = { height: number; type: AdvertisementType; apiPosition?: string; sizes: string };
+type SlotConfig = { height: number; type: AdvertisementType; apiPosition?: AdPlacement; sizes: string };
 
 const slotConfig: Record<string, SlotConfig> = {
   hero: { height: 320, type: 'banner', apiPosition: 'top', sizes: '(max-width: 600px) 100vw, 1200px' },
   banner: { height: 160, type: 'banner', apiPosition: 'middle', sizes: '(max-width: 600px) 100vw, 1200px' },
-  sidebar: { height: 360, type: 'sidebar', apiPosition: 'sidebar', sizes: '(max-width: 600px) 100vw, 360px' },
+  sidebar: { height: 360, type: 'sidebar', apiPosition: 'sidebar_top', sizes: '(max-width: 600px) 100vw, 360px' },
   in_content: { height: 260, type: 'in_content', apiPosition: 'middle', sizes: '(max-width: 600px) 100vw, 600px' },
   popup: { height: 220, type: 'popup', apiPosition: 'middle', sizes: '(max-width: 600px) 100vw, 480px' },
 };
@@ -31,10 +31,12 @@ export function AdSlot({ position, page }: { position: string; page?: string }) 
     apiPosition: undefined,
     sizes: '(max-width: 600px) 100vw, 600px',
   };
+  const allowedPages = new Set(['home', 'article', 'all']);
+  const normalizedPage = page ? (allowedPages.has(page) ? page : 'all') : undefined;
   const { data } = useAds({
     type: slot.type,
     position: slot.apiPosition,
-    page,
+    page: normalizedPage,
   });
   const isFallbackAd = !data || data.length === 0;
   const fallbackAd = sampleAds.find((item) => item.position === position) || sampleAds[0];

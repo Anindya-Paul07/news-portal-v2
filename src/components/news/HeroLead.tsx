@@ -11,7 +11,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { Button } from '@/components/ui/Button';
 import { Article } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
-import { formatDate, getLocalizedText } from '@/lib/utils';
+import { formatDate, getLocalizedText, resolveMediaUrl } from '@/lib/utils';
 
 export function HeroLead({ article }: { article: Article }) {
   const { language } = useLanguage();
@@ -20,7 +20,7 @@ export function HeroLead({ article }: { article: Article }) {
 
   const title = getLocalizedText(article.title, language);
   const summary = getLocalizedText(article.excerpt, language);
-  const imageUrl = article.featuredImage?.url || article.coverImage;
+  const imageUrl = resolveMediaUrl(article.featuredImage?.url || article.coverImage);
   const imageAlt = getLocalizedText(article.featuredImage?.alt, language) || title;
 
   return (
@@ -45,7 +45,7 @@ export function HeroLead({ article }: { article: Article }) {
                 size="small"
                 sx={{ fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase' }}
               />
-              <Link href={`/article/${article.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link href={`/article/${article.slug || article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <Typography variant="h3" component="h1" sx={{ fontWeight: 800, lineHeight: 1.1 }}>
                   {title}
                 </Typography>
@@ -62,7 +62,7 @@ export function HeroLead({ article }: { article: Article }) {
               </Stack>
               <Button
                 component={Link as unknown as 'a'}
-                href={`/article/${article.slug}`}
+                href={`/article/${article.slug || article.id}`}
                 variant="secondary"
                 sx={{ alignSelf: 'flex-start', px: 3 }}
               >
@@ -73,7 +73,7 @@ export function HeroLead({ article }: { article: Article }) {
           <Grid size={{ xs: 12, md: 6 }}>
             <CardActionArea
               component={Link}
-              href={`/article/${article.slug}`}
+              href={`/article/${article.slug || article.id}`}
               sx={{
                 position: 'relative',
                 height: { xs: 240, sm: 300 },

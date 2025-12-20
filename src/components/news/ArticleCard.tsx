@@ -11,7 +11,7 @@ import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 import { Article } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
-import { formatDate, getLocalizedText } from '@/lib/utils';
+import { formatDate, getLocalizedText, resolveMediaUrl } from '@/lib/utils';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
 
 export function ArticleCard({ article }: { article: Article }) {
@@ -20,7 +20,7 @@ export function ArticleCard({ article }: { article: Article }) {
   const categoryLabel = getLocalizedText(article.category?.name, language) || 'News';
   const title = getLocalizedText(article.title, language);
   const summary = getLocalizedText(article.excerpt, language);
-  const imageUrl = article.featuredImage?.url || article.coverImage;
+  const imageUrl = resolveMediaUrl(article.featuredImage?.url || article.coverImage);
   const imageAlt = getLocalizedText(article.featuredImage?.alt, language) || title;
 
   return (
@@ -39,7 +39,7 @@ export function ArticleCard({ article }: { article: Article }) {
     >
       <CardActionArea
         component={TransitionLink}
-        href={`/article/${article.slug}`}
+        href={`/article/${article.slug || article.id}`}
         sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
       >
         {imageUrl ? (
