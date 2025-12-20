@@ -39,7 +39,7 @@ export function AdSlot({ position, page }: { position: string; page?: string }) 
     page: normalizedPage,
   });
   const isFallbackAd = !data || data.length === 0;
-  const fallbackAd = sampleAds.find((item) => item.position === position) || sampleAds[0];
+  const fallbackAd = sampleAds.find((item) => item.position === (slot.apiPosition ?? position)) || sampleAds[0];
   const ad = data?.[0] || fallbackAd;
   const adTitle = ad.title || ad.name || 'Sponsored placement';
   const { language } = useLanguage();

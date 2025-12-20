@@ -152,7 +152,7 @@ export const sampleAds: Advertisement[] = [
     title: 'The Contemporary Studio',
     name: 'Studio banner',
     type: 'banner',
-    position: 'hero',
+    position: 'top',
     page: 'home',
     image: {
       url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
@@ -167,7 +167,7 @@ export const sampleAds: Advertisement[] = [
     title: 'Data & Climate Summit',
     name: 'Summit sidebar',
     type: 'sidebar',
-    position: 'sidebar',
+    position: 'sidebar_top',
     page: 'home',
     image: {
       url: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=800&q=80',
