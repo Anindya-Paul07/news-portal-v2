@@ -17,6 +17,7 @@ import Typography from '@mui/material/Typography';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { AdminShell } from '@/components/layout/AdminShell';
 import { useAdminArticles, useAdminCategories, useDeleteArticle, useMediaLibrary, useSaveArticle } from '@/hooks/api-hooks';
 import { resolveMediaUrl } from '@/lib/utils';
@@ -296,17 +297,19 @@ export default function ArticlesAdminPage() {
               />
             </Stack>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Textarea
+              <RichTextEditor
                 label="Content (EN)"
                 value={draft.contentEn}
-                onChange={(e) => setDraft((d) => ({ ...d, contentEn: e.target.value }))}
-                rows={5}
+                onChange={(value) => setDraft((d) => ({ ...d, contentEn: value }))}
+                helper="Use headings, lists, links, and images to enrich the article."
+                minHeight={240}
               />
-              <Textarea
+              <RichTextEditor
                 label="Content (BN)"
                 value={draft.contentBn}
-                onChange={(e) => setDraft((d) => ({ ...d, contentBn: e.target.value }))}
-                rows={5}
+                onChange={(value) => setDraft((d) => ({ ...d, contentBn: value }))}
+                helper="Use headings, lists, links, and images to enrich the article."
+                minHeight={240}
               />
             </Stack>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>

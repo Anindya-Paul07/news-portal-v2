@@ -198,6 +198,49 @@ img {
   color: var(--color-accent);
 }
 
+.article-content {
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.article-content p {
+  margin: 0 0 16px;
+  white-space: pre-wrap;
+}
+
+.article-content h2,
+.article-content h3 {
+  margin: 22px 0 12px;
+  font-weight: 700;
+}
+
+.article-content ul,
+.article-content ol {
+  margin: 0 0 16px;
+  padding-left: 1.25rem;
+}
+
+.article-content li,
+.article-content blockquote {
+  white-space: pre-wrap;
+}
+
+.article-content blockquote {
+  margin: 16px 0;
+  padding: 12px 18px;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-ink);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.article-content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 18px auto;
+  border-radius: 12px;
+}
+
 ::selection {
   background: rgba(255, 183, 3, 0.35);
   color: var(--color-primary-contrast);

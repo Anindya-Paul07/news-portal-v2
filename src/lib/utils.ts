@@ -51,29 +51,31 @@ export function resolveMediaUrl(url?: string | null) {
     return buildFromPath(url);
   }
 
-  try {
-    const parsed = new URL(url);
-    const allowedOrigins: string[] = [];
-    try {
-      allowedOrigins.push(new URL(uploadBase).origin);
-    } catch {
-      /* no-op */
-    }
-    try {
-      const origin = new URL(apiBase).origin;
-      if (!allowedOrigins.includes(origin)) {
-        allowedOrigins.push(origin);
-      }
-    } catch {
-      /* no-op */
-    }
-
-    if (allowedOrigins.includes(parsed.origin)) {
-      return buildFromPath(parsed.pathname);
-    }
-  } catch {
-    // Ignore parsing errors and fall through to returning the original URL.
-  }
-
   return url;
+}
+
+const escapeHtml = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+export function normalizeRichText(content?: string | null) {
+  if (!content) return '';
+  const trimmed = content.trim();
+  if (!trimmed) return '';
+  const hasHtml = /<\/?[a-z][\s\S]*>/i.test(trimmed);
+  if (hasHtml) return trimmed;
+  const escaped = escapeHtml(trimmed);
+  return `<p>${escaped.replace(/\r\n/g, '\n').replace(/\n/g, '<br />')}</p>`;
+}
+
+export function resolveRichTextMedia(html?: string | null) {
+  if (!html) return '';
+  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') return html;
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('img').forEach((img) => {
+    const src = img.getAttribute('src');
+    if (src) {
+      img.setAttribute('src', resolveMediaUrl(src));
+    }
+  });
+  return doc.body.innerHTML;
 }

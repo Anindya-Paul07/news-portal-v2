@@ -21,7 +21,7 @@ import { ArticleCard } from '@/components/news/ArticleCard';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useArticle, useRelatedArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
-import { formatDate, getLocalizedText, resolveMediaUrl } from '@/lib/utils';
+import { formatDate, getLocalizedText, normalizeRichText, resolveMediaUrl, resolveRichTextMedia } from '@/lib/utils';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
 
 export default function ArticlePage() {
@@ -56,6 +56,10 @@ export default function ArticlePage() {
     }
     return summary || '';
   }, [displayArticle, language, summary]);
+  const bodyHtml = useMemo(
+    () => resolveRichTextMedia(normalizeRichText(bodyContent || 'বাংলা কন্টেন্ট আসছে।')),
+    [bodyContent],
+  );
 
   if (articleQuery.isLoading) {
     return (
@@ -163,7 +167,7 @@ export default function ArticlePage() {
                   boxShadow: 3,
                 }}
               >
-                <Image src={featuredImage} alt={featuredAlt} fill className="object-cover" sizes="100vw" />
+                <Image src={featuredImage} alt={featuredAlt} fill className="object-cover" sizes="100vw" unoptimized />
               </Box>
             )}
 
@@ -177,9 +181,8 @@ export default function ArticlePage() {
                 '& p': { mb: 2 },
               }}
               className="article-content"
-            >
-              <Typography variant="body1">{bodyContent || 'বাংলা কন্টেন্ট আসছে।'}</Typography>
-            </Box>
+              dangerouslySetInnerHTML={{ __html: bodyHtml }}
+            />
 
             <Box sx={{ mt: 3 }}>
               <AdSlot position="in_content" page="article" />
