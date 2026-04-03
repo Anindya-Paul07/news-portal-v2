@@ -24,6 +24,7 @@ export type LocalizedText =
 export type ImageAsset = {
   url: string;
   alt?: LocalizedText;
+  caption?: LocalizedText;
 };
 
 export type Category = {

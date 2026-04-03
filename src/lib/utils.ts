@@ -1,81 +1,76 @@
-import { LocalizedText } from '@/lib/types';
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
-export function cn(...classes: Array<string | undefined | null | false>) {
-  return classes.filter(Boolean).join(' ');
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }
 
-export function formatDate(value?: string | number | Date) {
-  if (!value) return '';
-  const date = typeof value === 'string' || typeof value === 'number' ? new Date(value) : value;
-  return new Intl.DateTimeFormat('en', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date);
+/**
+ * Get localized text from an object with en/bn properties
+ */
+export function getLocalizedText(
+  obj: string | { en?: string | null; bn?: string | null } | undefined | null,
+  locale: 'en' | 'bn' = 'en'
+): string {
+  if (!obj) return '';
+  if (typeof obj === 'string') return obj;
+  return (locale === 'bn' ? obj.bn : obj.en) || obj.en || obj.bn || '';
 }
 
-export function readingTimeFromWords(words?: number) {
-  if (!words) return '';
-  const minutes = Math.max(1, Math.round(words / 200));
-  return `${minutes} min read`;
-}
-
-export function getLocalizedText(value?: LocalizedText | null, language: 'en' | 'bn' = 'en') {
-  if (!value) return '';
-  if (typeof value === 'string') return value;
-  const normalized = language.toLowerCase();
-  if (value[normalized]) return value[normalized];
-  if (value.en) return value.en;
-  if (value.bn) return value.bn;
-  const firstEntry = Object.values(value).find((entry) => typeof entry === 'string' && entry.trim().length > 0);
-  return firstEntry || '';
-}
-
-const defaultUploadBase = 'https://backoffice.thecontemporary.news';
-
-const stripApiPrefix = (value: string) => value.replace(/^api\/v\d+\//i, '');
-
-export function resolveMediaUrl(url?: string | null) {
+/**
+ * Resolve media URL - handles both absolute URLs and relative paths
+ */
+export function resolveMediaUrl(url: string | undefined | null): string {
   if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // Relative path - prepend API base URL
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE || 'https://backoffice.thecontemporary.news';
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+}
 
-  const uploadBase = (process.env.NEXT_PUBLIC_UPLOAD_BASE || defaultUploadBase).replace(/\/+$/, '');
-  const apiBase = (process.env.NEXT_PUBLIC_API_BASE || defaultUploadBase).replace(/\/+$/, '');
-
-  const buildFromPath = (path: string) => {
-    const withoutSlashes = path.replace(/^\/+/, '');
-    const normalized = stripApiPrefix(withoutSlashes);
-    return normalized ? `${uploadBase}/${normalized}` : uploadBase;
-  };
-
-  if (!/^https?:\/\//i.test(url)) {
-    return buildFromPath(url);
+/**
+ * Normalize rich text content into a string HTML payload that can be rendered safely by the UI.
+ */
+export function normalizeRichText(value: unknown): string {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : '<p></p>';
   }
 
-  return url;
+  if (value === null || value === undefined) {
+    return '<p></p>';
+  }
+
+  return String(value);
 }
 
-const escapeHtml = (value: string) =>
-  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-export function normalizeRichText(content?: string | null) {
-  if (!content) return '';
-  const trimmed = content.trim();
-  if (!trimmed) return '';
-  const hasHtml = /<\/?[a-z][\s\S]*>/i.test(trimmed);
-  if (hasHtml) return trimmed;
-  const escaped = escapeHtml(trimmed);
-  return `<p>${escaped.replace(/\r\n/g, '\n').replace(/\n/g, '<br />')}</p>`;
+/**
+ * Rewrite relative media sources inside rich text so article/editor rendering works consistently.
+ */
+export function resolveRichTextMedia(html: string): string {
+  return html.replace(
+    /\b(src|href)=["'](?!https?:\/\/|mailto:|tel:|#|data:)([^"']+)["']/gi,
+    (_match, attr: string, url: string) => `${attr}="${resolveMediaUrl(url)}"`,
+  );
 }
 
-export function resolveRichTextMedia(html?: string | null) {
-  if (!html) return '';
-  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') return html;
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  doc.querySelectorAll('img').forEach((img) => {
-    const src = img.getAttribute('src');
-    if (src) {
-      img.setAttribute('src', resolveMediaUrl(src));
-    }
-  });
-  return doc.body.innerHTML;
+/**
+ * Format date for display
+ */
+export function formatDate(date: string | Date | undefined | null, locale: 'en' | 'bn' = 'en'): string {
+  if (!date) return '';
+  
+  const d = typeof date === 'string' ? new Date(date) : date;
+  
+  if (isNaN(d.getTime())) return '';
+  
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  };
+  
+  return d.toLocaleDateString(locale === 'bn' ? 'bn-BD' : 'en-US', options);
 }

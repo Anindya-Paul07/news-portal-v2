@@ -124,9 +124,17 @@ export default function CategoriesPage() {
       title="Categories"
       description="Manage hierarchy, visibility, and menu order for navigation and landing pages."
     >
-      <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 3 }}>
+      <Card 
+        elevation={6}
+        sx={{ 
+          borderRadius: 4, 
+          mb: 5,
+          overflow: 'hidden',
+          border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.15)' : 'rgba(226,24,55,0.12)'}`,
+        }}
+      >
         <CardHeader
-          title={editingId ? 'Edit Category' : 'New Category'}
+          title={editingId ? '✏️ Edit Category' : '📁 New Category'}
           subheader="Hierarchies, order, and menu visibility."
           action={
             editingId ? (
@@ -147,15 +155,38 @@ export default function CategoriesPage() {
                     isActive: true,
                   });
                 }}
+                sx={{
+                  fontWeight: 700,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                  },
+                }}
               >
                 Cancel edit
               </Button>
             ) : null
           }
+          sx={{
+            background: (theme) => 
+              theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, rgba(255,107,129,0.08) 100%)`
+                : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, rgba(226,24,55,0.04) 100%)`,
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            '& .MuiCardHeader-title': {
+              fontWeight: 800,
+              fontSize: '1.5rem',
+              letterSpacing: 0.5,
+            },
+            '& .MuiCardHeader-subheader': {
+              fontStyle: 'italic',
+              mt: 0.5,
+            },
+          }}
         />
-        <CardContent>
+        <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
           <form onSubmit={onSubmit}>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Input
                   label="Name (EN)"
@@ -242,31 +273,100 @@ export default function CategoriesPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <Button type="submit">{editingId ? 'Update category' : 'Save category'}</Button>
+                <Button 
+                  type="submit"
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    fontWeight: 800,
+                    fontSize: '1rem',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 6,
+                    },
+                  }}
+                >
+                  {editingId ? '💾 Update category' : '✨ Save category'}
+                </Button>
               </Grid>
             </Grid>
           </form>
         </CardContent>
       </Card>
 
-      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-        Existing categories
+      <Typography 
+        variant="h5" 
+        sx={{ 
+          fontWeight: 900, 
+          mb: 3,
+          letterSpacing: 0.5,
+          background: (theme) => 
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(90deg, #ff6b81 0%, #a7abb0 100%)'
+              : 'linear-gradient(90deg, #e21837 0%, #5b5f63 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}
+      >
+        📂 Existing Categories
       </Typography>
       {!categories && <LoadingBlock lines={3} />}
       {categories?.length === 0 && <EmptyState title="No categories yet" description="Add your first category to start." />}
-      <Grid container spacing={2}>
+      <Grid container spacing={2.5}>
         {categories?.map((category) => (
           <Grid key={category.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card variant="outlined" sx={{ borderRadius: 2, boxShadow: 2 }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            <Card 
+              elevation={3}
+              sx={{ 
+                borderRadius: 3, 
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.1)' : 'rgba(226,24,55,0.08)'}`,
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: 8,
+                  borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.3)' : 'rgba(226,24,55,0.2)',
+                },
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 800,
+                    mb: 0.5,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
                   {getLocalizedText(category.name, language)}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                  }}
+                >
                   /{category.slug}
                 </Typography>
-                <Stack direction="row" spacing={1} mt={2}>
-                  <Button variant="ghost" size="small" onClick={() => handleEdit(category.id)}>
+                <Stack direction="row" spacing={1} mt={2} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  <Button 
+                    variant="ghost" 
+                    size="small" 
+                    onClick={() => handleEdit(category.id)}
+                    sx={{
+                      fontWeight: 700,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        transform: 'translateX(2px)',
+                      },
+                    }}
+                  >
                     Edit
                   </Button>
                   <Button
@@ -275,9 +375,12 @@ export default function CategoriesPage() {
                     sx={{
                       color: 'error.main',
                       borderColor: 'error.main',
+                      fontWeight: 700,
+                      transition: 'all 0.2s ease',
                       '&:hover': {
                         borderColor: 'error.dark',
                         backgroundColor: 'rgba(211,47,47,0.08)',
+                        transform: 'translateX(2px)',
                       },
                     }}
                     onClick={() => handleDelete(category.id)}

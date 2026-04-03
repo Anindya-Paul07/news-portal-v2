@@ -20,6 +20,7 @@ type AlertInput = {
 
 type AlertContextValue = {
   notify: (input: AlertInput) => void;
+  showAlert: (message: string, type?: AlertType, title?: string) => void;
 };
 
 const AlertContext = createContext<AlertContextValue | undefined>(undefined);
@@ -40,7 +41,18 @@ export function AlertProvider({ children }: { children: ReactNode }) {
     }, 3500);
   }, []);
 
-  const contextValue = useMemo(() => ({ notify }), [notify]);
+  const showAlert = useCallback(
+    (message: string, type: AlertType = 'info', title?: string) => {
+      notify({
+        title,
+        description: message,
+        type,
+      });
+    },
+    [notify],
+  );
+
+  const contextValue = useMemo(() => ({ notify, showAlert }), [notify, showAlert]);
 
   return (
     <AlertContext.Provider value={contextValue}>

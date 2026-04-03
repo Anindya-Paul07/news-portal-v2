@@ -2,48 +2,68 @@
 
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { useMemo } from 'react';
-import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
-import Container from '@mui/material/Container';
-import Divider from '@mui/material/Divider';
-import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import Skeleton from '@mui/material/Skeleton';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
-import BookmarkBorderRoundedIcon from '@mui/icons-material/BookmarkBorderRounded';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useMemo, useEffect, useState } from 'react';
+import { Share2, Bookmark, Clock, User, ArrowRight, Mail } from 'lucide-react';
 import { AdSlot } from '@/components/ads/AdSlot';
-import { ArticleCard } from '@/components/news/ArticleCard';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useArticle, useRelatedArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
 import { formatDate, getLocalizedText, normalizeRichText, resolveMediaUrl, resolveRichTextMedia } from '@/lib/utils';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 🔴 THE RED WIRE - ARTICLE READER (BBC/CNN Professional Design)
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * - Max-width: 720px for optimal reading
+ * - Serif typography for body (Georgia/Merriweather feel)
+ * - Large Playfair Display headline
+ * - Red accents for categories and UI elements
+ * - Sticky Reading Progress Bar
+ * - Clean sidebar with related content
+ * 
+ * ══════════════════════════════════════════════════════════════════════════
+ */
+
 export default function ArticlePage() {
   const params = useParams<{ slug: string }>();
-  const slug = params?.slug as string;
-  const articleQuery = useArticle(slug);
+  const slug = Array.isArray(params?.slug) ? params?.slug[0] : params?.slug;
+  const articleQuery = useArticle(slug || '');
   const article = articleQuery.data;
   const categoryIdForRelated = article?.categoryId;
   const relatedQuery = useRelatedArticles(categoryIdForRelated);
   const related = relatedQuery.data;
   const { language } = useLanguage();
-  const theme = useTheme();
+  
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Scroll Progress Logic
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollTop;
+      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scroll = `${totalScroll / windowHeight}`;
+      setScrollProgress(Number(scroll));
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const displayArticle = article;
   const relatedStories =
     related && related.length > 0 && displayArticle
       ? related.filter((item) => item.id !== displayArticle.id).slice(0, 4)
       : [];
+      
   const categoryLabel = displayArticle ? getLocalizedText(displayArticle.category?.name, language) || 'News' : 'News';
+  const getCategoryLink = () => displayArticle?.category?.slug ? `/category/${displayArticle.category.slug}` : '/';
+  
   const title = displayArticle ? getLocalizedText(displayArticle.title, language) : '';
   const summary = displayArticle ? getLocalizedText(displayArticle.excerpt, language) : '';
   const featuredImage = resolveMediaUrl(displayArticle?.featuredImage?.url || displayArticle?.coverImage);
   const featuredAlt = displayArticle ? getLocalizedText(displayArticle.featuredImage?.alt, language) || title : '';
+  
   const bodyContent = useMemo(() => {
     if (!displayArticle) return summary || '';
     if (typeof displayArticle.content === 'string') return displayArticle.content;
@@ -56,169 +76,226 @@ export default function ArticlePage() {
     }
     return summary || '';
   }, [displayArticle, language, summary]);
+
   const bodyHtml = useMemo(
-    () => resolveRichTextMedia(normalizeRichText(bodyContent || 'বাংলা কন্টেন্ট আসছে।')),
+    () => resolveRichTextMedia(normalizeRichText(bodyContent || 'Please wait, content loading...')),
     [bodyContent],
   );
 
+  // Loading State
   if (articleQuery.isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 }, px: { xs: 2, md: 4 } }}>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3, boxShadow: 3 }}>
-              <Stack spacing={1.5} direction="row" flexWrap="wrap" alignItems="center">
-                <Skeleton variant="rounded" width={92} height={26} />
-                <Skeleton width={140} />
-                <Skeleton width={120} />
-              </Stack>
-              <Stack spacing={1.25} sx={{ mt: 2 }}>
-                <Skeleton variant="text" height={54} width="92%" />
-                <Skeleton variant="text" height={28} width="78%" />
-              </Stack>
-              <Skeleton variant="rounded" sx={{ mt: 2, borderRadius: 3, height: { xs: 240, md: 320 } }} />
-              <Divider sx={{ my: 3 }} />
-              <Stack spacing={1}>
-                <Skeleton variant="text" height={22} width="96%" />
-                <Skeleton variant="text" height={22} width="92%" />
-                <Skeleton variant="text" height={22} width="90%" />
-                <Skeleton variant="text" height={22} width="84%" />
-              </Stack>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Stack spacing={2.5}>
-              <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, boxShadow: 2 }}>
-                <Skeleton width={160} />
-                <Stack spacing={1.5} mt={1.5}>
-                  {Array.from({ length: 4 }).map((_, idx) => (
-                    <Skeleton key={idx} variant="rounded" height={92} />
-                  ))}
-                </Stack>
-              </Paper>
-            </Stack>
-          </Grid>
-        </Grid>
-      </Container>
+      <div className="max-w-[1000px] mx-auto px-4 py-8 animate-pulse">
+        <div className="h-8 bg-gray-200 w-3/4 mb-4 rounded"></div>
+        <div className="h-4 bg-gray-200 w-1/2 mb-8 rounded"></div>
+        <div className="aspect-video bg-gray-200 w-full mb-8 rounded"></div>
+        <div className="space-y-4">
+            <div className="h-4 bg-gray-200 w-full rounded"></div>
+            <div className="h-4 bg-gray-200 w-full rounded"></div>
+            <div className="h-4 bg-gray-200 w-5/6 rounded"></div>
+        </div>
+      </div>
     );
   }
 
+  // Not Found State
   if (!displayArticle) {
     return (
-      <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 }, px: { xs: 2, md: 4 } }}>
+      <div className="max-w-[1440px] mx-auto px-4 py-12">
         <EmptyState title="Article not found" description="The story could not be loaded. Please try again later." />
-      </Container>
+      </div>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 }, px: { xs: 2, md: 4 } }}>
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Paper
-            variant="outlined"
-            sx={{
-              p: { xs: 2.5, md: 3 },
-              borderRadius: 3,
-              boxShadow: 3,
-              bgcolor: 'background.paper',
-            }}
-          >
-            <Stack spacing={1.5} direction="row" flexWrap="wrap" alignItems="center" sx={{ color: 'text.secondary' }}>
-              <Chip
-                label={categoryLabel}
-                color="warning"
-                size="small"
-                sx={{ fontWeight: 700, letterSpacing: 1, bgcolor: alpha(theme.palette.warning.main, 0.18) }}
-              />
-              {displayArticle.publishedAt && <Typography variant="body2">{formatDate(displayArticle.publishedAt)}</Typography>}
-              {displayArticle.readingTime && <Typography variant="body2">• {displayArticle.readingTime} min read</Typography>}
-              {displayArticle.author?.name && <Typography variant="body2">• By {displayArticle.author.name}</Typography>}
-              <Stack direction="row" spacing={1} sx={{ marginLeft: 'auto' }}>
-                <IconButton size="small" aria-label="Share article">
-                  <ShareRoundedIcon fontSize="small" />
-                </IconButton>
-                <IconButton size="small" aria-label="Save article">
-                  <BookmarkBorderRoundedIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            </Stack>
+    <div className="bg-[var(--news-white)] min-h-screen relative">
+      {/* Reading Progress Bar (Red) */}
+      <div className="fixed top-0 left-0 h-1 bg-[var(--news-red-700)] z-50 transition-all duration-100 ease-out" style={{ width: `${scrollProgress * 100}%` }} />
 
-            <Stack spacing={1.5} sx={{ mt: 2 }}>
-              <Typography variant="h3" component="h1" sx={{ fontWeight: 800 }}>
-                {title}
-              </Typography>
-              {summary && (
-                <Typography variant="body1" color="text.secondary">
-                  {summary}
-                </Typography>
+      <div className="max-w-[1200px] mx-auto px-4 py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          
+          {/* Main Content Column - 8 cols (centered feel) */}
+          <main className="lg:col-span-8">
+            <article>
+              {/* Header Info */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-2 h-2 bg-[var(--news-red-700)] rounded-full animate-pulse"></span>
+                  <TransitionLink 
+                    href={getCategoryLink()}
+                    className="font-['var(--font-work-sans)'] text-[var(--news-red-700)] text-sm font-bold uppercase tracking-wider hover:underline"
+                  >
+                    {categoryLabel}
+                  </TransitionLink>
+                </div>
+
+                <h1 className="font-['var(--font-playfair)'] text-[var(--news-black)] text-3xl md:text-5xl font-bold leading-tight mb-4">
+                  {title}
+                </h1>
+
+                {summary && (
+                  <p className="font-['var(--font-work-sans)'] text-[var(--news-gray-600)] text-lg md:text-xl leading-relaxed mb-6 border-l-4 border-[var(--news-red-700)] pl-4 bg-[var(--news-offwhite)] py-2 pr-2">
+                    {summary}
+                  </p>
+                )}
+
+                {/* Meta Data Row */}
+                <div className="flex flex-wrap items-center justify-between border-y border-[var(--news-gray-200)] py-4 gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center gap-y-2 gap-x-6 text-sm text-[var(--news-darkgray)] font-['var(--font-work-sans)']">
+                    {displayArticle.author?.name && (
+                      <div className="flex items-center gap-2 font-bold group">
+                        <div className="p-1 bg-[var(--news-red-100)] rounded-full group-hover:bg-[var(--news-red-200)] transition-colors">
+                            <User size={14} className="text-[var(--news-red-700)]" />
+                        </div>
+                        <span className="group-hover:text-[var(--news-red-700)] transition-colors">By {displayArticle.author.name}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                       <Clock size={16} className="text-[var(--news-gray-400)]" />
+                       <span>{displayArticle.publishedAt ? formatDate(displayArticle.publishedAt) : ''}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-[var(--news-red-50)] text-[var(--news-gray-600)] hover:text-[var(--news-red-700)] transition-colors text-sm font-bold group">
+                      <Share2 size={16} />
+                      <span className="hidden sm:inline">Share</span>
+                    </button>
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-[var(--news-red-50)] text-[var(--news-gray-600)] hover:text-[var(--news-red-700)] transition-colors text-sm font-bold">
+                      <Bookmark size={16} />
+                      <span className="hidden sm:inline">Save</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Featured Image */}
+              {featuredImage && (
+                <div className="relative aspect-video w-full mb-8 lg:mb-10 bg-[var(--news-gray-100)] border-b-4 border-[var(--news-red-700)]">
+                  <Image 
+                    src={featuredImage} 
+                    alt={featuredAlt} 
+                    fill 
+                    className="object-cover" 
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 800px"
+                    priority
+                    unoptimized 
+                  />
+                  {displayArticle.featuredImage?.caption && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
+                       <p className="text-white text-xs md:text-sm font-['var(--font-work-sans)']">
+                         {getLocalizedText(displayArticle.featuredImage.caption, language)}
+                       </p>
+                    </div>
+                  )}
+                </div>
               )}
-            </Stack>
 
-            {featuredImage && (
-              <Box
-                sx={{
-                  position: 'relative',
-                  height: { xs: 240, md: 320 },
-                  width: '100%',
-                  mt: 2,
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                  boxShadow: 3,
-                }}
-              >
-                <Image src={featuredImage} alt={featuredAlt} fill className="object-cover" sizes="100vw" unoptimized />
-              </Box>
-            )}
+              {/* Article Body */}
+              <div 
+                className="prose prose-lg max-w-none 
+                  prose-headings:font-['var(--font-playfair)'] prose-headings:font-bold prose-headings:text-[var(--news-black)]
+                  prose-p:font-['Georgia'] prose-p:text-[var(--news-darkgray)] prose-p:text-lg prose-p:leading-8 prose-p:mb-6
+                  prose-a:text-[var(--news-red-700)] prose-a:font-bold prose-a:no-underline prose-a:border-b-2 prose-a:border-[var(--news-red-200)] hover:prose-a:border-[var(--news-red-700)] hover:prose-a:bg-[var(--news-red-50)] prose-a:transition-all
+                  prose-blockquote:border-l-4 prose-blockquote:border-[var(--news-red-700)] prose-blockquote:bg-[var(--news-offwhite)] prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:my-8 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:font-['var(--font-playfair)'] prose-blockquote:text-xl prose-blockquote:text-[var(--news-black)]
+                  prose-img:rounded-sm prose-img:w-full prose-img:shadow-md
+                  prose-strong:text-[var(--news-red-700)]
+                  font-serif text-[var(--news-black)]"
+                dangerouslySetInnerHTML={{ __html: bodyHtml }}
+              />
 
-            <Divider sx={{ my: 3 }} />
+              {/* Newsletter Callout */}
+              <div className="my-10 p-8 bg-[var(--news-red-700)] text-white rounded-sm text-center">
+                  <Mail className="w-8 h-8 mx-auto mb-4 text-white/80" />
+                  <h3 className="font-['var(--font-playfair)'] text-2xl font-bold mb-2">Get the Red Wire</h3>
+                  <p className="font-['var(--font-work-sans)'] text-white/80 mb-6 max-w-md mx-auto">
+                    Essential news, expert analysis, and exclusive content delivered straight to your inbox.
+                  </p>
+                  <div className="flex max-w-sm mx-auto gap-2">
+                    <input type="email" placeholder="Your email" className="flex-1 px-4 py-2 text-black rounded-sm focus:outline-none" />
+                    <button className="bg-black text-white px-6 py-2 font-bold uppercase text-sm tracking-wide hover:bg-gray-900 transition-colors">
+                      Join
+                    </button>
+                  </div>
+              </div>
 
-            <Box
-              sx={{
-                color: 'text.primary',
-                lineHeight: 1.8,
-                fontSize: '1rem',
-                '& p': { mb: 2 },
-              }}
-              className="article-content"
-              dangerouslySetInnerHTML={{ __html: bodyHtml }}
-            />
+              {/* In-content Ad */}
+              <div className="my-8 py-8 border-t border-[var(--news-gray-200)] text-center">
+                 <span className="text-xs text-[var(--news-gray-400)] uppercase tracking-widest mb-2 block">Advertisement</span>
+                 <AdSlot position="in_content" page="article" />
+              </div>
 
-            <Box sx={{ mt: 3 }}>
-              <AdSlot position="in_content" page="article" />
-            </Box>
-          </Paper>
-        </Grid>
+            </article>
+          </main>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Stack spacing={2.5}>
-            <AdSlot position="sidebar" page="article" />
-            <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, boxShadow: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 1.5 }}>
-                Related stories
-              </Typography>
-              <Stack spacing={1.5}>
-                {relatedQuery.isLoading
-                  ? Array.from({ length: 4 }).map((_, idx) => <Skeleton key={`related-skeleton-${idx}`} variant="rounded" height={92} />)
-                  : relatedStories.slice(0, 4).map((item) => <ArticleCard key={item.id} article={item} />)}
-              </Stack>
-            </Paper>
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, boxShadow: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                Explore categories
-              </Typography>
-              <Stack spacing={1} mt={1.5}>
-                <TransitionLink href="/category/top" style={{ color: 'inherit', textDecoration: 'none' }}>
-                  <Typography variant="body2">Top stories</Typography>
-                </TransitionLink>
-                <TransitionLink href="/category/politics" style={{ color: 'inherit', textDecoration: 'none' }}>
-                  <Typography variant="body2">Politics</Typography>
-                </TransitionLink>
-              </Stack>
-            </Paper>
-          </Stack>
-        </Grid>
-      </Grid>
-    </Container>
+          {/* Sidebar Column - 4 cols */}
+          <aside className="lg:col-span-4 lg:pl-8 lg:border-l border-[var(--news-gray-200)]">
+             <div className="sticky top-24">
+                {/* Related Stories */}
+                <div className="mb-8 p-6 bg-[var(--news-offwhite)] border-t-4 border-[var(--news-red-700)]">
+                  <div className="flex items-center gap-2 mb-6">
+                    <h3 className="font-['var(--font-work-sans)'] font-bold text-lg uppercase tracking-wide text-[var(--news-red-700)]">
+                      Related Stories
+                    </h3>
+                  </div>
+
+                  <div className="flex flex-col gap-6">
+                    {relatedQuery.isLoading ? (
+                      [1,2,3].map(i => <div key={i} className="h-24 bg-gray-200 animate-pulse rounded"></div>)
+                    ) : relatedStories.length > 0 ? (
+                      relatedStories.map(story => (
+                        <TransitionLink 
+                          href={`/article/${story.slug || story.id}`} 
+                          key={story.id}
+                          className="group flex gap-3 items-start"
+                        >
+                          <div className="pt-1">
+                             <ArrowRight size={16} className="text-[var(--news-red-700)] -ml-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1" />
+                          </div>
+                          <div>
+                             <h4 className="font-['var(--font-work-sans)'] font-bold text-sm leading-snug text-[var(--news-black)] group-hover:text-[var(--news-red-700)] transition-colors line-clamp-3">
+                               {getLocalizedText(story.title, language)}
+                             </h4>
+                             <span className="text-xs text-[var(--news-gray-500)] mt-1 block group-hover:text-[var(--news-red-400)]">
+                               {story.publishedAt ? formatDate(story.publishedAt) : ''}
+                             </span>
+                          </div>
+                        </TransitionLink>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">No related stories found.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sidebar Ad */}
+                <div className="mb-8">
+                  <AdSlot position="sidebar" page="article" />
+                </div>
+                
+                {/* Explore Categories */}
+                <div className="p-6 border border-[var(--news-gray-200)]">
+                   <h3 className="font-['var(--font-work-sans)'] font-bold text-sm uppercase tracking-wide mb-4 text-[var(--news-black)]">
+                     Explore More
+                   </h3>
+                   <div className="flex flex-wrap gap-2">
+                      {['Politics', 'Business', 'Sports', 'Tech', 'World', 'Opinion'].map((cat) => (
+                        <TransitionLink 
+                          key={cat}
+                          href={`/category/${cat.toLowerCase()}`} 
+                          className="px-3 py-1 bg-white border border-[var(--news-gray-300)] text-xs font-bold text-[var(--news-gray-600)] hover:border-[var(--news-red-700)] hover:bg-[var(--news-red-700)] hover:text-white transition-all duration-300 uppercase"
+                        >
+                          {cat}
+                        </TransitionLink>
+                      ))}
+                   </div>
+                </div>
+
+             </div>
+          </aside>
+        </div>
+      </div>
+    </div>
   );
 }

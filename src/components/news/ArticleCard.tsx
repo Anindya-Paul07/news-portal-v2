@@ -1,22 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import Card from '@mui/material/Card';
-import CardActionArea from '@mui/material/CardActionArea';
-import CardContent from '@mui/material/CardContent';
-import CardMedia from '@mui/material/CardMedia';
-import Chip from '@mui/material/Chip';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { alpha, useTheme } from '@mui/material/styles';
 import { Article } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { formatDate, getLocalizedText, resolveMediaUrl } from '@/lib/utils';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
+import { Clock } from 'lucide-react';
 
-export function ArticleCard({ article }: { article: Article }) {
+export function ArticleCard({ article, className = '' }: { article: Article; className?: string }) {
   const { language } = useLanguage();
-  const theme = useTheme();
   const categoryLabel = getLocalizedText(article.category?.name, language) || 'News';
   const title = getLocalizedText(article.title, language);
   const summary = getLocalizedText(article.excerpt, language);
@@ -24,57 +16,84 @@ export function ArticleCard({ article }: { article: Article }) {
   const imageAlt = getLocalizedText(article.featuredImage?.alt, language) || title;
 
   return (
-    <Card
-      sx={{
-        height: '100%',
-        borderRadius: 3,
-        border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
-        boxShadow: theme.shadows[1],
-        transition: 'transform 200ms ease, box-shadow 200ms ease',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: theme.shadows[6],
-        },
-      }}
-    >
-      <CardActionArea
-        component={TransitionLink}
+    <article className={`group flex flex-col h-full bg-white md:hover:-translate-y-1 transition-transform duration-300 ${className}`}>
+      {/* Image Container */}
+      <TransitionLink 
         href={`/article/${article.slug || article.id}`}
-        sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
+        className="block relative aspect-[4/3] w-full overflow-hidden bg-gray-100"
       >
         {imageUrl ? (
-          <CardMedia sx={{ position: 'relative', width: '100%', height: 200, overflow: 'hidden', borderBottom: 3, borderColor: 'primary.main' }}>
-            <Image
-              src={imageUrl}
-              alt={imageAlt}
-              fill
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover"
-            />
-          </CardMedia>
-        ) : null}
-        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
-            <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>
-              {categoryLabel}
-            </Typography>
-            {article.isBreaking && <Chip size="small" label="Breaking" color="primary" />}
-            {article.isTrending && <Chip size="small" label="Trending" variant="outlined" color="secondary" />}
-          </Stack>
-          <Typography variant="h6" component="h3" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+          <Image
+            src={imageUrl}
+            alt={imageAlt}
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <span className="font-serif italic text-2xl">NewsOS</span>
+          </div>
+        )}
+        
+        {/* Overlays */}
+        {(article.isBreaking || article.isTrending) && (
+          <div className="absolute top-3 left-3 flex gap-2">
+            {article.isBreaking && (
+              <span className="bg-[var(--news-red-700)] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 shadow-sm animate-pulse">
+                Breaking
+              </span>
+            )}
+            {article.isTrending && (
+              <span className="bg-black text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 shadow-sm">
+                Trending
+              </span>
+            )}
+          </div>
+        )}
+      </TransitionLink>
+
+      {/* Content */}
+      <div className="flex flex-col flex-grow py-4">
+        {/* Category */}
+        <div className="mb-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--news-red-700)]">
+            {categoryLabel}
+          </span>
+        </div>
+
+        {/* Title */}
+        <TransitionLink 
+          href={`/article/${article.slug || article.id}`} 
+          className="mb-3 block group-hover:text-[var(--news-red-700)] transition-colors"
+        >
+          <h3 className="font-serif text-xl font-bold text-gray-900 leading-snug line-clamp-3">
             {title}
-          </Typography>
-          {summary && (
-            <Typography variant="body2" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {summary}
-            </Typography>
+          </h3>
+        </TransitionLink>
+
+        {/* Excerpt */}
+        {summary && (
+          <p className="font-serif text-sm text-gray-600 leading-relaxed line-clamp-3 mb-4 flex-grow">
+            {summary}
+          </p>
+        )}
+
+        {/* Footer / Meta */}
+        <div className="flex items-center justify-between pt-4 mt-auto border-t border-gray-100">
+          <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-wide">
+             <span className="flex items-center gap-1">
+               <Clock className="w-3 h-3" />
+               {article.publishedAt ? formatDate(article.publishedAt) : 'Recent'}
+             </span>
+          </div>
+          {article.readingTime && (
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">
+              {article.readingTime} min read
+            </span>
           )}
-          <Stack direction="row" justifyContent="space-between" sx={{ mt: 'auto', color: 'text.secondary' }}>
-            <Typography variant="caption">{article.author?.name || 'Staff Desk'}</Typography>
-            {article.publishedAt && <Typography variant="caption">{formatDate(article.publishedAt)}</Typography>}
-          </Stack>
-        </CardContent>
-      </CardActionArea>
-    </Card>
+        </div>
+      </div>
+    </article>
   );
 }

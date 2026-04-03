@@ -68,9 +68,17 @@ export default function UsersPage() {
 
   return (
     <AdminShell title="Users" description="Assign roles, toggle activation, and reset credentials.">
-      <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 3 }}>
+      <Card 
+        elevation={6}
+        sx={{ 
+          borderRadius: 4, 
+          mb: 5,
+          overflow: 'hidden',
+          border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.15)' : 'rgba(226,24,55,0.12)'}`,
+        }}
+      >
         <CardHeader
-          title={editingId ? 'Edit User' : 'New User'}
+          title={editingId ? '✏️ Edit User' : '👤 New User'}
           subheader="Create accounts, assign roles, or update credentials."
           action={
             editingId ? (
@@ -81,14 +89,37 @@ export default function UsersPage() {
                   setEditingId(null);
                   setDraft({ name: '', email: '', role: 'editorial', password: '' });
                 }}
+                sx={{
+                  fontWeight: 700,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                  },
+                }}
               >
                 Cancel edit
               </Button>
             ) : null
           }
+          sx={{
+            background: (theme) => 
+              theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, rgba(255,107,129,0.08) 100%)`
+                : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, rgba(226,24,55,0.04) 100%)`,
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            '& .MuiCardHeader-title': {
+              fontWeight: 800,
+              fontSize: '1.5rem',
+              letterSpacing: 0.5,
+            },
+            '& .MuiCardHeader-subheader': {
+              fontStyle: 'italic',
+              mt: 0.5,
+            },
+          }}
         />
-        <CardContent>
-          <Grid container spacing={2} component="form" onSubmit={onSubmit}>
+        <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
+          <Grid container spacing={3} component="form" onSubmit={onSubmit}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Input
                 label="Name"
@@ -107,8 +138,8 @@ export default function UsersPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                Role
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, letterSpacing: 0.5 }}>
+                Role Assignment
               </Typography>
               <Grid container spacing={1}>
                 {roles.map((role) => (
@@ -117,6 +148,19 @@ export default function UsersPage() {
                       label={role}
                       color={draft.role === role ? 'primary' : 'default'}
                       onClick={() => setDraft((d) => ({ ...d, role }))}
+                      sx={{
+                        fontWeight: 700,
+                        textTransform: 'capitalize',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: 3,
+                        },
+                        '&:active': {
+                          transform: 'translateY(0)',
+                        },
+                      }}
                     />
                   </Grid>
                 ))}
@@ -131,39 +175,113 @@ export default function UsersPage() {
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Button type="submit">{editingId ? 'Update user' : 'Save user'}</Button>
+              <Button 
+                type="submit"
+                sx={{
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: 6,
+                  },
+                }}
+              >
+                {editingId ? '💾 Update user' : '✨ Save user'}
+              </Button>
             </Grid>
           </Grid>
         </CardContent>
       </Card>
 
-      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-        User directory
+      <Typography 
+        variant="h5" 
+        sx={{ 
+          fontWeight: 900, 
+          mb: 3,
+          letterSpacing: 0.5,
+          background: (theme) => 
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(90deg, #ff6b81 0%, #a7abb0 100%)'
+              : 'linear-gradient(90deg, #e21837 0%, #5b5f63 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}
+      >
+        👥 User Directory
       </Typography>
       {!users && <LoadingBlock lines={3} />}
       {users?.length === 0 && <EmptyState title="No users" description="Create a user to get started." />}
       {users && users.length > 0 && (
-        <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 2, boxShadow: 2 }}>
+        <Paper 
+          elevation={3}
+          sx={{ 
+            overflow: 'hidden', 
+            borderRadius: 3,
+            border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.1)' : 'rgba(226,24,55,0.08)'}`,
+          }}
+        >
           <Table size="small">
             <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Role</TableCell>
-                <TableCell align="right">Actions</TableCell>
+              <TableRow
+                sx={{
+                  background: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,107,129,0.05)'
+                      : 'rgba(226,24,55,0.03)',
+                }}
+              >
+                <TableCell sx={{ fontWeight: 800, letterSpacing: 0.5 }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 800, letterSpacing: 0.5 }}>Email</TableCell>
+                <TableCell sx={{ fontWeight: 800, letterSpacing: 0.5 }}>Role</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 800, letterSpacing: 0.5 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.id} hover>
+                <TableRow 
+                  key={user.id} 
+                  hover
+                  sx={{
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: (theme) => 
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255,107,129,0.03)'
+                          : 'rgba(226,24,55,0.02)',
+                    },
+                  }}
+                >
                   <TableCell sx={{ fontWeight: 700 }}>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Chip label={user.role} color="secondary" size="small" />
+                    <Chip 
+                      label={user.role} 
+                      color="secondary" 
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        textTransform: 'capitalize',
+                      }}
+                    />
                   </TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={1} justifyContent="flex-end">
-                    <Button variant="ghost" size="small" onClick={() => handleEdit(user.id)}>
+                    <Button 
+                      variant="ghost" 
+                      size="small" 
+                      onClick={() => handleEdit(user.id)}
+                      sx={{
+                        fontWeight: 700,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateX(2px)',
+                        },
+                      }}
+                    >
                       Edit
                     </Button>
                     <Button
@@ -172,9 +290,12 @@ export default function UsersPage() {
                       sx={{
                         color: 'error.main',
                         borderColor: 'error.main',
+                        fontWeight: 700,
+                        transition: 'all 0.2s ease',
                         '&:hover': {
                           borderColor: 'error.dark',
                           backgroundColor: 'rgba(211,47,47,0.08)',
+                          transform: 'translateX(2px)',
                         },
                       }}
                       onClick={() => handleDelete(user.id)}

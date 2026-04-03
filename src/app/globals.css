@@ -1,130 +1,235 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ NEWSROOM OPERATING SYSTEM (NewsOS) - "GLASS & STEEL" DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════
+
+   REFERENCE: Bloomberg Terminal v3, Linear.app, Avid iNEWS
+
+   CORE PRINCIPLES:
+   1. PANES, NOT CARDS - Full-height rectangular areas with 1px borders
+   2. NO GAPS - Panes touch each other (no margins between)
+   3. EXTREME DENSITY - 50% padding reduction, h-10 table rows
+   4. PURE NEUTRALS - Absolutely NO blue/navy tints in dark mode
+   5. BORDER-DEFINED STRUCTURE - Use borders, not background colors
+
+   CONSTRAINT: NO rounded-sm+, NO shadows, NO blue backgrounds
+
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ☀️ LIGHT MODE: "The News Paper" - Pure White Paper with Black Ink */
 :root {
-  --color-surface: #fff8f5;
-  --color-surface-elevated: #fff1ec;
-  --color-surface-hover: #ffe4da;
-  --color-ink: #211315;
-  --color-muted: #6b585d;
-  --color-primary: #e21837;
-  --color-primary-contrast: #fff9f5;
-  --color-primary-variant: #a70f25;
-  --color-secondary: #5b5f63;
-  --color-secondary-contrast: #f6f7fb;
-  --color-accent: #ff9a7f;
-  --color-border: #f1d9d3;
-  --color-card-shadow: 0 24px 56px -32px rgba(81, 34, 37, 0.28);
-  --color-focus: #ff9a7f;
-  --gradient-hero: radial-gradient(circle at 20% 20%, rgba(226, 24, 55, 0.2), transparent 38%),
-    radial-gradient(circle at 80% 15%, rgba(255, 154, 127, 0.25), transparent 32%);
-  --color-header-bg: #cd0f25;
-  --color-header-text: #fff9f5;
-  --color-header-subtext: #5a4f50;
-  --color-header-chip-bg: #ffe5df;
-  --color-header-chip-text: #40393c;
-  --color-header-nav-bg: #93071c;
-  --color-nav-link: #fff4ee;
-  --color-nav-link-active: #ffb19b;
-  --color-nav-hover-bg: #f8d1c7;
-  --color-search-bg: #fff2ec;
-  --color-search-border: #f0d3cc;
-  --color-search-text: #211315;
-  --color-search-placeholder: #7a6565cc;
-  --color-panel-bg: #fff0ea;
-  --color-panel-border: #f3d8d1;
-  --color-panel-text: #2b1a1b;
-  --color-trending-bg: #f8e4db;
-  --color-trending-text: #4c4648;
-  --color-trending-border: #e21837;
-  --color-card-border: #f0d5ce;
-  --color-card-heading: #2b1a1b;
-  --color-card-meta: #7a6565;
-  --color-card-breaking-bg: #5b5f63;
-  --color-card-breaking-text: #fff4ed;
-  --color-card-trending-border: #ecd7d0;
-  --color-card-trending-text: #7f6a6f;
-  --color-section-bg: #fff0ea;
-  --color-section-text: #2b1a1b;
-  --color-section-muted: #7f6a6f;
-  --color-footer-bg: #1b1113;
-  --color-footer-text: #f6e9e4;
-  --color-footer-title: #ffc2b2;
-  --color-footer-link: #ff9a7f;
+  /* ─── Pane System ─── */
+  --newsos-bg-primary: #FFFFFF;
+  --newsos-bg-secondary: #FAFAFA;
+  --newsos-bg-hover: #F5F5F5;
+  --newsos-bg-active: #F0F0F0;
+
+  /* ─── Border System (Structure Definition) ─── */
+  --newsos-border-default: #E5E5E5;
+  --newsos-border-strong: #D4D4D4;
+  --newsos-border-input: #D4D4D4;
+
+  /* ─── Typography ─── */
+  --newsos-text-primary: #000000;
+  --newsos-text-secondary: #525252;
+  --newsos-text-tertiary: #737373;
+  --newsos-text-muted: #A3A3A3;
+
+  /* ─── Status Indicators ─── */
+  --newsos-status-live: #EF4444;
+  --newsos-status-published: #10B981;
+  --newsos-status-draft: #F59E0B;
+  --newsos-status-archived: #6B7280;
+
+  /* ─── Accent (Red Wire) ─── */
+  --newsos-accent-primary: #DC2626;
+  --newsos-accent-hover: #B91C1C;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     🔴 THE RED WIRE - PUBLIC NEWS THEME (BBC/CNN Style)
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* ─── The Red Wire (Breaking News & CTAs) ─── */
+  --news-red-700: #B90000;
+  --news-red-600: #D32F2F;
+  --news-red-500: #E53935;
+  --news-red-hover: #9B0000;
+
+  /* ─── Paper & Ink (Base Colors) ─── */
+  --news-white: #FFFFFF;
+  --news-offwhite: #F9FAFB;
+  --news-black: #111111;
+  --news-darkgray: #333333;
+
+  /* ─── The Grid (Borders & Separators) ─── */
+  --news-gray-50: #F9FAFB;
+  --news-gray-100: #F3F4F6;
+  --news-gray-200: #E5E7EB;
+  --news-gray-300: #D1D5DB;
+  --news-gray-400: #9CA3AF;
+  --news-gray-500: #6B7280;
+  --news-gray-600: #4B5563;
+  --news-gray-700: #374151;
+  --news-gray-800: #1F2937;
+  --news-gray-900: #111827;
+
+  /* ─── Status Indicators (News Specific) ─── */
+  --news-live: #B90000;
+  --news-breaking: #D32F2F;
+  --news-trending: #F97316;
+  --news-exclusive: #8B5CF6;
+
+
+  /* ─── System Status Bar ─── */
+  --newsos-statusbar-bg: #F5F5F5;
+  --newsos-statusbar-text: #525252;
+
+  /* ─── Fonts ─── */
   --font-sans: var(--font-work-sans);
   --font-serif: var(--font-playfair);
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.21 0.006 285.885);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.705 0.015 286.067);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-primary: oklch(0.21 0.006 285.885);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.705 0.015 286.067);
 }
 
-[data-theme='dark'] {
-  --color-surface: #1a1013;
-  --color-surface-elevated: #23151a;
-  --color-surface-hover: #2c1a21;
-  --color-ink: #fff2ed;
-  --color-muted: #d1bcbc;
-  --color-primary: #ff6b81;
-  --color-primary-contrast: #1a0f12;
-  --color-primary-variant: #c3263f;
-  --color-secondary: #a7abb0;
-  --color-secondary-contrast: #141013;
-  --color-accent: #ff997f;
-  --color-border: #3d232a;
-  --color-card-shadow: 0 28px 64px -38px rgba(0, 0, 0, 0.85);
-  --color-focus: #ff997f;
-  --gradient-hero: radial-gradient(circle at 18% 22%, rgba(255, 107, 129, 0.3), transparent 38%),
-    radial-gradient(circle at 78% 10%, rgba(160, 114, 114, 0.26), transparent 40%);
-  --color-header-bg: #1a0f12;
-  --color-header-text: #fff2ed;
-  --color-header-subtext: #c9b7b5;
-  --color-header-chip-bg: #2a181e;
-  --color-header-chip-text: #fff2ed;
-  --color-header-nav-bg: #2a161c;
-  --color-nav-link: #fff2ed;
-  --color-nav-link-active: #ff8ea1;
-  --color-nav-hover-bg: #3a1d24;
-  --color-search-bg: #28181f;
-  --color-search-border: #4a2a33;
-  --color-search-text: #fff2ed;
-  --color-search-placeholder: #d4bdbf;
-  --color-panel-bg: #23161c;
-  --color-panel-border: #4a2a33;
-  --color-panel-text: #fff2ed;
-  --color-trending-bg: #2a1b21;
-  --color-trending-text: #fff2ed;
-  --color-trending-border: #ff6b81;
-  --color-card-border: #462731;
-  --color-card-heading: #fff2ed;
-  --color-card-meta: #d5bdc0;
-  --color-card-breaking-bg: #ff6b81;
-  --color-card-breaking-text: #1a0f12;
-  --color-card-trending-border: #452933;
-  --color-card-trending-text: #d5bdc0;
-  --color-section-bg: #22151a;
-  --color-section-text: #fff2ed;
-  --color-section-muted: #d5bdc0;
-  --color-footer-bg: #140a0d;
-  --color-footer-text: #f6e9e4;
-  --color-footer-title: #ff8ea1;
-  --color-footer-link: #ff6b81;
-  --marquee-duration: 22s;
+/* 🌑 DARK MODE: "The OLED Terminal" - Pure Black with Etched Light */
+.dark {
+  --newsos-bg-primary: #09090b;
+  --newsos-bg-secondary: #18181b;
+  --newsos-bg-hover: #27272a;
+  --newsos-bg-active: #3f3f46;
+
+  --newsos-border-default: #27272a;
+  --newsos-border-strong: #3f3f46;
+  --newsos-border-input: #3f3f46;
+
+  --newsos-text-primary: #FAFAFA;
+  --newsos-text-secondary: #D4D4D8;
+  --newsos-text-tertiary: #A1A1AA;
+  --newsos-text-muted: #71717A;
+
+  --newsos-status-live: #EF4444;
+  --newsos-status-published: #10B981;
+  --newsos-status-draft: #FBBF24;
+  --newsos-status-archived: #71717A;
+
+  --newsos-accent-primary: #EF4444;
+  --newsos-accent-hover: #DC2626;
+
+  --newsos-statusbar-bg: #18181b;
+  --newsos-statusbar-text: #A1A1AA;
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.004 286.32);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.552 0.016 285.938);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.552 0.016 285.938);
 }
 
 @theme inline {
   --font-sans: var(--font-work-sans);
   --font-serif: var(--font-playfair);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
 }
 
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-marquee {
-  animation: marquee var(--marquee-duration, 22s) linear infinite;
-  will-change: transform;
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ NewsOS BASE STYLES - Extreme Density, Pane-Based Layout
+   ══════════════════════════════════════════════════════════════════════════ */
 
 *,
 *::before,
@@ -138,11 +243,13 @@ html {
 
 body {
   min-height: 100vh;
-  background: var(--color-surface);
-  color: var(--color-ink);
-  font-family: var(--font-sans), "Inter", system-ui, -apple-system, sans-serif;
+  background: var(--newsos-bg-primary);
+  color: var(--newsos-text-primary);
+  font-family: var(--font-sans), "Work Sans", "Inter", system-ui, -apple-system, sans-serif;
   margin: 0;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -155,9 +262,8 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-  border-radius: 8px;
+  outline: 2px solid var(--newsos-accent-primary);
+  outline-offset: 0px;
 }
 
 img {
@@ -165,42 +271,243 @@ img {
   height: auto;
 }
 
-.container {
-  width: min(1200px, 100% - 32px);
-  margin: 0 auto;
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ NewsOS PANE SYSTEM - Full-Height Border-Separated Areas
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Pane: Full-height rectangular area */
+.newsos-pane {
+  background: var(--newsos-bg-primary);
+  border-right: 1px solid var(--newsos-border-default);
+  height: 100%;
+  overflow-y: auto;
 }
 
-.card-soft {
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 18px;
-  box-shadow: var(--color-card-shadow);
+.newsos-pane:last-child {
+  border-right: none;
 }
 
-.surface-card {
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 18px;
-  box-shadow: var(--color-card-shadow);
+/* Pane Header: Fixed header within a pane */
+.newsos-pane-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--newsos-bg-primary);
+  border-bottom: 1px solid var(--newsos-border-default);
+  padding: 6px 12px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--newsos-text-tertiary);
 }
 
-.headline {
-  font-family: var(--font-serif), "Times New Roman", serif;
-  letter-spacing: -0.02em;
+/* Pane Content: Scrollable content area */
+.newsos-pane-content {
+  padding: 0;
 }
 
-.article-content,
-.article-content :where(p, li, span, strong) {
-  color: var(--color-ink);
+/* Pane Item: Individual rows in a pane list */
+.newsos-pane-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--newsos-border-default);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
 }
 
-.article-content a {
-  color: var(--color-accent);
+.newsos-pane-item:hover {
+  background: var(--newsos-bg-hover);
 }
+
+.newsos-pane-item.active {
+  background: var(--newsos-bg-active);
+  border-left: 2px solid var(--newsos-accent-primary);
+  padding-left: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ NewsOS DATA TABLES - Extreme Density
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.newsos-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.newsos-table thead th {
+  background: var(--newsos-bg-secondary);
+  border-bottom: 1px solid var(--newsos-border-default);
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--newsos-text-tertiary);
+  height: 32px;
+}
+
+.newsos-table tbody td {
+  border-bottom: 1px solid var(--newsos-border-default);
+  padding: 6px 8px;
+  font-size: 0.813rem;
+  color: var(--newsos-text-primary);
+  height: 40px;
+}
+
+.newsos-table tbody tr:hover {
+  background: var(--newsos-bg-hover);
+}
+
+.newsos-table tbody tr.selected {
+  background: var(--newsos-bg-active);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ NewsOS INPUTS - Transparent with Strong Borders
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.newsos-input {
+  background: transparent;
+  border: 1px solid var(--newsos-border-input);
+  color: var(--newsos-text-primary);
+  padding: 6px 8px;
+  font-size: 0.813rem;
+  font-family: inherit;
+  width: 100%;
+  transition: border-color 0.1s ease;
+}
+
+.newsos-input:focus {
+  outline: none;
+  border-color: var(--newsos-accent-primary);
+  border-width: 2px;
+  padding: 5px 7px;
+}
+
+.newsos-input::placeholder {
+  color: var(--newsos-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ NewsOS BUTTONS - Dense, Uppercase, Red Accent
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.newsos-button {
+  background: var(--newsos-accent-primary);
+  color: #FFFFFF;
+  border: none;
+  padding: 6px 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.newsos-button:hover {
+  background: var(--newsos-accent-hover);
+}
+
+.newsos-button-outline {
+  background: transparent;
+  color: var(--newsos-accent-primary);
+  border: 1px solid var(--newsos-accent-primary);
+  padding: 5px 11px;
+}
+
+.newsos-button-outline:hover {
+  background: var(--newsos-bg-hover);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ NewsOS STATUS INDICATORS - Color-Coded Dots
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.status-live {
+  background: var(--newsos-status-live);
+}
+
+.status-published {
+  background: var(--newsos-status-published);
+}
+
+.status-draft {
+  background: var(--newsos-status-draft);
+}
+
+.status-archived {
+  background: var(--newsos-status-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ NewsOS SYSTEM STATUS BAR - Sticky Footer (h-8)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.newsos-statusbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: var(--newsos-statusbar-bg);
+  border-top: 1px solid var(--newsos-border-default);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 0.75rem;
+  color: var(--newsos-statusbar-text);
+  z-index: 50;
+}
+
+.newsos-statusbar-item {
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.newsos-statusbar-separator {
+  width: 1px;
+  height: 16px;
+  background: var(--newsos-border-default);
+  margin: 0 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ NewsOS TYPOGRAPHY - Dense Labels
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.newsos-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--newsos-text-tertiary);
+}
+
+.newsos-text-data {
+  font-size: 0.813rem;
+  color: var(--newsos-text-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ ARTICLE CONTENT STYLING
+   ══════════════════════════════════════════════════════════════════════════ */
 
 .article-content {
   font-size: 1rem;
   line-height: 1.85;
+  color: var(--newsos-text-primary);
 }
 
 .article-content p {
@@ -212,25 +519,20 @@ img {
 .article-content h3 {
   margin: 22px 0 12px;
   font-weight: 700;
+  font-family: var(--font-serif);
+  color: var(--newsos-text-primary);
 }
 
-.article-content ul,
-.article-content ol {
-  margin: 0 0 16px;
-  padding-left: 1.25rem;
-}
-
-.article-content li,
-.article-content blockquote {
-  white-space: pre-wrap;
+.article-content a {
+  color: var(--newsos-accent-primary);
+  text-decoration: underline;
 }
 
 .article-content blockquote {
   margin: 16px 0;
   padding: 12px 18px;
-  border-left: 3px solid var(--color-border);
-  color: var(--color-ink);
-  background: rgba(0, 0, 0, 0.03);
+  border-left: 3px solid var(--newsos-accent-primary);
+  background: var(--newsos-bg-secondary);
 }
 
 .article-content img {
@@ -238,10 +540,143 @@ img {
   max-width: 100%;
   height: auto;
   margin: 18px auto;
-  border-radius: 12px;
+  border: 1px solid var(--newsos-border-default);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ SELECTION STYLING
+   ══════════════════════════════════════════════════════════════════════════ */
+
 ::selection {
-  background: rgba(255, 183, 3, 0.35);
-  color: var(--color-primary-contrast);
+  background: var(--newsos-accent-primary);
+  color: #FFFFFF;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖥️ TIPTAP RICH TEXT EDITOR - NewsOS Styling
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ProseMirror Editor Container */
+.ProseMirror {
+  outline: none;
+  min-height: inherit;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--newsos-text-muted);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Focus States */
+.ProseMirror:focus {
+  outline: 1px solid var(--newsos-accent-primary);
+  outline-offset: -1px;
+}
+
+/* Links in Editor */
+.ProseMirror a {
+  color: var(--newsos-accent-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: var(--newsos-accent-hover);
+}
+
+/* Images in Editor */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 12px 0;
+  border: 1px solid var(--newsos-border-default);
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--newsos-accent-primary);
+  outline-offset: 2px;
+}
+
+/* Headings in Editor */
+.ProseMirror h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 16px 0 12px;
+  color: var(--newsos-text-primary);
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 14px 0 10px;
+  color: var(--newsos-text-primary);
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 12px 0 8px;
+  color: var(--newsos-text-primary);
+}
+
+/* Lists in Editor */
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.ProseMirror li {
+  margin: 4px 0;
+}
+
+/* Code blocks */
+.ProseMirror code {
+  background: var(--newsos-bg-secondary);
+  padding: 2px 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  border: 1px solid var(--newsos-border-default);
+}
+
+.ProseMirror pre {
+  background: var(--newsos-bg-secondary);
+  padding: 12px;
+  border: 1px solid var(--newsos-border-default);
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+}
+
+/* Blockquotes */
+.ProseMirror blockquote {
+  border-left: 3px solid var(--newsos-accent-primary);
+  padding-left: 16px;
+  margin: 12px 0;
+  color: var(--newsos-text-secondary);
+  font-style: italic;
+}
+
+/* Horizontal Rule */
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--newsos-border-default);
+  margin: 20px 0;
 }

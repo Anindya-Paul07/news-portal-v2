@@ -80,11 +80,38 @@ export default function MediaPage() {
 
   return (
     <AdminShell title="Media library" description="Upload assets, edit metadata, and pick for articles/ads.">
-      <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 3 }}>
-        <CardHeader title="Upload" subheader="Add alt text for accessibility and SEO." />
-        <CardContent>
-          <Stack component="form" onSubmit={onUpload} spacing={2}>
-            <Grid container spacing={2}>
+      <Card 
+        elevation={6}
+        sx={{ 
+          borderRadius: 4, 
+          mb: 5,
+          overflow: 'hidden',
+          border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.15)' : 'rgba(226,24,55,0.12)'}`,
+        }}
+      >
+        <CardHeader 
+          title="📎 Upload Media" 
+          subheader="Add alt text for accessibility and SEO."
+          sx={{
+            background: (theme) => 
+              theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, rgba(255,107,129,0.08) 100%)`
+                : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, rgba(226,24,55,0.04) 100%)`,
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            '& .MuiCardHeader-title': {
+              fontWeight: 800,
+              fontSize: '1.5rem',
+              letterSpacing: 0.5,
+            },
+            '& .MuiCardHeader-subheader': {
+              fontStyle: 'italic',
+              mt: 0.5,
+            },
+          }}
+        />
+        <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
+          <Stack component="form" onSubmit={onUpload} spacing={3}>
+            <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Input label="Alt text (EN)" value={altEn} onChange={(e) => setAltEn(e.target.value)} />
               </Grid>
@@ -93,15 +120,42 @@ export default function MediaPage() {
               </Grid>
             </Grid>
             <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-            <Button type="submit" sx={{ alignSelf: 'flex-start' }}>
-              Upload
+            <Button 
+              type="submit" 
+              sx={{ 
+                alignSelf: 'flex-start',
+                px: 4,
+                py: 1.5,
+                fontWeight: 800,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: 6,
+                },
+              }}
+            >
+              ⬆️ Upload
             </Button>
           </Stack>
         </CardContent>
       </Card>
 
-      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-        Library
+      <Typography 
+        variant="h5" 
+        sx={{ 
+          fontWeight: 900, 
+          mb: 3,
+          letterSpacing: 0.5,
+          background: (theme) => 
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(90deg, #ff6b81 0%, #a7abb0 100%)'
+              : 'linear-gradient(90deg, #e21837 0%, #5b5f63 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}
+      >
+        🖼️ Media Library
       </Typography>
       {!media && <LoadingBlock lines={3} />}
       {media?.length === 0 && <EmptyState title="No media" description="Upload assets to see them here." />}
@@ -182,7 +236,20 @@ function MediaItemCard({ item, onUpdate, onDelete }: MediaItemCardProps) {
       : item.alt?.en || item.alt?.bn || Object.values(item.alt || {}).find(Boolean) || 'Asset';
 
   return (
-    <ImageListItem sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', p: 1 }}>
+    <ImageListItem 
+      sx={{ 
+        borderRadius: 3, 
+        overflow: 'hidden', 
+        border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.1)' : 'rgba(226,24,55,0.08)'}`,
+        p: 1.5,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: 6,
+          borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.3)' : 'rgba(226,24,55,0.2)',
+        },
+      }}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}

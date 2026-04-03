@@ -1,0 +1,15 @@
+.git
+.gitignore
+.next
+node_modules
+coverage
+dist
+tmp
+.codex
+*.log
+*.tsbuildinfo
+Dockerfile*
+docker-compose*.yml
+README.md
+*.md
+public/*.Zone.Identifier

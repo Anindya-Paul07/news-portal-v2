@@ -122,21 +122,56 @@ export default function AdsPage() {
       title="Advertisements"
       description="Control placements, priorities, activation windows, and preview banners/sidebars/popup units."
     >
-      <Card sx={{ borderRadius: 3, boxShadow: 4, mb: 3 }}>
+      <Card 
+        elevation={6}
+        sx={{ 
+          borderRadius: 4, 
+          mb: 5,
+          overflow: 'hidden',
+          border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.15)' : 'rgba(226,24,55,0.12)'}`,
+        }}
+      >
         <CardHeader
-          title={editingId ? 'Edit Advertisement' : 'New Advertisement'}
+          title={editingId ? '✏️ Edit Advertisement' : '📢 New Advertisement'}
           subheader="Configure placement, timing, and creatives."
           action={
             editingId ? (
-              <Button variant="ghost" size="small" onClick={() => { setEditingId(null); setDraft(initialAdDraft); }}>
+              <Button 
+                variant="ghost" 
+                size="small" 
+                onClick={() => { setEditingId(null); setDraft(initialAdDraft); }}
+                sx={{
+                  fontWeight: 700,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                  },
+                }}
+              >
                 Cancel edit
               </Button>
             ) : null
           }
+          sx={{
+            background: (theme) => 
+              theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, rgba(255,107,129,0.08) 100%)`
+                : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, rgba(226,24,55,0.04) 100%)`,
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            '& .MuiCardHeader-title': {
+              fontWeight: 800,
+              fontSize: '1.5rem',
+              letterSpacing: 0.5,
+            },
+            '& .MuiCardHeader-subheader': {
+              fontStyle: 'italic',
+              mt: 0.5,
+            },
+          }}
         />
-        <CardContent>
+        <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
           <form onSubmit={onSubmit}>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid size={{ xs: 12 }}>
                 <Input
                   label="Internal name"
@@ -146,8 +181,8 @@ export default function AdsPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                  Type
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, letterSpacing: 0.5 }}>
+                  Ad Type
                 </Typography>
                 <Grid container spacing={1}>
                   {adTypes.map((type) => (
@@ -156,14 +191,27 @@ export default function AdsPage() {
                         label={type}
                         color={draft.type === type ? 'primary' : 'default'}
                         onClick={() => setDraft((d) => ({ ...d, type }))}
+                        sx={{
+                          fontWeight: 700,
+                          textTransform: 'capitalize',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: 3,
+                          },
+                          '&:active': {
+                            transform: 'translateY(0)',
+                          },
+                        }}
                       />
                     </Grid>
                   ))}
                 </Grid>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                  Slot position
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, letterSpacing: 0.5 }}>
+                  Slot Position
                 </Typography>
                 <Grid container spacing={1}>
                   {positions.map((pos) => (
@@ -172,6 +220,19 @@ export default function AdsPage() {
                         label={pos.replace(/[-_]/g, ' ')}
                         color={draft.position === pos ? 'secondary' : 'default'}
                         onClick={() => setDraft((d) => ({ ...d, position: pos }))}
+                        sx={{
+                          fontWeight: 700,
+                          textTransform: 'capitalize',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: 3,
+                          },
+                          '&:active': {
+                            transform: 'translateY(0)',
+                          },
+                        }}
                       />
                     </Grid>
                   ))}
@@ -249,15 +310,43 @@ export default function AdsPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <Button type="submit">{editingId ? 'Update advertisement' : 'Save advertisement'}</Button>
+                <Button 
+                  type="submit"
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    fontWeight: 800,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 6,
+                    },
+                  }}
+                >
+                  {editingId ? '💾 Update advertisement' : '✨ Save advertisement'}
+                </Button>
               </Grid>
             </Grid>
           </form>
         </CardContent>
       </Card>
 
-      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-        Active ads
+      <Typography 
+        variant="h5" 
+        sx={{ 
+          fontWeight: 900, 
+          mb: 3,
+          letterSpacing: 0.5,
+          background: (theme) => 
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(90deg, #ff6b81 0%, #a7abb0 100%)'
+              : 'linear-gradient(90deg, #e21837 0%, #5b5f63 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}
+      >
+        📊 Active Advertisements
       </Typography>
       {!ads && <LoadingBlock lines={3} />}
       {ads?.length === 0 && <EmptyState title="No ads yet" description="Create an ad to fill placements." />}
@@ -266,8 +355,19 @@ export default function AdsPage() {
           const title = ad.name || getLocalizedText(ad.title) || 'Untitled ad';
           return (
             <Grid key={ad.id} size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card variant="outlined" sx={{ borderRadius: 2, boxShadow: 2 }}>
-                <CardContent>
+              <Card 
+                elevation={3}
+                sx={{ 
+                  borderRadius: 3,
+                  border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,107,129,0.1)' : 'rgba(226,24,55,0.08)'}`,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 6,
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 2.5 }}>
                   <Typography variant="h6" sx={{ fontWeight: 800 }}>
                     {title}
                   </Typography>
@@ -282,7 +382,18 @@ export default function AdsPage() {
                     size="small"
                   />
                   <Stack direction="row" spacing={1} mt={2}>
-                    <Button variant="ghost" size="small" onClick={() => handleEdit(ad.id)}>
+                    <Button 
+                      variant="ghost" 
+                      size="small" 
+                      onClick={() => handleEdit(ad.id)}
+                      sx={{
+                        fontWeight: 700,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateX(2px)',
+                        },
+                      }}
+                    >
                       Edit
                     </Button>
                     <Button
@@ -291,9 +402,12 @@ export default function AdsPage() {
                       sx={{
                         color: 'error.main',
                         borderColor: 'error.main',
+                        fontWeight: 700,
+                        transition: 'all 0.2s ease',
                         '&:hover': {
                           borderColor: 'error.dark',
                           backgroundColor: 'rgba(211,47,47,0.08)',
+                          transform: 'translateX(2px)',
                         },
                       }}
                       onClick={() => handleDelete(ad.id)}
