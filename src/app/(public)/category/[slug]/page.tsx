@@ -200,7 +200,7 @@ function CategoryLead({ article, categoryName }: { article: Article; categoryNam
           <h2 className="mt-4 [font-family:var(--font-serif)] text-3xl font-bold leading-tight text-[var(--news-ink)] md:text-5xl">
             {title}
           </h2>
-          {excerpt ? <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--news-muted)]">{excerpt}</p> : null}
+          {excerpt ? <div className="mt-4 max-w-3xl text-base leading-7 text-[var(--news-muted)] [&>p]:m-0" dangerouslySetInnerHTML={{ __html: excerpt }} /> : null}
           <div className="mt-4 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[var(--news-soft)]">
             <span className="inline-flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
@@ -225,9 +225,10 @@ function CategoryBrief({ article, categoryName }: { article: Article; categoryNa
       <h3 className="mt-2 [font-family:var(--font-serif)] text-xl font-bold leading-tight text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)]">
         {getLocalizedText(article.title, language)}
       </h3>
-      <p className="mt-3 text-sm leading-6 text-[var(--news-muted)] line-clamp-2">
-        {getLocalizedText(article.excerpt, language)}
-      </p>
+      <div 
+        className="mt-3 text-sm leading-6 text-[var(--news-muted)] line-clamp-2 [&>p]:m-0"
+        dangerouslySetInnerHTML={{ __html: getLocalizedText(article.excerpt, language) || '' }}
+      />
       <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--news-soft)]">
         {article.publishedAt ? formatDate(article.publishedAt, language) : 'Recent'}
       </p>

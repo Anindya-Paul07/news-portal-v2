@@ -138,9 +138,10 @@ export default function ArticlePage() {
                 </h1>
 
                 {summary && (
-                  <p className="font-['var(--font-work-sans)'] text-[var(--news-gray-600)] text-lg md:text-xl leading-relaxed mb-6 border-l-4 border-[var(--news-red-700)] pl-4 bg-[var(--news-offwhite)] py-2 pr-2">
-                    {summary}
-                  </p>
+                  <div 
+                    className="font-['var(--font-work-sans)'] text-[var(--news-gray-600)] text-lg md:text-xl leading-relaxed mb-6 border-l-4 border-[var(--news-red-700)] pl-4 bg-[var(--news-offwhite)] py-2 pr-2 [&>p]:m-0"
+                    dangerouslySetInnerHTML={{ __html: summary }}
+                  />
                 )}
 
                 {/* Meta Data Row */}

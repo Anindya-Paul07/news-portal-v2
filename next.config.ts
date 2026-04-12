@@ -10,10 +10,16 @@ const nextConfig: NextConfig = {
     root: projectRoot,
   },
   images: {
+    unoptimized: true,
     remotePatterns: [
-      // Temporarily allow images from any remote source (http/https).
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "placehold.co" },
+      { protocol: "https", hostname: "backoffice.thecontemporary.news" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "images.pexels.com" },
+      { protocol: "https", hostname: "cdn.pixabay.com" },
+      { protocol: "http", hostname: "localhost" },
+      { protocol: "http", hostname: "127.0.0.1" },
     ],
   },
 };

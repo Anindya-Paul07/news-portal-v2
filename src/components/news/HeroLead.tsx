@@ -52,9 +52,7 @@ export function HeroLead({ article }: { article: Article }) {
                 </Typography>
               </Link>
               {summary && (
-                <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-                  {summary}
-                </Typography>
+                <Typography component="div" variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.6, '& > p': { m: 0 } }} dangerouslySetInnerHTML={{ __html: summary }} />
               )}
               <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ color: 'text.secondary', fontSize: 14 }}>
                 <span>{article.author?.name || 'Staff Desk'}</span>

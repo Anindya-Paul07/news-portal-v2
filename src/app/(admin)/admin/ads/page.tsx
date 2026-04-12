@@ -28,7 +28,6 @@ import {
   useAnalyticsAdsSummary,
   useAnalyticsAdsTop,
   useDeleteAd,
-  useLayoutSettings,
   useSaveAd,
   useSaveLayoutSettings,
 } from '@/hooks/api-hooks';
@@ -183,7 +182,6 @@ export default function AdsPage() {
   const { data: articles } = useAdminArticles({ status: 'published', limit: 50, sort: '-publishedAt' }, { enabled: canLoadAds });
   const { data: analyticsSummary } = useAnalyticsAdsSummary({ enabled: canLoadAds });
   const { data: analyticsTop } = useAnalyticsAdsTop({ limit: 6, sort: 'impressions', order: 'desc' }, { enabled: canLoadAds });
-  const layoutSettingsQuery = useLayoutSettings({ enabled: canLoadAds });
   const { mutateAsync: saveAd } = useSaveAd();
   const { mutateAsync: saveLayoutSettings } = useSaveLayoutSettings();
   const { mutateAsync: deleteAd } = useDeleteAd();
@@ -299,7 +297,7 @@ export default function AdsPage() {
   const selectedPreset = AD_PRESETS[draft.preset];
   const articleOptions = articles ?? [];
   const categoryOptions = categories ?? [];
-  const curation = curationDraft ?? layoutSettingsQuery.data ?? readLayoutCuration();
+  const curation = curationDraft ?? readLayoutCuration();
   const categoryFilterOptions: Array<[string, string]> = [
     ['all', 'All categories'],
     ...categoryOptions.map((category) => [category.id, getCategoryLabel(category)] as [string, string]),

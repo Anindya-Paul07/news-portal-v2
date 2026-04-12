@@ -9,7 +9,7 @@ import { BreakingTicker } from '@/components/news/BreakingTicker';
 import type { FbShort } from '@/components/news/FbShortsRail';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
 import { useLanguage } from '@/contexts/language-context';
-import { useBreakingTicker, useFeaturedArticles, useLatestArticles, useLayoutSettings, useTrendingArticles } from '@/hooks/api-hooks';
+import { useBreakingTicker, useFeaturedArticles, useLatestArticles, useTrendingArticles } from '@/hooks/api-hooks';
 import { findCuratedArticle, findCuratedArticles, readLayoutCuration } from '@/lib/layout-curation-store';
 import { fetchReels, readReels } from '@/lib/reels-store';
 import { handleApiError } from '@/lib/query-config';
@@ -87,9 +87,10 @@ function LeadStory({ article, language }: StoryCardProps) {
             {title}
           </h1>
           {excerpt ? (
-            <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--news-muted)] md:text-lg">
-              {excerpt}
-            </p>
+            <div 
+              className="mt-4 max-w-3xl text-base leading-7 text-[var(--news-muted)] md:text-lg [&>p]:m-0"
+              dangerouslySetInnerHTML={{ __html: excerpt }}
+            />
           ) : null}
         </div>
         <div className="border-t border-[var(--news-grid)] pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--news-soft)] md:border-l md:border-t-0 md:pl-5 md:pt-0">
@@ -122,7 +123,7 @@ function SideStory({ article, language, compact = false }: StoryCardProps) {
           {title}
         </h2>
         {!compact && getStoryExcerpt(article, language) ? (
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--news-muted)]">{getStoryExcerpt(article, language)}</p>
+          <div className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--news-muted)] [&>p]:m-0" dangerouslySetInnerHTML={{ __html: getStoryExcerpt(article, language) || '' }} />
         ) : null}
         <p className="news-meta mt-3 text-[var(--news-soft)]">{formatDate(article.publishedAt, language)}</p>
       </div>
@@ -147,7 +148,7 @@ function BriefCard({ article, language }: StoryCardProps) {
   );
 }
 
-function HighlightCarousel({ articles, language }: { articles: Article[]; language: 'en' | 'bn' }) {
+function TrendingCarousel({ articles, language }: { articles: Article[]; language: 'en' | 'bn' }) {
   const items = articles
     .filter((article, index, source) => source.findIndex((entry) => entry.id === article.id) === index)
     .slice(0, 6);
@@ -159,16 +160,16 @@ function HighlightCarousel({ articles, language }: { articles: Article[]; langua
       <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="news-meta text-[var(--news-red-700)]">
-            {language === 'bn' ? 'হাইলাইট ক্যারোসেল' : 'News highlights'}
+            {language === 'bn' ? 'ট্রেন্ডিং ক্যারোসেল' : 'Trending carousel'}
           </p>
           <h2 className="news-section-title">
-            {language === 'bn' ? 'ছবি, প্রেক্ষাপট, দ্রুত স্ক্যান' : 'Visual stories worth scanning now'}
+            {language === 'bn' ? 'এখন সবচেয়ে আলোচিত খবর' : 'Stories gaining momentum now'}
           </h2>
         </div>
         <p className="max-w-md text-sm leading-6 text-[var(--news-muted)]">
           {language === 'bn'
-            ? 'অফ-হোয়াইট পেপার কন্টেইনারে সাজানো গুরুত্বপূর্ণ গল্প, মোবাইলে স্ন্যাপ-স্ক্রলিং।'
-            : 'A paper-toned, snap-scrolling highlight shelf for stronger newsroom pacing on desktop and mobile.'}
+            ? 'শুধু নির্বাচিত ট্রেন্ডিং গল্পগুলো অফ-হোয়াইট কন্টেইনারে, যাতে পেজ ভারী না লাগে।'
+            : 'Only selected trending stories sit in a paper-toned carousel, keeping the page clean instead of over-contained.'}
         </p>
       </div>
       <div className="rounded-[1.75rem] border border-[var(--news-grid)] bg-[var(--news-paper)] p-3 shadow-[0_18px_55px_rgba(18,24,31,0.06)] md:p-5">
@@ -194,9 +195,7 @@ function HighlightCarousel({ articles, language }: { articles: Article[]; langua
                     {title}
                   </h3>
                   {getStoryExcerpt(article, language) ? (
-                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--news-muted)]">
-                      {getStoryExcerpt(article, language)}
-                    </p>
+                    <div className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--news-muted)] [&>p]:m-0" dangerouslySetInnerHTML={{ __html: getStoryExcerpt(article, language) || '' }} />
                   ) : null}
                   <p className="news-meta mt-4 text-[var(--news-soft)]">{formatDate(article.publishedAt, language)}</p>
                 </div>
@@ -224,7 +223,6 @@ export default function HomePage() {
   const trendingQuery = useTrendingArticles();
   const latestQuery = useLatestArticles();
   const featuredQuery = useFeaturedArticles();
-  const layoutSettingsQuery = useLayoutSettings();
 
   useEffect(() => {
     let mounted = true;
@@ -240,7 +238,7 @@ export default function HomePage() {
   const trendingList = useMemo(() => trendingQuery.data ?? [], [trendingQuery.data]);
   const featuredList = useMemo(() => featuredQuery.data ?? [], [featuredQuery.data]);
   const breakingTicker = useMemo(() => breakingQuery.data ?? [], [breakingQuery.data]);
-  const curation = layoutSettingsQuery.data ?? readLayoutCuration();
+  const curation = readLayoutCuration();
   const storyPool = useMemo(
     () =>
       [...featuredList, ...breakingTicker, ...trendingList, ...latestList].filter(
@@ -396,9 +394,7 @@ export default function HomePage() {
                         {getStoryTitle(editorsPick, language)}
                       </h3>
                       {getStoryExcerpt(editorsPick, language) ? (
-                        <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--news-muted)]">
-                          {getStoryExcerpt(editorsPick, language)}
-                        </p>
+                        <div className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--news-muted)] [&>p]:m-0" dangerouslySetInnerHTML={{ __html: getStoryExcerpt(editorsPick, language) || '' }} />
                       ) : null}
                     </TransitionLink>
                   </div>
@@ -413,8 +409,8 @@ export default function HomePage() {
           )}
         </section>
 
-        <HighlightCarousel
-          articles={[leadStory, ...heroStack, editorsPick, ...quickBriefs, ...featureStrip].filter(
+        <TrendingCarousel
+          articles={(trendingList.length ? trendingList : [leadStory, ...heroStack, editorsPick, ...quickBriefs, ...featureStrip]).filter(
             (article): article is Article => Boolean(article),
           )}
           language={language}
@@ -425,20 +421,10 @@ export default function HomePage() {
             <div className="mb-5 border-b border-[var(--news-grid)] pb-2">
               <h2 className="news-section-title">{language === 'bn' ? 'নিউজ ব্রিফিং' : 'News briefing'}</h2>
             </div>
-            <div className="rounded-[1.5rem] border border-[var(--news-grid)] bg-[var(--news-paper)] p-4 shadow-[0_18px_50px_rgba(18,24,31,0.05)] md:p-5">
-              <div className="mb-3 flex items-center justify-between border-b border-[var(--news-grid)] pb-3">
-                <p className="news-meta text-[var(--news-red-700)]">
-                  {language === 'bn' ? 'দ্রুত পাঠ' : 'Quick-read tiles'}
-                </p>
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--news-soft)]">
-                  {language === 'bn' ? 'স্ক্যানযোগ্য' : 'Scan friendly'}
-                </span>
-              </div>
-              <div className="grid gap-0 md:grid-cols-2 md:gap-x-6">
+            <div className="grid gap-0 md:grid-cols-2 md:gap-x-6">
               {quickBriefs.map((article) => (
                 <BriefCard key={article.id} article={article} language={language} />
               ))}
-              </div>
             </div>
 
             {featureStrip.length > 0 ? (
@@ -564,9 +550,7 @@ export default function HomePage() {
                           {getStoryTitle(article, language)}
                         </h3>
                         {getStoryExcerpt(article, language) ? (
-                          <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--news-muted)]">
-                            {getStoryExcerpt(article, language)}
-                          </p>
+                          <div className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--news-muted)] [&>p]:m-0" dangerouslySetInnerHTML={{ __html: getStoryExcerpt(article, language) || '' }} />
                         ) : null}
                         <p className="news-meta mt-4 text-[var(--news-soft)]">{formatDate(article.publishedAt, language)}</p>
                       </div>

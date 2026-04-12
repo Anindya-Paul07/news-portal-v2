@@ -75,9 +75,10 @@ export function ArticleCard({ article, className = '' }: { article: Article; cla
 
         {/* Excerpt */}
         {summary && (
-          <p className="[font-family:var(--font-serif)] mb-4 flex-grow line-clamp-3 text-sm leading-relaxed text-[var(--news-muted)]">
-            {summary}
-          </p>
+          <div 
+            className="[font-family:var(--font-serif)] mb-4 flex-grow line-clamp-3 text-sm leading-relaxed text-[var(--news-muted)] [&>p]:m-0"
+            dangerouslySetInnerHTML={{ __html: summary }}
+          />
         )}
 
         {/* Footer / Meta */}
