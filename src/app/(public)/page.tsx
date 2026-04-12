@@ -208,14 +208,6 @@ function TrendingCarousel({ articles, language }: { articles: Article[]; languag
   );
 }
 
-const extractVideoUrl = (article: Article, language: 'en' | 'bn') => {
-  const content = getLocalizedText(article.content, language);
-  const excerpt = getLocalizedText(article.excerpt, language);
-  const combined = `${content} ${excerpt}`;
-  const match = combined.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/|facebook\.com\/[^\s"'<>]+)/i);
-  return match?.[0];
-};
-
 export default function HomePage() {
   const { language } = useLanguage();
   const [customReels, setCustomReels] = useState<FbShort[]>(() => readReels());
@@ -310,18 +302,7 @@ export default function HomePage() {
       .slice(0, 3);
   })();
 
-  const articleReels: FbShort[] = [...latestList, ...trendingList]
-    .filter((article, index, source) => source.findIndex((item) => item.id === article.id) === index)
-    .map((article) => ({
-      id: article.id,
-      title: getStoryTitle(article, language),
-      thumbnailUrl: article.featuredImage?.url ? resolveMediaUrl(article.featuredImage.url) : resolveMediaUrl(article.coverImage),
-      videoUrl: extractVideoUrl(article, language),
-      postedAt: article.publishedAt ? formatDate(article.publishedAt, language) : undefined,
-    }))
-    .filter((item) => item.thumbnailUrl || item.videoUrl)
-    .slice(0, 8);
-  const reels: FbShort[] = [...customReels, ...articleReels]
+  const reels: FbShort[] = customReels
     .filter((item, index, source) => source.findIndex((entry) => entry.id === item.id) === index)
     .slice(0, 10);
 
