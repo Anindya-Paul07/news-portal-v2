@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -25,9 +26,9 @@ import {
   Undo,
   Redo,
 } from 'lucide-react';
-import { useRef } from 'react';
 import { useUploadMedia } from '@/hooks/api-hooks';
 import { useAlert } from '@/contexts/alert-context';
+import { getDisplayErrorMessage } from '@/lib/errors';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -99,6 +100,13 @@ export function RichTextEditor({
     },
   });
 
+  useEffect(() => {
+    if (!editor) return;
+    const currentHtml = editor.getHTML();
+    if (currentHtml === value) return;
+    editor.commands.setContent(value || '', { emitUpdate: false });
+  }, [editor, value]);
+
   const handleImageUpload = async (file: File) => {
     try {
       const result = await uploadMutation.mutateAsync({
@@ -111,8 +119,7 @@ export function RichTextEditor({
         showAlert('Image uploaded successfully', 'success');
       }
     } catch (error) {
-      showAlert('Failed to upload image', 'error');
-      console.error('Image upload error:', error);
+      showAlert(getDisplayErrorMessage(error, 'media-upload'), 'error', 'Image upload failed');
     }
   };
 

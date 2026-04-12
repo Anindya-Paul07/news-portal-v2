@@ -1,18 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useTheme } from '@mui/material/styles';
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 
 export type FbShort = {
@@ -21,6 +13,8 @@ export type FbShort = {
   thumbnailUrl?: string;
   videoUrl?: string;
   embedUrl?: string;
+  description?: string;
+  isActive?: boolean;
   duration?: string;
   postedAt?: string;
   views?: number;
@@ -28,231 +22,227 @@ export type FbShort = {
 
 type FbShortsRailProps = {
   items: FbShort[];
-  variant?: 'default' | 'compact';
+  headline?: string;
+  strapline?: string;
+};
+
+const getYouTubeId = (url: string) => {
+  const patterns = [
+    /youtu\.be\/([^?&/]+)/,
+    /youtube\.com\/shorts\/([^?&/]+)/,
+    /youtube\.com\/watch\?v=([^?&/]+)/,
+    /youtube\.com\/embed\/([^?&/]+)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+
+  return undefined;
 };
 
 const buildEmbedUrl = (short: FbShort) => {
   if (short.embedUrl) return short.embedUrl;
-  if (short.videoUrl) {
-    const base = 'https://www.facebook.com/plugins/video.php';
-    return `${base}?href=${encodeURIComponent(short.videoUrl)}&show_text=false`;
+  if (!short.videoUrl) return undefined;
+
+  const youtubeId = getYouTubeId(short.videoUrl);
+  if (youtubeId) {
+    return `https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&playsinline=1`;
   }
-  return undefined;
+
+  if (short.videoUrl.includes('facebook.com')) {
+    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(short.videoUrl)}&show_text=false`;
+  }
+
+  return short.videoUrl;
 };
 
-export function FbShortsRail({ items, variant = 'default' }: FbShortsRailProps) {
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [atStart, setAtStart] = useState(true);
-  const [atEnd, setAtEnd] = useState(false);
-  const theme = useTheme();
-  const cardWidth = variant === 'compact' ? 190 : 220;
+const formatViews = (views?: number) => {
+  if (!views) return undefined;
+  return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(views);
+};
 
-  const activeShort = items[activeIndex];
-  const embedSrc = activeShort ? buildEmbedUrl(activeShort) : undefined;
+export function FbShortsRail({
+  items,
+  headline = 'Shorts',
+  strapline = 'Fast vertical video from the newsroom',
+}: FbShortsRailProps) {
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const updateScrollMeta = () => {
-    const node = scrollRef.current;
-    if (!node) return;
-    setAtStart(node.scrollLeft <= 12);
-    setAtEnd(node.scrollLeft + node.clientWidth >= node.scrollWidth - 12);
-  };
+  const normalized = useMemo(
+    () =>
+      items.map((item) => ({
+        ...item,
+        embedSrc: buildEmbedUrl(item),
+      })),
+    [items],
+  );
 
   useEffect(() => {
-    updateScrollMeta();
-    const node = scrollRef.current;
-    if (!node) return;
-    node.addEventListener('scroll', updateScrollMeta, { passive: true });
-    return () => node.removeEventListener('scroll', updateScrollMeta);
-  }, [items.length]);
+    if (activeIndex === null) return;
 
-  const scroll = (direction: 'prev' | 'next') => {
-    const node = scrollRef.current;
-    if (!node) return;
-    const delta = direction === 'next' ? cardWidth * 2 : -cardWidth * 2;
-    node.scrollBy({ left: delta, behavior: 'smooth' });
-  };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActiveIndex(null);
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        setActiveIndex((current) => (current === null ? 0 : Math.min(current + 1, normalized.length - 1)));
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        setActiveIndex((current) => (current === null ? 0 : Math.max(current - 1, 0)));
+      }
+    };
 
-  const handleOpen = (index: number) => {
-    setActiveIndex(index);
-    setViewerOpen(true);
-  };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeIndex, normalized.length]);
 
-  if (!items.length) return null;
+  useEffect(() => {
+    if (activeIndex === null || !overlayRef.current) return;
+    const cardHeight = overlayRef.current.clientHeight;
+    overlayRef.current.scrollTo({ top: cardHeight * activeIndex, behavior: 'smooth' });
+  }, [activeIndex]);
 
-  const skeletonImage = 'linear-gradient(120deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25))';
+  if (!normalized.length) return null;
 
   return (
     <>
-      <Card
-        variant="outlined"
-        sx={{
-          borderRadius: variant === 'compact' ? 2 : 3,
-          p: { xs: 2, md: variant === 'compact' ? 2 : 3 },
-          boxShadow: theme.shadows[3],
-        }}
-      >
-        <Stack spacing={2}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack spacing={0.5}>
-              <Typography variant="overline" sx={{ letterSpacing: 3, color: 'text.secondary' }}>
-                Shorts
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                Latest from the newsroom
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={1}>
-              <IconButton
-                aria-label="Previous short"
-                disabled={atStart}
-                onClick={() => scroll('prev')}
-                size="small"
-                sx={{ border: `1px solid ${theme.palette.divider}` }}
-              >
-                <ChevronLeftRoundedIcon fontSize="small" />
-              </IconButton>
-              <IconButton
-                aria-label="Next short"
-                disabled={atEnd}
-                onClick={() => scroll('next')}
-                size="small"
-                sx={{ border: `1px solid ${theme.palette.divider}` }}
-              >
-                <ChevronRightRoundedIcon fontSize="small" />
-              </IconButton>
-            </Stack>
-          </Stack>
-
-          <Box
-            ref={scrollRef}
-            sx={{
-              display: 'flex',
-              gap: 2,
-              overflowX: 'auto',
-              pb: 1,
-              scrollSnapType: 'x mandatory',
-              '&::-webkit-scrollbar': { display: 'none' },
-            }}
-          >
-            {items.map((short, index) => {
-              const isActive = index === activeIndex;
-              return (
-                <Box
-                  key={short.id}
-                  component="button"
-                  type="button"
-                  onClick={() => handleOpen(index)}
-                  sx={{
-                    minWidth: cardWidth,
-                    border: 0,
-                    padding: 0,
-                    background: 'transparent',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    scrollSnapAlign: 'start',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      borderRadius: 3,
-                      overflow: 'hidden',
-                      height: variant === 'compact' ? 240 : 280,
-                      boxShadow: isActive ? theme.shadows[5] : theme.shadows[2],
-                      transition: 'transform 150ms ease, box-shadow 150ms ease',
-                      '&:hover': {
-                        transform: 'translateY(-3px)',
-                        boxShadow: theme.shadows[6],
-                      },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        backgroundImage: short.thumbnailUrl
-                          ? `url(${short.thumbnailUrl})`
-                          : skeletonImage,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        filter: 'brightness(0.85)',
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.8) 100%)',
-                        color: '#fff',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'flex-end',
-                        p: 2,
-                        gap: 0.75,
-                      }}
-                    >
-                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                        {short.title}
-                      </Typography>
-                      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ fontSize: 12, textTransform: 'uppercase' }}>
-                        {short.duration && (
-                          <Stack direction="row" spacing={0.5} alignItems="center">
-                            <PlayArrowRoundedIcon fontSize="inherit" />
-                            <Typography variant="caption" color="inherit">
-                              {short.duration}
-                            </Typography>
-                          </Stack>
-                        )}
-                        {short.postedAt && (
-                          <Typography variant="caption" color="inherit">
-                            {short.postedAt}
-                          </Typography>
-                        )}
-                      </Stack>
-                    </Box>
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
-        </Stack>
-      </Card>
-
-      <Dialog fullWidth maxWidth="md" open={viewerOpen} onClose={() => setViewerOpen(false)}>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            {activeShort?.title || 'Short'}
-          </Typography>
-          <IconButton aria-label="Close" onClick={() => setViewerOpen(false)}>
-            <CloseRoundedIcon />
+      <section className="overflow-hidden bg-[#101010] text-white">
+        <div className="flex items-start justify-between gap-4 px-4 pb-3 pt-5 md:px-6">
+          <div className="flex items-center gap-3">
+            <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#ff174d]">
+              <PlayArrowRoundedIcon sx={{ fontSize: 22, color: '#fff' }} />
+            </span>
+            <div>
+              <h2 className="text-3xl font-bold leading-none text-white md:text-4xl">{headline}</h2>
+              <p className="mt-1 text-sm text-white/60">{strapline}</p>
+            </div>
+          </div>
+          <IconButton aria-label="More shorts actions" sx={{ color: '#fff' }}>
+            <MoreVertRoundedIcon />
           </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          {embedSrc ? (
-            <Box
-              component="iframe"
-              title={activeShort?.title}
-              src={embedSrc}
-              scrolling="no"
-              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
-              allowFullScreen
-              loading="lazy"
-              sx={{
-                width: '100%',
-                minHeight: 420,
-                border: 0,
-                borderRadius: 2,
-              }}
-            />
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Add a Facebook video or embed URL to play this short.
-            </Typography>
-          )}
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        <div className="overflow-x-auto px-2 pb-4 md:px-4">
+          <div className="flex min-w-max gap-5">
+            {normalized.map((short, index) => (
+              <button
+                key={short.id}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                className="group w-[320px] text-left outline-none sm:w-[340px]"
+              >
+                <div className="relative overflow-hidden rounded-[18px] bg-[#1a1a1a]">
+                  <div className="relative aspect-[9/16]">
+                    {short.thumbnailUrl ? (
+                      <img
+                        src={short.thumbnailUrl}
+                        alt={short.title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-[linear-gradient(180deg,#3c0e11,#111)]" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-4">
+                      <div className="mb-2 inline-flex items-center rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white/85">
+                        {short.duration || 'Short'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start justify-between gap-3 px-1 pb-1 pt-3">
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-2 text-[1.05rem] font-bold leading-[1.25] text-white">
+                      {short.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-white/62">
+                      {[short.postedAt, formatViews(short.views) ? `${formatViews(short.views)} views` : undefined]
+                        .filter(Boolean)
+                        .join(' • ')}
+                    </p>
+                  </div>
+                  <IconButton aria-label="Short options" sx={{ color: 'rgba(255,255,255,0.88)', mt: -0.5 }}>
+                    <MoreVertRoundedIcon />
+                  </IconButton>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {activeIndex !== null ? (
+        <div className="fixed inset-0 z-[1400] bg-black/92 backdrop-blur-sm">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-white md:px-6">
+            <div>
+              <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.56)' }}>
+                Shorts Viewer
+              </Typography>
+              <Typography sx={{ mt: 0.5, fontSize: '1.05rem', fontWeight: 700 }}>
+                {normalized[activeIndex]?.title}
+              </Typography>
+            </div>
+            <IconButton aria-label="Close shorts viewer" onClick={() => setActiveIndex(null)} sx={{ color: '#fff' }}>
+              <CloseRoundedIcon />
+            </IconButton>
+          </div>
+
+          <div
+            ref={overlayRef}
+            className="h-[calc(100vh-72px)] overflow-y-auto"
+            style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none' }}
+          >
+            {normalized.map((short, index) => (
+              <div
+                key={short.id}
+                className="flex min-h-[calc(100vh-72px)] items-center justify-center px-3 py-6 md:px-6"
+                style={{ scrollSnapAlign: 'start' }}
+              >
+                <div className="grid w-full max-w-[1180px] gap-6 lg:grid-cols-[420px_minmax(0,1fr)] lg:items-center">
+                  <div className="mx-auto w-full max-w-[420px]">
+                    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-black shadow-[0_26px_80px_rgba(0,0,0,0.55)]">
+                      <div className="aspect-[9/16] bg-black">
+                        {short.embedSrc ? (
+                          <iframe
+                            title={short.title}
+                            src={short.embedSrc}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            loading="lazy"
+                            className="h-full w-full border-0"
+                          />
+                        ) : short.thumbnailUrl ? (
+                          <img src={short.thumbnailUrl} alt={short.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full bg-[linear-gradient(180deg,#3c0e11,#111)]" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="hidden lg:block">
+                    <p className="news-meta text-[var(--news-red-300)]">Short-form coverage</p>
+                    <h3 className="mt-3 [font-family:var(--font-serif)] text-5xl font-bold leading-tight text-white">
+                      {short.title}
+                    </h3>
+                    <p className="mt-5 max-w-xl text-base leading-7 text-white/70">
+                      {short.description ||
+                        'Open a short to view it in a portrait-first vertical viewer. This keeps the homepage shelf compact like YouTube Shorts, while still allowing a full-screen newsroom reel experience.'}
+                    </p>
+                    <div className="mt-6 flex flex-wrap gap-3 text-xs font-bold uppercase tracking-[0.16em] text-white/56">
+                      <span>{index + 1} / {normalized.length}</span>
+                      {short.duration ? <span>{short.duration}</span> : null}
+                      {short.postedAt ? <span>{short.postedAt}</span> : null}
+                      {formatViews(short.views) ? <span>{formatViews(short.views)} views</span> : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

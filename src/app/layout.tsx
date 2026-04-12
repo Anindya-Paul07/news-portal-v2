@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Work_Sans } from "next/font/google";
+import { Hind_Siliguri, Noto_Serif_Bengali, Playfair_Display, Work_Sans } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -14,6 +14,20 @@ const playfair = Playfair_Display({
 const workSans = Work_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const bengaliSans = Hind_Siliguri({
+  variable: "--font-bengali-sans",
+  subsets: ["bengali", "latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const bengaliSerif = Noto_Serif_Bengali({
+  variable: "--font-bengali-serif",
+  subsets: ["bengali", "latin"],
   display: "swap",
   weight: ["400", "500", "600", "700"],
 });
@@ -61,7 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${playfair.variable} ${workSans.variable} antialiased bg-[var(--color-surface)] text-[var(--color-ink)]`}
+        className={`${playfair.variable} ${workSans.variable} ${bengaliSans.variable} ${bengaliSerif.variable} antialiased bg-[var(--color-surface)] text-[var(--color-ink)]`}
       >
         <AppRouterCacheProvider>
           <Providers>{children}</Providers>

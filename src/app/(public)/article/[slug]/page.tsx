@@ -8,6 +8,7 @@ import { AdSlot } from '@/components/ads/AdSlot';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useArticle, useRelatedArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
+import { handleApiError } from '@/lib/query-config';
 import { formatDate, getLocalizedText, normalizeRichText, resolveMediaUrl, resolveRichTextMedia } from '@/lib/utils';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
 
@@ -31,8 +32,7 @@ export default function ArticlePage() {
   const slug = Array.isArray(params?.slug) ? params?.slug[0] : params?.slug;
   const articleQuery = useArticle(slug || '');
   const article = articleQuery.data;
-  const categoryIdForRelated = article?.categoryId;
-  const relatedQuery = useRelatedArticles(categoryIdForRelated);
+  const relatedQuery = useRelatedArticles(article?.id);
   const related = relatedQuery.data;
   const { language } = useLanguage();
   
@@ -102,13 +102,16 @@ export default function ArticlePage() {
   if (!displayArticle) {
     return (
       <div className="max-w-[1440px] mx-auto px-4 py-12">
-        <EmptyState title="Article not found" description="The story could not be loaded. Please try again later." />
+        <EmptyState
+          title={articleQuery.isError ? 'Unable to load article' : 'Article not found'}
+          description={articleQuery.isError ? handleApiError(articleQuery.error) : 'The story could not be loaded. Please try again later.'}
+        />
       </div>
     );
   }
 
   return (
-    <div className="bg-[var(--news-white)] min-h-screen relative">
+    <div className="bg-[var(--news-page)] min-h-screen relative">
       {/* Reading Progress Bar (Red) */}
       <div className="fixed top-0 left-0 h-1 bg-[var(--news-red-700)] z-50 transition-all duration-100 ease-out" style={{ width: `${scrollProgress * 100}%` }} />
 
@@ -223,7 +226,7 @@ export default function ArticlePage() {
               {/* In-content Ad */}
               <div className="my-8 py-8 border-t border-[var(--news-gray-200)] text-center">
                  <span className="text-xs text-[var(--news-gray-400)] uppercase tracking-widest mb-2 block">Advertisement</span>
-                 <AdSlot position="in_content" page="article" />
+                 <AdSlot slot="article_inline_wide" page="article" categoryId={displayArticle.category?.id || displayArticle.categoryId} />
               </div>
 
             </article>
@@ -271,7 +274,7 @@ export default function ArticlePage() {
 
                 {/* Sidebar Ad */}
                 <div className="mb-8">
-                  <AdSlot position="sidebar" page="article" />
+                  <AdSlot slot="article_sidebar_tall" page="article" categoryId={displayArticle.category?.id || displayArticle.categoryId} />
                 </div>
                 
                 {/* Explore Categories */}
@@ -294,6 +297,10 @@ export default function ArticlePage() {
 
              </div>
           </aside>
+        </div>
+
+        <div className="mt-10 border-t border-[var(--news-gray-200)] pt-8">
+          <AdSlot slot="article_footer_banner" page="article" categoryId={displayArticle.category?.id || displayArticle.categoryId} />
         </div>
       </div>
     </div>

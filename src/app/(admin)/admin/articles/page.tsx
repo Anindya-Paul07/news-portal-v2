@@ -4,10 +4,13 @@ import { useState, type FormEvent } from 'react';
 import { AdminShell } from '@/components/layout/AdminShell';
 import { RichTextEditor } from '@/components/editor/RichTextEditor';
 import { LanguageTabs } from '@/components/editor/LanguageTabs';
+import { MediaPickerDialog } from '@/components/media/MediaPickerDialog';
 import { useAdminArticles, useAdminCategories, useDeleteArticle, useSaveArticle, useUploadMedia } from '@/hooks/api-hooks';
 import { useAlert } from '@/contexts/alert-context';
 import { useAuth } from '@/contexts/auth-context';
 import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
+import { ErrorState } from '@/components/states/ErrorState';
+import { getDisplayErrorMessage } from '@/lib/errors';
 import { canDeleteArticle } from '@/lib/rbac';
 import { ArticleStatus, LocalizedText, ImageAsset } from '@/lib/types';
 import { getLocalizedText, resolveMediaUrl } from '@/lib/utils';
@@ -17,6 +20,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
+import PhotoLibraryRoundedIcon from '@mui/icons-material/PhotoLibraryRounded';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -54,8 +58,8 @@ export default function ArticlesPage() {
 
   const { user } = useAuth();
   const { showAlert } = useAlert();
-  const { data: articles, isLoading } = useAdminArticles();
-  const { data: categories } = useAdminCategories();
+  const { data: articles, isLoading, isError: isArticlesError, error: articlesError, refetch: refetchArticles } = useAdminArticles();
+  const { data: categories, isError: isCategoriesError, error: categoriesError, refetch: refetchCategories } = useAdminCategories();
   const deleteMutation = useDeleteArticle();
   const saveMutation = useSaveArticle();
   const uploadMutation = useUploadMedia();
@@ -71,8 +75,7 @@ export default function ArticlesPage() {
         showAlert('Image uploaded successfully', 'success');
       }
     } catch (error) {
-      console.error(error);
-      showAlert('Failed to upload image', 'error');
+      showAlert(getDisplayErrorMessage(error, 'media-upload'), 'error', 'Image upload failed');
     }
   };
 
@@ -81,6 +84,7 @@ export default function ArticlesPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState(initialDraft);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
   // Helper to safely get string from LocalizedText
   const getStr = (text: LocalizedText | undefined | null, lang: 'en' | 'bn'): string => {
@@ -114,7 +118,7 @@ export default function ArticlesPage() {
       setSelectedArticleId(null);
       setIsEditing(false);
     } catch (error) {
-      showAlert('Failed to delete article', 'error');
+      showAlert(getDisplayErrorMessage(error, 'article-delete'), 'error', 'Delete failed');
     }
   };
 
@@ -155,15 +159,25 @@ export default function ArticlesPage() {
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (!draft.titleEn && !draft.titleBn) {
-      showAlert('Title is required', 'error');
+    if (!draft.titleEn.trim() || !draft.titleBn.trim()) {
+      showAlert('Both English and Bangla titles are required by the backend.', 'error', 'Missing title');
+      return;
+    }
+
+    if (!draft.contentEn.trim() || !draft.contentBn.trim()) {
+      showAlert('Both English and Bangla article content are required by the backend.', 'error', 'Missing content');
+      return;
+    }
+
+    if (!draft.category) {
+      showAlert('Select a category before saving this article.', 'error', 'Missing category');
       return;
     }
 
     try {
       await saveMutation.mutateAsync({
         id: editingId || undefined,
-        slug: draft.slug, // Make sure slug is generated on backend if empty, or handle it here
+        slug: draft.slug || undefined,
         title: { en: draft.titleEn, bn: draft.titleBn },
         excerpt: { en: draft.excerptEn, bn: draft.excerptBn },
         content: { en: draft.contentEn, bn: draft.contentBn },
@@ -179,8 +193,7 @@ export default function ArticlesPage() {
       setEditingId(null);
       setDraft(initialDraft);
     } catch (error) {
-      console.error(error);
-      showAlert('Failed to save article', 'error');
+      showAlert(getDisplayErrorMessage(error, 'article-save'), 'error', 'Save failed');
     }
   };
 
@@ -248,7 +261,17 @@ export default function ArticlesPage() {
 
         {/* ═══ PANE 3: PREVIEW/EDIT ═══ */}
         <div className="overflow-y-auto bg-[var(--newsos-bg-primary)]">
-          {isEditing ? (
+          {isArticlesError || isCategoriesError ? (
+            <div className="p-4">
+              <ErrorState
+                title={getDisplayErrorMessage(articlesError || categoriesError, 'fetch')}
+                onRetry={() => {
+                  refetchArticles();
+                  refetchCategories();
+                }}
+              />
+            </div>
+          ) : isEditing ? (
             /* ─── EDITOR ─── */
             <form onSubmit={handleSave} className="h-full flex flex-col">
               <div className="sticky top-0 z-10 bg-[var(--newsos-bg-primary)] border-b border-[var(--newsos-border-default)] px-4 py-3">
@@ -275,7 +298,7 @@ export default function ArticlesPage() {
                     <input type="text" value={draft.titleEn} onChange={(e) => setDraft({ ...draft, titleEn: e.target.value })} className="w-full px-3 py-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-sm focus:outline-none focus:border-[var(--newsos-accent-primary)]" placeholder="Enter title..." />
                   </div>
                   <div>
-                    <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Title (Bengali)</label>
+                    <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Title (Bangla) *</label>
                     <input type="text" value={draft.titleBn} onChange={(e) => setDraft({ ...draft, titleBn: e.target.value })} className="w-full px-3 py-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-sm focus:outline-none focus:border-[var(--newsos-accent-primary)]" placeholder="শিরোনাম..." />
                   </div>
                 </div>
@@ -287,7 +310,7 @@ export default function ArticlesPage() {
                     <input type="text" value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} className="w-full px-3 py-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-sm focus:outline-none focus:border-[var(--newsos-accent-primary)]" placeholder="slug" />
                   </div>
                   <div>
-                    <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Category</label>
+                    <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Category *</label>
                     <select value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} className="w-full px-3 py-2 bg-[var(--newsos-bg-primary)] border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-sm focus:outline-none focus:border-[var(--newsos-accent-primary)]">
                       <option value="">Select...</option>
                       {(categories || []).map((cat) => <option key={cat.id} value={cat.id}>{getLocalizedText(cat.name, 'en') || getLocalizedText(cat.name, 'bn')}</option>)}
@@ -298,6 +321,7 @@ export default function ArticlesPage() {
                     <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as ArticleStatus })} className="w-full px-3 py-2 bg-[var(--newsos-bg-primary)] border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-sm focus:outline-none focus:border-[var(--newsos-accent-primary)]">
                       <option value="draft">Draft</option>
                       <option value="published">Published</option>
+                      <option value="scheduled">Scheduled</option>
                       <option value="archived">Archived</option>
                     </select>
                   </div>
@@ -311,12 +335,12 @@ export default function ArticlesPage() {
                       {
                         label: 'English',
                         value: 'en',
-                        content: <RichTextEditor value={draft.excerptEn} onChange={(html) => setDraft({ ...draft, excerptEn: html })} placeholder="Brief summary..." minHeight="120px" />
+                        content: <RichTextEditor key={`excerpt-en-${editingId || 'new'}`} value={draft.excerptEn} onChange={(html) => setDraft({ ...draft, excerptEn: html })} placeholder="Brief summary..." minHeight="120px" />
                       },
                       {
                         label: 'বাংলা',
                         value: 'bn',
-                        content: <RichTextEditor value={draft.excerptBn} onChange={(html) => setDraft({ ...draft, excerptBn: html })} placeholder="সংক্ষিপ্ত বিবরণ..." minHeight="120px" />
+                        content: <RichTextEditor key={`excerpt-bn-${editingId || 'new'}`} value={draft.excerptBn} onChange={(html) => setDraft({ ...draft, excerptBn: html })} placeholder="সংক্ষিপ্ত বিবরণ..." minHeight="120px" />
                       }
                     ]}
                   />
@@ -330,12 +354,12 @@ export default function ArticlesPage() {
                       {
                         label: 'English',
                         value: 'en',
-                        content: <RichTextEditor value={draft.contentEn} onChange={(html) => setDraft({ ...draft, contentEn: html })} placeholder="Write your article content..." minHeight="400px" />
+                        content: <RichTextEditor key={`content-en-${editingId || 'new'}`} value={draft.contentEn} onChange={(html) => setDraft({ ...draft, contentEn: html })} placeholder="Write your article content..." minHeight="400px" />
                       },
                       {
                         label: 'বাংলা',
                         value: 'bn',
-                        content: <RichTextEditor value={draft.contentBn} onChange={(html) => setDraft({ ...draft, contentBn: html })} placeholder="নিবন্ধ লিখুন..." minHeight="400px" />
+                        content: <RichTextEditor key={`content-bn-${editingId || 'new'}`} value={draft.contentBn} onChange={(html) => setDraft({ ...draft, contentBn: html })} placeholder="নিবন্ধ লিখুন..." minHeight="400px" />
                       }
                     ]}
                   />
@@ -359,8 +383,16 @@ export default function ArticlesPage() {
                           className="hidden" 
                         />
                       </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsMediaPickerOpen(true)}
+                        className="flex items-center gap-2 px-3 py-2 border border-[var(--newsos-border-default)] text-xs font-bold uppercase tracking-wide text-[var(--newsos-text-primary)] transition-colors hover:bg-[var(--newsos-bg-hover)]"
+                      >
+                        <PhotoLibraryRoundedIcon sx={{ fontSize: 18 }} />
+                        Library
+                      </button>
                       <span className="text-[0.65rem] text-[var(--newsos-text-tertiary)]">
-                        or paste URL below
+                        upload, choose from library, or paste URL below
                       </span>
                     </div>
                     
@@ -459,6 +491,14 @@ export default function ArticlesPage() {
           )}
         </div>
       </div>
+      <MediaPickerDialog
+        open={isMediaPickerOpen}
+        onClose={() => setIsMediaPickerOpen(false)}
+        onSelect={(item) => {
+          setDraft((prev) => ({ ...prev, imageUrl: item.url }));
+          showAlert('Image selected from media library', 'success');
+        }}
+      />
     </AdminShell>
   );
 }

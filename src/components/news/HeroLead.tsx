@@ -22,6 +22,7 @@ export function HeroLead({ article }: { article: Article }) {
   const summary = getLocalizedText(article.excerpt, language);
   const imageUrl = resolveMediaUrl(article.featuredImage?.url || article.coverImage);
   const imageAlt = getLocalizedText(article.featuredImage?.alt, language) || title;
+  const readTime = article.readTime ?? article.readingTime;
 
   return (
     <Card
@@ -58,7 +59,7 @@ export function HeroLead({ article }: { article: Article }) {
               <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ color: 'text.secondary', fontSize: 14 }}>
                 <span>{article.author?.name || 'Staff Desk'}</span>
                 {article.publishedAt && <span>• {formatDate(article.publishedAt)}</span>}
-                {article.readingTime && <span>• {article.readingTime} min read</span>}
+                {readTime && <span>• {readTime} min read</span>}
               </Stack>
               <Button
                 component={Link as unknown as 'a'}

@@ -24,6 +24,7 @@ import {
   MediaUpdatePayload,
   MediaUploadPayload,
   User,
+  LayoutCuration,
 } from '@/lib/types';
 
 const buildQuery = (params?: Record<string, string | number | boolean | undefined>) => {
@@ -68,14 +69,13 @@ export const useBreakingTicker = () =>
 export const useTrendingArticles = () =>
   useQuery({
     queryKey: ['articles', 'trending'],
-    queryFn: () => fetcher<Article[]>(`/articles${buildQuery({ isTrending: true, status: 'published', limit: 12 })}`),
+    queryFn: () => fetcher<Article[]>(`/articles/trending/list${buildQuery({ limit: 12 })}`),
   });
 
 export const useLatestArticles = () =>
   useQuery({
     queryKey: ['articles', 'latest'],
-    queryFn: () =>
-      fetcher<Article[]>(`/articles${buildQuery({ sort: '-publishedAt', status: 'published', limit: 12 })}`),
+    queryFn: () => fetcher<Article[]>(`/articles/latest/list${buildQuery({ limit: 12 })}`),
   });
 
 export const useArticles = (
@@ -95,11 +95,11 @@ export const useArticle = (identifier: string) =>
     queryFn: () => fetcher<Article>(`/articles/${identifier}`),
   });
 
-export const useRelatedArticles = (categoryId?: string) =>
+export const useRelatedArticles = (articleId?: string) =>
   useQuery({
-    enabled: !!categoryId,
-    queryKey: ['articles', 'related', categoryId],
-    queryFn: () => fetcher<Article[]>(`/articles${buildQuery({ category: categoryId, limit: 6 })}`),
+    enabled: !!articleId,
+    queryKey: ['articles', 'related', articleId],
+    queryFn: () => fetcher<Article[]>(`/articles/${articleId}/related${buildQuery({ limit: 6 })}`),
   });
 
 export const useCategory = (identifier: string) =>
@@ -126,7 +126,7 @@ export const useSearchArticles = (term: string, filters?: Record<string, string 
     queryFn: () => fetcher<Article[]>(`/articles/search/query${buildQuery({ q: term, ...filters })}`),
   });
 
-export const useAds = (params?: { type?: AdvertisementType; position?: AdPlacement; page?: string }) =>
+export const useAds = (params?: { type?: AdvertisementType; position?: AdPlacement; page?: string; categoryId?: string }) =>
   useQuery({
     queryKey: ['ads', 'active', params],
     queryFn: () => fetcher<Advertisement[]>(`/advertisements/active${buildQuery(params)}`),
@@ -168,34 +168,52 @@ export const useAnalyticsTraffic = (params?: { window?: string; interval?: strin
     queryFn: () => fetcher<AnalyticsTrafficPoint[]>(`/analytics/traffic${buildQuery(params)}`),
   });
 
-export const useAnalyticsAdsSummary = () =>
+export const useAnalyticsAdsSummary = (options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: ['analytics', 'ads', 'summary'],
     queryFn: () => fetcher<AnalyticsAdsSummary>('/analytics/ads/summary'),
+    enabled: options?.enabled ?? true,
   });
 
-export const useAnalyticsAdsTop = (params?: { limit?: number; sort?: string; position?: string; categoryId?: string }) =>
+export const useAnalyticsAdsTop = (
+  params?: { limit?: number; sort?: string; order?: string; position?: string; categoryId?: string },
+  options?: { enabled?: boolean },
+) =>
   useQuery({
     queryKey: ['analytics', 'ads', 'top', params],
     queryFn: () => fetcher<AdPerformancePoint[]>(`/analytics/ads/top${buildQuery(params)}`),
+    enabled: options?.enabled ?? true,
   });
 
-export const useAdminArticles = (params?: Record<string, string | number | boolean | undefined>) =>
+export const useLayoutSettings = (options?: { enabled?: boolean }) =>
+  useQuery({
+    queryKey: ['settings', 'layout'],
+    queryFn: () => fetcher<LayoutCuration>('/settings/layout'),
+    enabled: options?.enabled ?? true,
+  });
+
+export const useAdminArticles = (
+  params?: Record<string, string | number | boolean | undefined>,
+  options?: { enabled?: boolean },
+) =>
   useQuery({
     queryKey: ['admin', 'articles', params],
     queryFn: () => fetcher<Article[]>(`/articles${buildQuery(params)}`),
+    enabled: options?.enabled ?? true,
   });
 
-export const useAdminCategories = () =>
+export const useAdminCategories = (options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: ['admin', 'categories'],
     queryFn: () => fetcher<Category[]>('/categories'),
+    enabled: options?.enabled ?? true,
   });
 
-export const useAdminAds = () =>
+export const useAdminAds = (options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: ['admin', 'ads'],
     queryFn: () => fetcher<Advertisement[]>('/advertisements'),
+    enabled: options?.enabled ?? true,
   });
 
 export const useUsers = () =>
@@ -248,6 +266,19 @@ export const useSaveAd = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ads'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'ads'] });
+    },
+  });
+};
+
+export const useSaveLayoutSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: LayoutCuration) => {
+      const response = await apiClient.put<ApiResponse<LayoutCuration>>('/settings/layout', payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings', 'layout'] });
     },
   });
 };
@@ -314,6 +345,7 @@ export const useUploadMedia = () => {
     mutationFn: (payload: MediaUploadPayload) => {
       const formData = new FormData();
       formData.append('file', payload.file);
+      if (payload.type) formData.append('type', payload.type);
       if (payload.alt && typeof payload.alt === 'string') {
         formData.append('alt[en]', payload.alt);
       } else if (payload.alt) {
@@ -322,8 +354,20 @@ export const useUploadMedia = () => {
           formData.append(`alt[${locale}]`, text);
         });
       }
+      if (payload.caption && typeof payload.caption === 'string') {
+        formData.append('caption[en]', payload.caption);
+      } else if (payload.caption) {
+        Object.entries(payload.caption).forEach(([locale, text]) => {
+          if (!text) return;
+          formData.append(`caption[${locale}]`, text);
+        });
+      }
       if (payload.folder) formData.append('folder', payload.folder);
-      if (payload.tags?.length) formData.append('tags', payload.tags.join(','));
+      payload.tags?.forEach((tag) => {
+        if (tag) formData.append('tags[]', tag);
+      });
+      if (payload.isPublic !== undefined) formData.append('isPublic', String(payload.isPublic));
+      if (payload.cloudinaryId) formData.append('cloudinaryId', payload.cloudinaryId);
       return apiClient.post<ApiResponse<Media>>('/media/upload', formData, { formData: true });
     },
     onSuccess: () => {
@@ -339,6 +383,23 @@ export const useUpdateMedia = () => {
       apiClient.put<ApiResponse<Media>>(`/media/${id}`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'media'] });
+    },
+  });
+};
+
+export const useAttachMediaToArticle = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      articleId,
+      featuredImage,
+    }: {
+      articleId: string;
+      featuredImage: Article['featuredImage'];
+    }) => apiClient.put<ApiResponse<Article>>(`/articles/${articleId}`, { featuredImage }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'articles'] });
     },
   });
 };

@@ -20,42 +20,42 @@ import { PaletteMode, Theme, alpha, createTheme, responsiveFontSizes } from '@mu
  * ══════════════════════════════════════════════════════════════════════════
  */
 
-// ☀️ LIGHT MODE: "The News Paper"
+// ☀️ LIGHT MODE: Warm paper + maroon wire
 const lightPalette = {
-  primary: { main: '#DC2626', contrastText: '#FFFFFF' },      // Red-600
-  secondary: { main: '#000000', contrastText: '#FFFFFF' },    // Pure black
+  primary: { main: '#7D1418', contrastText: '#FFFFFF' },
+  secondary: { main: '#161413', contrastText: '#FFFFFF' },
   background: { 
-    default: '#FFFFFF',                                       // Pure white
-    paper: '#FFFFFF',                                         // Same as default
+    default: '#FBF8F4',
+    paper: '#F7F2EC',
   },
   text: { 
-    primary: '#000000',                                       // Pure black (STRICT)
-    secondary: '#525252',                                     // Neutral-600
+    primary: '#161413',
+    secondary: '#5B534F',
   },
-  divider: '#E5E5E5',                                        // Neutral-200
-  error: { main: '#DC2626' },                                // Red-600
-  warning: { main: '#F59E0B' },                              // Amber-500
-  info: { main: '#3B82F6' },                                 // Blue-500
-  success: { main: '#10B981' },                              // Emerald-500
+  divider: '#D9CEC5',
+  error: { main: '#A11F24' },
+  warning: { main: '#B26A00' },
+  info: { main: '#8A3B3F' },
+  success: { main: '#3B7A57' },
 };
 
-// 🌑 DARK MODE: "The OLED Terminal" (ZINC SCALE - NO BLUE TINTS)
+// 🌑 DARK MODE: warm black + deeper maroon
 const darkPalette = {
-  primary: { main: '#EF4444', contrastText: '#09090b' },      // Red-500 (brighter)
-  secondary: { main: '#FAFAFA', contrastText: '#09090b' },    // Zinc-50
+  primary: { main: '#C75A5F', contrastText: '#120F10' },
+  secondary: { main: '#F5EDE6', contrastText: '#120F10' },
   background: { 
-    default: '#09090b',                                       // Zinc-950 OLED (NOT NAVY)
-    paper: '#18181b',                                         // Zinc-900 (NOT SLATE)
+    default: '#120F10',
+    paper: '#1B1718',
   },
   text: { 
-    primary: '#FAFAFA',                                       // Zinc-50
-    secondary: '#A1A1AA',                                     // Zinc-400
+    primary: '#F8F1EA',
+    secondary: '#C2B4AA',
   },
-  divider: '#27272a',                                        // Zinc-800 (NOT SLATE)
-  error: { main: '#EF4444' },                                // Red-500
-  warning: { main: '#FBBF24' },                              // Amber-400
-  info: { main: '#60A5FA' },                                 // Blue-400
-  success: { main: '#10B981' },                              // Emerald-500
+  divider: '#3C3330',
+  error: { main: '#D46A70' },
+  warning: { main: '#D9A441' },
+  info: { main: '#A56C70' },
+  success: { main: '#5CA57F' },
 };
 
 export function getTheme(mode: PaletteMode): Theme {

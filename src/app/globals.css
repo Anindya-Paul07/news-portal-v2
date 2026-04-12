@@ -23,74 +23,111 @@
 /* ☀️ LIGHT MODE: "The News Paper" - Pure White Paper with Black Ink */
 :root {
   /* ─── Pane System ─── */
-  --newsos-bg-primary: #FFFFFF;
-  --newsos-bg-secondary: #FAFAFA;
-  --newsos-bg-hover: #F5F5F5;
-  --newsos-bg-active: #F0F0F0;
+  --newsos-bg-primary: #FBF8F4;
+  --newsos-bg-secondary: #F7F2EC;
+  --newsos-bg-hover: #EFE8E2;
+  --newsos-bg-active: #E8DED6;
 
   /* ─── Border System (Structure Definition) ─── */
-  --newsos-border-default: #E5E5E5;
-  --newsos-border-strong: #D4D4D4;
-  --newsos-border-input: #D4D4D4;
+  --newsos-border-default: #D9CEC5;
+  --newsos-border-strong: #B7A79B;
+  --newsos-border-input: #B7A79B;
 
   /* ─── Typography ─── */
-  --newsos-text-primary: #000000;
-  --newsos-text-secondary: #525252;
-  --newsos-text-tertiary: #737373;
-  --newsos-text-muted: #A3A3A3;
+  --newsos-text-primary: #161413;
+  --newsos-text-secondary: #5B534F;
+  --newsos-text-tertiary: #8C817A;
+  --newsos-text-muted: #A8978A;
 
   /* ─── Status Indicators ─── */
-  --newsos-status-live: #EF4444;
-  --newsos-status-published: #10B981;
-  --newsos-status-draft: #F59E0B;
-  --newsos-status-archived: #6B7280;
+  --newsos-status-live: #A11F24;
+  --newsos-status-published: #3B7A57;
+  --newsos-status-draft: #B26A00;
+  --newsos-status-archived: #83756B;
 
   /* ─── Accent (Red Wire) ─── */
-  --newsos-accent-primary: #DC2626;
-  --newsos-accent-hover: #B91C1C;
+  --newsos-accent-primary: #7D1418;
+  --newsos-accent-hover: #641013;
 
   /* ═══════════════════════════════════════════════════════════════════════════
      🔴 THE RED WIRE - PUBLIC NEWS THEME (BBC/CNN Style)
      ══════════════════════════════════════════════════════════════════════════ */
 
   /* ─── The Red Wire (Breaking News & CTAs) ─── */
-  --news-red-700: #B90000;
-  --news-red-600: #D32F2F;
-  --news-red-500: #E53935;
-  --news-red-hover: #9B0000;
+  --news-red-900: #4B0F12;
+  --news-red-700: #7D1418;
+  --news-red-600: #A11F24;
+  --news-red-500: #C22B31;
+  --news-red-300: #E7A7AA;
+  --news-red-hover: #641013;
 
   /* ─── Paper & Ink (Base Colors) ─── */
   --news-white: #FFFFFF;
-  --news-offwhite: #F9FAFB;
-  --news-black: #111111;
+  --news-offwhite: #F5F1EC;
+  --news-paper: #F7F2EC;
+  --news-page: #FBF8F4;
+  --news-black: #121212;
   --news-darkgray: #333333;
+  --news-ink: #161413;
+  --news-ink-strong: #120F10;
+  --news-muted: #5B534F;
+  --news-soft: #8C817A;
+  --news-mahogany: #5C2326;
 
   /* ─── The Grid (Borders & Separators) ─── */
-  --news-gray-50: #F9FAFB;
-  --news-gray-100: #F3F4F6;
-  --news-gray-200: #E5E7EB;
-  --news-gray-300: #D1D5DB;
-  --news-gray-400: #9CA3AF;
-  --news-gray-500: #6B7280;
-  --news-gray-600: #4B5563;
-  --news-gray-700: #374151;
-  --news-gray-800: #1F2937;
-  --news-gray-900: #111827;
+  --news-gray-50: #FAF8F5;
+  --news-gray-100: #EFE8E2;
+  --news-gray-200: #DDD2C9;
+  --news-gray-300: #C8BBB1;
+  --news-gray-400: #A8978A;
+  --news-gray-500: #83756B;
+  --news-gray-600: #5F554F;
+  --news-gray-700: #443D39;
+  --news-gray-800: #2D2927;
+  --news-gray-900: #171514;
+  --news-grid: #D9CEC5;
+  --news-grid-strong: #B7A79B;
+  --news-bg-light: var(--news-paper);
+  --news-bg-dark: var(--news-black);
+  --news-grey-100: var(--news-gray-100);
+  --news-grey-200: var(--news-gray-200);
+  --news-grey-300: var(--news-gray-300);
+  --news-grey-400: var(--news-gray-400);
+  --news-grey-500: var(--news-gray-500);
+  --news-grey-600: var(--news-gray-600);
+  --news-grey-700: var(--news-gray-700);
+  --news-grey-800: var(--news-gray-800);
+  --news-grey-900: var(--news-ink);
+  --news-red-800: var(--news-red-hover);
+  --news-red-50: #faf2f2;
+  --news-red-200: #f0c3c5;
+  --news-red-400: #d76c71;
 
   /* ─── Status Indicators (News Specific) ─── */
   --news-live: #B90000;
   --news-breaking: #D32F2F;
   --news-trending: #F97316;
   --news-exclusive: #8B5CF6;
+  --news-ticker-bg: #8A0E16;
+  --news-ticker-text: #FFE789;
+  --news-ticker-hover: #FFF4C1;
+  --news-ticker-live: #FFEBC0;
+  --news-footer-bg: #121212;
+  --news-footer-surface: rgba(255, 255, 255, 0.05);
+  --news-footer-border: rgba(255, 255, 255, 0.14);
+  --news-footer-text: rgba(255, 255, 255, 0.92);
+  --news-footer-muted: rgba(255, 255, 255, 0.68);
+  --news-footer-soft: rgba(255, 255, 255, 0.5);
+  --news-footer-accent: #efcaca;
 
 
   /* ─── System Status Bar ─── */
-  --newsos-statusbar-bg: #F5F5F5;
-  --newsos-statusbar-text: #525252;
+  --newsos-statusbar-bg: #F1EAE3;
+  --newsos-statusbar-text: #5B534F;
 
   /* ─── Fonts ─── */
-  --font-sans: var(--font-work-sans);
-  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-work-sans), var(--font-bengali-sans), "Noto Sans Bengali", "Hind Siliguri", "Noto Sans", system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-playfair), var(--font-bengali-serif), "Noto Serif Bengali", "Noto Serif Bengali UI", Georgia, serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -127,30 +164,86 @@
 
 /* 🌑 DARK MODE: "The OLED Terminal" - Pure Black with Etched Light */
 .dark {
-  --newsos-bg-primary: #09090b;
-  --newsos-bg-secondary: #18181b;
-  --newsos-bg-hover: #27272a;
-  --newsos-bg-active: #3f3f46;
+  --newsos-bg-primary: #120F10;
+  --newsos-bg-secondary: #1B1718;
+  --newsos-bg-hover: #2B2526;
+  --newsos-bg-active: #3B3330;
 
-  --newsos-border-default: #27272a;
-  --newsos-border-strong: #3f3f46;
-  --newsos-border-input: #3f3f46;
+  --newsos-border-default: #3B3330;
+  --newsos-border-strong: #544842;
+  --newsos-border-input: #544842;
 
-  --newsos-text-primary: #FAFAFA;
-  --newsos-text-secondary: #D4D4D8;
-  --newsos-text-tertiary: #A1A1AA;
-  --newsos-text-muted: #71717A;
+  --newsos-text-primary: #F8F1EA;
+  --newsos-text-secondary: #C2B4AA;
+  --newsos-text-tertiary: #9F9187;
+  --newsos-text-muted: #7A6D66;
 
-  --newsos-status-live: #EF4444;
-  --newsos-status-published: #10B981;
-  --newsos-status-draft: #FBBF24;
-  --newsos-status-archived: #71717A;
+  --newsos-status-live: #D46A70;
+  --newsos-status-published: #5CA57F;
+  --newsos-status-draft: #D9A441;
+  --newsos-status-archived: #7A6D66;
 
-  --newsos-accent-primary: #EF4444;
-  --newsos-accent-hover: #DC2626;
+  --newsos-accent-primary: #C75A5F;
+  --newsos-accent-hover: #A7494F;
 
-  --newsos-statusbar-bg: #18181b;
-  --newsos-statusbar-text: #A1A1AA;
+  --news-red-900: #5f1720;
+  --news-red-700: #b3424d;
+  --news-red-600: #cf5d68;
+  --news-red-500: #e27c85;
+  --news-red-300: #efb0b6;
+  --news-red-hover: #99333d;
+  --news-white: #e7edf8;
+  --news-offwhite: #0f1622;
+  --news-paper: #111826;
+  --news-page: #0b1017;
+  --news-black: #060a10;
+  --news-darkgray: #c2cbda;
+  --news-ink: #e7edf8;
+  --news-ink-strong: #f5f8ff;
+  --news-muted: #aab6ca;
+  --news-soft: #8b98ae;
+  --news-mahogany: #6b2f38;
+  --news-gray-50: #141c2a;
+  --news-gray-100: #1a2434;
+  --news-gray-200: #243043;
+  --news-gray-300: #314057;
+  --news-gray-400: #475771;
+  --news-gray-500: #60718a;
+  --news-gray-600: #8191a8;
+  --news-gray-700: #a6b4c8;
+  --news-gray-800: #cad5e5;
+  --news-gray-900: #e7edf8;
+  --news-grid: #273244;
+  --news-grid-strong: #3a4960;
+  --news-bg-light: var(--news-paper);
+  --news-bg-dark: #0f0d0d;
+  --news-grey-100: var(--news-gray-100);
+  --news-grey-200: var(--news-gray-200);
+  --news-grey-300: var(--news-gray-300);
+  --news-grey-400: var(--news-gray-400);
+  --news-grey-500: var(--news-gray-500);
+  --news-grey-600: var(--news-gray-600);
+  --news-grey-700: var(--news-gray-700);
+  --news-grey-800: var(--news-gray-800);
+  --news-grey-900: var(--news-gray-900);
+  --news-red-800: var(--news-red-hover);
+  --news-red-50: rgba(199, 90, 95, 0.1);
+  --news-red-200: rgba(227, 139, 144, 0.35);
+  --news-red-400: #e28b90;
+  --news-ticker-bg: #5F1015;
+  --news-ticker-text: #FFE9A0;
+  --news-ticker-hover: #FFF4CC;
+  --news-ticker-live: #FFE1A6;
+  --news-footer-bg: linear-gradient(180deg, #0d1320 0%, #070b13 100%);
+  --news-footer-surface: rgba(20, 30, 46, 0.86);
+  --news-footer-border: rgba(148, 168, 196, 0.24);
+  --news-footer-text: rgba(237, 244, 255, 0.94);
+  --news-footer-muted: rgba(188, 205, 228, 0.8);
+  --news-footer-soft: rgba(151, 171, 197, 0.66);
+  --news-footer-accent: #f0c0c6;
+
+  --newsos-statusbar-bg: #1B1718;
+  --newsos-statusbar-text: #9F9187;
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
@@ -184,9 +277,14 @@
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }
 
+.news-perf-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 920px;
+}
+
 @theme inline {
-  --font-sans: var(--font-work-sans);
-  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-work-sans), var(--font-bengali-sans), "Noto Sans Bengali", "Hind Siliguri", "Noto Sans", system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-playfair), var(--font-bengali-serif), "Noto Serif Bengali", "Noto Serif Bengali UI", Georgia, serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -250,6 +348,32 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.news-section-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--news-ink);
+}
+
+.news-meta {
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.news-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 a {

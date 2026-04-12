@@ -19,6 +19,7 @@ import SignalCellularAltRoundedIcon from '@mui/icons-material/SignalCellularAltR
 const nav: Array<{ label: string; href: string; area: AdminArea }> = [
   { label: 'Dashboard', href: '/admin', area: 'dashboard' },
   { label: 'Articles', href: '/admin/articles', area: 'articles' },
+  { label: 'Reels', href: '/admin/reels', area: 'reels' },
   { label: 'Categories', href: '/admin/categories', area: 'categories' },
   { label: 'Advertisements', href: '/admin/ads', area: 'ads' },
   { label: 'Media Library', href: '/admin/media', area: 'media' },

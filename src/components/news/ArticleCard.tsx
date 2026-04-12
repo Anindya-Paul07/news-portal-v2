@@ -14,13 +14,14 @@ export function ArticleCard({ article, className = '' }: { article: Article; cla
   const summary = getLocalizedText(article.excerpt, language);
   const imageUrl = resolveMediaUrl(article.featuredImage?.url || article.coverImage);
   const imageAlt = getLocalizedText(article.featuredImage?.alt, language) || title;
+  const readTime = article.readTime ?? article.readingTime;
 
   return (
-    <article className={`group flex flex-col h-full bg-white md:hover:-translate-y-1 transition-transform duration-300 ${className}`}>
+    <article className={`group flex h-full flex-col bg-white transition-transform duration-300 md:hover:-translate-y-1 ${className}`}>
       {/* Image Container */}
       <TransitionLink 
         href={`/article/${article.slug || article.id}`}
-        className="block relative aspect-[4/3] w-full overflow-hidden bg-gray-100"
+        className="block relative aspect-[4/3] w-full overflow-hidden bg-[var(--news-gray-100)]"
       >
         {imageUrl ? (
           <Image
@@ -31,8 +32,8 @@ export function ArticleCard({ article, className = '' }: { article: Article; cla
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <span className="font-serif italic text-2xl">NewsOS</span>
+          <div className="flex h-full w-full items-center justify-center text-[var(--news-gray-300)]">
+            <span className="[font-family:var(--font-serif)] text-2xl italic">NewsOS</span>
           </div>
         )}
         
@@ -45,7 +46,7 @@ export function ArticleCard({ article, className = '' }: { article: Article; cla
               </span>
             )}
             {article.isTrending && (
-              <span className="bg-black text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 shadow-sm">
+              <span className="bg-[var(--news-black)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
                 Trending
               </span>
             )}
@@ -67,29 +68,29 @@ export function ArticleCard({ article, className = '' }: { article: Article; cla
           href={`/article/${article.slug || article.id}`} 
           className="mb-3 block group-hover:text-[var(--news-red-700)] transition-colors"
         >
-          <h3 className="font-serif text-xl font-bold text-gray-900 leading-snug line-clamp-3">
+          <h3 className="[font-family:var(--font-serif)] text-xl font-bold leading-snug text-[var(--news-ink)] line-clamp-3">
             {title}
           </h3>
         </TransitionLink>
 
         {/* Excerpt */}
         {summary && (
-          <p className="font-serif text-sm text-gray-600 leading-relaxed line-clamp-3 mb-4 flex-grow">
+          <p className="[font-family:var(--font-serif)] mb-4 flex-grow line-clamp-3 text-sm leading-relaxed text-[var(--news-muted)]">
             {summary}
           </p>
         )}
 
         {/* Footer / Meta */}
-        <div className="flex items-center justify-between pt-4 mt-auto border-t border-gray-100">
-          <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-wide">
+        <div className="mt-auto flex items-center justify-between border-t border-[var(--news-grid)] pt-4">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[var(--news-soft)]">
              <span className="flex items-center gap-1">
                <Clock className="w-3 h-3" />
                {article.publishedAt ? formatDate(article.publishedAt) : 'Recent'}
              </span>
           </div>
-          {article.readingTime && (
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">
-              {article.readingTime} min read
+          {readTime && (
+            <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--news-soft)]">
+              {readTime} min read
             </span>
           )}
         </div>

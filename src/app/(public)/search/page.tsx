@@ -1,22 +1,24 @@
 'use client';
 
+import Image from 'next/image';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArticleCard } from '@/components/news/ArticleCard';
-import { useArticles, useMenuCategories, useSearchArticles } from '@/hooks/api-hooks';
-import { useLanguage } from '@/contexts/language-context';
-import { getLocalizedText } from '@/lib/utils';
-import { Search, Filter } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import { AdSlot } from '@/components/ads/AdSlot';
+import { ArticleCard } from '@/components/news/ArticleCard';
+import { useLanguage } from '@/contexts/language-context';
+import { useArticles, useMenuCategories, useSearchArticles } from '@/hooks/api-hooks';
+import { handleApiError } from '@/lib/query-config';
+import { getLocalizedText, resolveMediaUrl } from '@/lib/utils';
 
 export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--news-bg-light)]">
+        <div className="flex min-h-screen items-center justify-center bg-[var(--news-page)]">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-8 h-8 border-4 border-[var(--news-red-700)] border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-500 font-medium">Initializing search...</p>
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--news-red-700)] border-t-transparent" />
+            <p className="news-meta text-[var(--news-soft)]">Initializing search</p>
           </div>
         </div>
       }
@@ -29,248 +31,222 @@ export default function SearchPage() {
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { language } = useLanguage();
   const [term, setTerm] = useState(searchParams.get('query') || '');
   const [sort, setSort] = useState(searchParams.get('sort') || 'relevance');
   const category = searchParams.get('category') || undefined;
-  
-  // Real-time keyword update debouncing could be added here, 
-  // but for now we stick to the existing logic of updating URL on specific triggers if needed,
-  // or just letting the input state drive the button click. 
-  // However, the original code had an effect that synced state -> URL. 
-  // We will keep it simple: sync UI state to URL when user keeps typing?
-  // Actually, standard search UX is "type -> press enter/search button".
-  // The previous implementation utilized a `useEffect` to sync everything. We will replicate that behavior slightly better.
 
-  const { data: categories } = useMenuCategories();
-  const { data: results, isLoading: isSearchLoading } = useSearchArticles(term, { sort, category });
-  const { data: latest } = useArticles({ sort: '-publishedAt', limit: 5 });
-  const { language } = useLanguage();
-  
+  const { data: categories, isError: isCategoriesError, error: categoriesError } = useMenuCategories();
+  const { data: results, isLoading: isSearchLoading, isError: isSearchError, error: searchError } = useSearchArticles(term, { sort, category });
+  const { data: latest, isError: isLatestError, error: latestError } = useArticles({ sort: '-publishedAt', limit: 5, status: 'published' });
+
   const categoryList = categories ?? [];
   const latestList = latest ?? [];
   const resultItems = results ?? [];
 
-  // Sync state to URL with debounce to avoid spamming history
   useEffect(() => {
     const handler = setTimeout(() => {
       const query = new URLSearchParams();
       if (term) query.set('query', term);
       if (sort) query.set('sort', sort);
       if (category) query.set('category', category);
-      
-      // Only replace if parameters actually changed to avoid loop
-      const currentString = searchParams.toString();
-      const newString = query.toString();
-      if (currentString !== newString) {
-        router.replace(`/search?${newString}`);
+
+      if (query.toString() !== searchParams.toString()) {
+        router.replace(`/search?${query.toString()}`);
       }
-    }, 500);
+    }, 400);
 
     return () => clearTimeout(handler);
   }, [term, sort, category, router, searchParams]);
 
-
   return (
-    <div className="min-h-screen bg-[var(--news-white)]">
-      
-      {/* ────────────────────────────────────────────────────────────────────────
-          SEARCH HERO / HEADER
-          ──────────────────────────────────────────────────────────────────────── */}
-      <div className="bg-[var(--news-bg-light)] border-b border-gray-200">
-        <div className="max-w-[1240px] mx-auto px-4 py-12">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <h1 className="font-serif text-4xl md:text-5xl font-black text-gray-900">
-              Search the <span className="text-[var(--news-red-700)]">Wire</span>
+    <div className="min-h-screen bg-[var(--news-page)]">
+      <div className="border-b border-[var(--news-grid)] bg-[var(--news-paper)]">
+        <div className="mx-auto max-w-[1440px] px-4 py-10 md:py-14">
+          <div className="max-w-4xl">
+            <p className="news-meta text-[var(--news-red-700)]">Search desk</p>
+            <h1 className="mt-3 [font-family:var(--font-serif)] text-4xl font-bold leading-none tracking-[-0.04em] text-[var(--news-ink)] md:text-6xl">
+              {language === 'bn' ? 'দ্রুত, নির্ভুল, সম্পাদিত অনুসন্ধান' : 'Faster, cleaner newsroom search'}
             </h1>
-            
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400 group-focus-within:text-[var(--news-red-700)] transition-colors" />
-              </div>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--news-muted)]">
+              {language === 'bn'
+                ? 'শিরোনাম, বিষয়, বিভাগ এবং সাম্প্রতিক প্রতিবেদন খুঁজুন।'
+                : 'Search headlines, topics, sections, and the latest reporting without the old cluttered filter layout.'}
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--news-soft)]" />
               <input
                 type="text"
                 value={term}
-                onChange={(e) => setTerm(e.target.value)}
-                placeholder="Search for articles, topics, or authors..."
-                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--news-red-700)] focus:border-transparent transition-shadow shadow-sm rounded-none text-lg"
+                onChange={(event) => setTerm(event.target.value)}
+                placeholder={language === 'bn' ? 'খুঁজুন প্রতিবেদন, বিষয়, লেখক' : 'Search reports, topics, authors'}
+                className="w-full border border-[var(--news-grid-strong)] bg-white py-4 pl-12 pr-4 text-lg text-[var(--news-ink)] placeholder:text-[var(--news-soft)] focus:border-[var(--news-red-700)] focus:outline-none"
               />
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-                <span className="text-gray-500 font-bold uppercase tracking-wide text-xs flex items-center gap-1">
-                  <Filter className="w-3 h-3" /> Filters:
-                </span>
-                
-                {/* Sort Toggle */}
-                <div className="flex items-center bg-white border border-gray-200 p-1 gap-1">
-                  {[
-                    { key: 'relevance', label: 'Recommended' },
-                    { key: 'date', label: 'Newest' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.key}
-                      onClick={() => setSort(opt.key)}
-                      className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
-                        sort === opt.key 
-                          ? 'bg-[var(--news-bg-dark)] text-white' 
-                          : 'text-gray-500 hover:bg-gray-50'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="news-meta inline-flex items-center gap-1 text-[var(--news-soft)]">
+                <Filter className="h-3.5 w-3.5" />
+                Filters
+              </span>
+              <div className="flex border border-[var(--news-grid-strong)] bg-white p-1">
+                {[
+                  { key: 'relevance', label: language === 'bn' ? 'সাজেস্টেড' : 'Recommended' },
+                  { key: 'date', label: language === 'bn' ? 'সর্বশেষ' : 'Newest' },
+                ].map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setSort(option.key)}
+                    className={`px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors ${
+                      sort === option.key ? 'bg-[var(--news-black)] text-white' : 'text-[var(--news-soft)] hover:text-[var(--news-ink)]'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            
-            {/* Horizontal Category List */}
-            <div className="flex flex-wrap justify-center gap-2">
-               <button
-                  onClick={() => { 
-                    const url = new URL(window.location.href);
-                    url.searchParams.delete('category');
-                    router.replace(url.toString()); // Force URL update directly for "All"
-                    // But we also need to update local state if we want immediate feedback?
-                    // The useEffect above syncs local state to URL. 
-                    // Wait, the useEffect relies on `category` state.
-                    // If we update URL directly, we need to make sure the component re-renders or state updates.
-                    // Actually, let's just use the `searchParams` as the source of truth? 
-                    // No, `SearchContent` initializes state from params.
-                    // Let's stick to updating state.
-                    // BUT `category` IS derived from `searchParams.get('category')` in the original code logic?
-                    // No, `const category = searchParams.get(...)` is a constant in render.
-                    // Wait, the original code had NO `setCategory`. All updates were via `router.replace`.
-                    // Ah! In my `SearchContent` I defined `const category = searchParams.get('category')`. 
-                    // I did NOT define `[category, setCategory]`.
-                    // So `category` IS purely derived from URL.
-                    // `term` and `sort` were state.
-                    // Let's fix that.
-                  }}
-                  className={`px-3 py-1.5 border text-xs font-bold uppercase tracking-wide transition-all ${
-                    !category 
-                     ? 'border-[var(--news-red-700)] text-[var(--news-red-700)]' 
-                     : 'border-transparent text-gray-500 hover:text-gray-900 bg-white border-gray-200'
-                  }`}
-               >
-                 All
-               </button>
-               {categoryList.map((cat) => (
-                 <button
-                   key={cat.id}
-                   onClick={() => {
-                      const url = new URL(window.location.href);
-                      url.searchParams.set('category', cat.slug);
-                      url.searchParams.set('query', term); // Ensure query is preserved
-                      url.searchParams.set('sort', sort);
-                      router.replace(url.toString());
-                   }}
-                   className={`px-3 py-1.5 border text-xs font-bold uppercase tracking-wide transition-all ${
-                     category === cat.slug
-                       ? 'border-[var(--news-red-700)] text-[var(--news-red-700)] bg-white'
-                       : 'border-transparent text-gray-500 hover:text-gray-900 bg-white border-gray-200'
-                   }`}
-                 >
-                   {getLocalizedText(cat.name, language)}
-                 </button>
-               ))}
-            </div>
+          </div>
 
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => router.replace(`/search?query=${encodeURIComponent(term)}&sort=${sort}`)}
+              className={`px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] ${
+                !category ? 'bg-[var(--news-red-700)] text-white' : 'border border-[var(--news-grid)] bg-white text-[var(--news-soft)]'
+              }`}
+            >
+              {language === 'bn' ? 'সব' : 'All'}
+            </button>
+            {categoryList.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() =>
+                  router.replace(
+                    `/search?query=${encodeURIComponent(term)}&sort=${sort}&category=${encodeURIComponent(cat.slug)}`,
+                  )
+                }
+                className={`px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] ${
+                  category === cat.slug
+                    ? 'bg-[var(--news-red-700)] text-white'
+                    : 'border border-[var(--news-grid)] bg-white text-[var(--news-soft)]'
+                }`}
+              >
+                {getLocalizedText(cat.name, language)}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* ────────────────────────────────────────────────────────────────────────
-          MAIN RESULTS GRID
-          ──────────────────────────────────────────────────────────────────────── */}
-      <div className="max-w-[1240px] mx-auto px-4 py-8 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pl-0">
-          
-          {/* SEARCH RESULTS COLUMN */}
-          <div className="lg:col-span-8 space-y-8">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-4">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                {term ? (
-                   <>Results for <span className="text-[var(--news-red-700)]">&quot;{term}&quot;</span></>
-                ) : (
-                   'Latest Stories'
-                )}
+      <div className="mx-auto max-w-[1440px] px-4 py-8 md:py-10">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_340px]">
+          <div>
+            <div className="mb-5 flex items-center justify-between border-b border-[var(--news-grid)] pb-2">
+              <h2 className="news-section-title">
+                {term
+                  ? language === 'bn'
+                    ? `"${term}" এর ফলাফল`
+                    : `Results for "${term}"`
+                  : language === 'bn'
+                    ? 'সাম্প্রতিক প্রতিবেদন'
+                    : 'Recent reporting'}
               </h2>
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                {resultItems.length} found
-              </span>
+              <span className="news-meta text-[var(--news-soft)]">{resultItems.length} items</span>
             </div>
 
             {isSearchLoading ? (
-               <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="animate-pulse flex gap-4 h-32">
-                       <div className="w-1/3 bg-gray-200"></div>
-                       <div className="w-2/3 space-y-2 py-2">
-                          <div className="h-4 bg-gray-200 w-3/4"></div>
-                          <div className="h-4 bg-gray-200 w-1/2"></div>
-                       </div>
-                    </div>
-                  ))}
-               </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="animate-pulse border border-[var(--news-grid)] bg-white p-4">
+                    <div className="aspect-[4/3] bg-[var(--news-gray-100)]" />
+                    <div className="mt-4 h-4 w-20 bg-[var(--news-gray-100)]" />
+                    <div className="mt-3 h-6 w-full bg-[var(--news-gray-100)]" />
+                    <div className="mt-2 h-6 w-4/5 bg-[var(--news-gray-100)]" />
+                  </div>
+                ))}
+              </div>
+            ) : isSearchError ? (
+              <div className="border border-[var(--news-grid)] bg-white px-6 py-16 text-center">
+                <h3 className="mt-2 [font-family:var(--font-serif)] text-3xl font-bold text-[var(--news-ink)]">
+                  {language === 'bn' ? 'অনুসন্ধান লোড করা যায়নি' : 'Search is unavailable'}
+                </h3>
+                <p className="mt-4 max-w-md mx-auto text-[var(--news-muted)]">{handleApiError(searchError)}</p>
+              </div>
             ) : resultItems.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+              <div className="grid gap-6 md:grid-cols-2">
                 {resultItems.map((article) => (
-                  <ArticleCard key={article.id} article={article} />
+                  <ArticleCard key={article.id} article={article} className="border border-[var(--news-grid)] bg-white p-4" />
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center bg-gray-50 border border-gray-200">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                   <Search className="w-8 h-8" />
+              <div className="border border-[var(--news-grid)] bg-white px-6 py-16 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--news-paper)] text-[var(--news-soft)]">
+                  <Search className="h-6 w-6" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No matches found</h3>
-                <p className="text-gray-500 max-w-sm mx-auto">
-                   We couldn&apos;t find any articles matching your criteria. Try different keywords or browse the categories.
+                <h3 className="mt-4 [font-family:var(--font-serif)] text-3xl font-bold text-[var(--news-ink)]">
+                  {language === 'bn' ? 'কিছু পাওয়া যায়নি' : 'No matching stories'}
+                </h3>
+                <p className="mt-4 max-w-md mx-auto text-[var(--news-muted)]">
+                  {language === 'bn'
+                    ? 'অন্য শব্দ ব্যবহার করে চেষ্টা করুন অথবা বিভাগ ব্রাউজ করুন।'
+                    : 'Try another term or browse the main sections instead.'}
                 </p>
               </div>
             )}
           </div>
 
-          {/* SIDEBAR */}
-          <div className="lg:col-span-4 space-y-10 border-l-0 lg:border-l border-gray-200 pl-0 lg:pl-10">
-             
-             {/* Ad */}
-             <div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block text-center">Advertisement</span>
-                <div className="bg-gray-100 min-h-[250px] flex items-center justify-center">
-                   <AdSlot position="sidebar" page="search" />
-                </div>
-             </div>
+          <aside className="space-y-6">
+            <div className="border border-[var(--news-grid)] bg-[var(--news-paper)] p-4">
+              <AdSlot position="sidebar" page="search" />
+            </div>
 
-             {/* Sections: Latest News */}
-             <div>
-               <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--news-red-700)] mb-5 border-b border-gray-200 pb-2">
-                  Just In
-               </h3>
-               <div className="space-y-6">
-                 {latestList.map(article => (
-                    <div key={article.id} className="group flex gap-4 items-start">
-                       <div className="flex-1">
-                          <a href={`/article/${article.slug}`} className="block font-serif font-bold text-gray-900 leading-snug hover:text-[var(--news-red-700)] transition-colors mb-1">
-                             {getLocalizedText(article.title, language)}
-                          </a>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase">
-                             {article.publishedAt ? new Date(article.publishedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now'}
-                          </span>
-                       </div>
-                       {article.featuredImage?.url && (
-                          <div className="w-16 h-16 bg-gray-100 flex-shrink-0 relative overflow-hidden">
-                             <img src={article.featuredImage.url} alt="" className="object-cover w-full h-full group-hover:scale-105 transition-transform" />
-                          </div>
-                       )}
-                    </div>
-                 ))}
-               </div>
-             </div>
-
-          </div>
-
+            <div className="border border-[var(--news-grid)] bg-white p-5">
+              <h3 className="news-section-title border-b border-[var(--news-grid)] pb-2">
+                {language === 'bn' ? 'জাস্ট ইন' : 'Just in'}
+              </h3>
+              <div className="mt-4 space-y-4">
+                {isLatestError ? (
+                  <p className="text-sm leading-6 text-[var(--news-muted)]">{handleApiError(latestError)}</p>
+                ) : null}
+                {latestList.map((article) => {
+                  const imageUrl = resolveMediaUrl(article.featuredImage?.url || article.coverImage);
+                  return (
+                    <a
+                      key={article.id}
+                      href={`/article/${article.slug || article.id}`}
+                      className="group grid grid-cols-[minmax(0,1fr)_72px] gap-3 border-b border-[var(--news-grid)] pb-4 last:border-b-0 last:pb-0"
+                    >
+                      <div>
+                        <p className="news-meta text-[var(--news-red-700)]">
+                          {getLocalizedText(article.category?.name, language) || 'News'}
+                        </p>
+                        <h4 className="mt-2 [font-family:var(--font-serif)] text-lg font-bold leading-tight text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)]">
+                          {getLocalizedText(article.title, language)}
+                        </h4>
+                      </div>
+                      <div className="relative h-[72px] overflow-hidden bg-[var(--news-gray-100)]">
+                        {imageUrl ? (
+                          <Image src={imageUrl} alt="" fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="72px" />
+                        ) : null}
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
         </div>
+        {isCategoriesError ? (
+          <div className="mt-6 border border-[var(--news-grid)] bg-white px-5 py-4 text-sm text-[var(--news-muted)]">
+            {handleApiError(categoriesError)}
+          </div>
+        ) : null}
       </div>
     </div>
   );

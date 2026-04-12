@@ -18,18 +18,22 @@ import { AdminShell } from '@/components/layout/AdminShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useSaveUser, useUsers, useDeleteUser } from '@/hooks/api-hooks';
+import { useAlert } from '@/contexts/alert-context';
+import { getDisplayErrorMessage } from '@/lib/errors';
 import { Role } from '@/lib/types';
 import { EmptyState } from '@/components/states/EmptyState';
+import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
 import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
-const roles: Role[] = ['super_admin', 'admin', 'editorial', 'journalist', 'reader'];
+const roles: Role[] = ['super_admin', 'admin', 'editorial'];
 
 export default function UsersPage() {
   useAdminAreaGuard('users');
-  const { data: users } = useUsers();
+  const { data: users, isError, error, refetch } = useUsers();
   const { mutateAsync: saveUser } = useSaveUser();
   const { mutateAsync: deleteUser } = useDeleteUser();
+  const { notify } = useAlert();
   const [draft, setDraft] = useState<{ name: string; email: string; role: Role; password: string }>({
     name: '',
     email: '',
@@ -44,9 +48,18 @@ export default function UsersPage() {
     if (!payload.password) {
       delete (payload as Partial<typeof payload>).password;
     }
-    await saveUser(payload);
-    setDraft({ name: '', email: '', role: 'editorial' as const, password: '' });
-    setEditingId(null);
+    try {
+      await saveUser(payload);
+      setDraft({ name: '', email: '', role: 'editorial' as const, password: '' });
+      setEditingId(null);
+      notify({ type: 'success', title: editingId ? 'User updated' : 'User created' });
+    } catch (error) {
+      notify({
+        type: 'error',
+        title: editingId ? 'User update failed' : 'User save failed',
+        description: getDisplayErrorMessage(error, 'user-save'),
+      });
+    }
   };
 
   const handleEdit = (userId: string) => {
@@ -59,10 +72,15 @@ export default function UsersPage() {
 
   const handleDelete = async (userId: string) => {
     if (!window.confirm('Delete this user?')) return;
-    await deleteUser(userId);
-    if (editingId === userId) {
-      setEditingId(null);
-      setDraft({ name: '', email: '', role: 'editorial' as const, password: '' });
+    try {
+      await deleteUser(userId);
+      notify({ type: 'success', title: 'User deleted' });
+      if (editingId === userId) {
+        setEditingId(null);
+        setDraft({ name: '', email: '', role: 'editorial' as const, password: '' });
+      }
+    } catch (error) {
+      notify({ type: 'error', title: 'Delete failed', description: getDisplayErrorMessage(error, 'user-delete') });
     }
   };
 
@@ -213,6 +231,7 @@ export default function UsersPage() {
       >
         👥 User Directory
       </Typography>
+      {isError && <ErrorState title={getDisplayErrorMessage(error, 'fetch')} onRetry={() => refetch()} />}
       {!users && <LoadingBlock lines={3} />}
       {users?.length === 0 && <EmptyState title="No users" description="Create a user to get started." />}
       {users && users.length > 0 && (

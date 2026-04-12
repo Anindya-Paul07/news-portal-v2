@@ -1,9 +1,10 @@
-export type Role = 'super_admin' | 'admin' | 'editorial' | 'journalist' | 'reader';
+export type Role = 'super_admin' | 'admin' | 'editorial';
 
 export type Pagination = {
   page: number;
   limit: number;
   total: number;
+  totalPages?: number;
 };
 
 export type ApiResponse<T> = {
@@ -32,10 +33,15 @@ export type Category = {
   name: LocalizedText;
   slug: string;
   description?: LocalizedText;
+  parent?: string | null;
   parentId?: string | null;
   isActive?: boolean;
   showInMenu?: boolean;
   order?: number;
+  image?: string | ImageAsset;
+  metaTitle?: LocalizedText;
+  metaDescription?: LocalizedText;
+  subcategories?: Category[];
   children?: Category[];
 };
 
@@ -60,33 +66,69 @@ export type Article = {
   isBreaking?: boolean;
   isTrending?: boolean;
   publishedAt?: string;
+  scheduledAt?: string | null;
+  readTime?: number;
   readingTime?: number;
-  tags?: LocalizedText[];
+  views?: number;
+  likes?: number;
+  shares?: number;
+  metaTitle?: LocalizedText;
+  metaDescription?: LocalizedText;
+  metaKeywords?: string[];
+  allowComments?: boolean;
+  gallery?: ImageAsset[];
+  tags?: string[];
 };
 
 export type ArticlePayload = {
   id?: string;
-  slug: string;
+  slug?: string;
   title: LocalizedText;
   excerpt?: LocalizedText;
   content?: LocalizedText;
   category?: string;
   status?: ArticleStatus;
   featuredImage?: ImageAsset;
-  tags?: LocalizedText[];
+  gallery?: ImageAsset[];
+  tags?: string[];
   isFeatured?: boolean;
   isBreaking?: boolean;
   isTrending?: boolean;
+  publishedAt?: string;
+  scheduledAt?: string | null;
+  likes?: number;
+  shares?: number;
+  metaTitle?: LocalizedText;
+  metaDescription?: LocalizedText;
+  metaKeywords?: string[];
+  allowComments?: boolean;
 };
 
-export type AdPlacement = 'top' | 'middle' | 'bottom' | 'sidebar_top' | 'sidebar_middle' | 'sidebar_bottom';
+export type AdPlacement =
+  | 'top'
+  | 'middle'
+  | 'bottom'
+  | 'sidebar_top'
+  | 'sidebar_middle'
+  | 'sidebar_bottom';
 
 export type AdvertisementType = 'banner' | 'sidebar' | 'in_content' | 'popup';
+
+export type AdPresetKey =
+  | 'home_top_leaderboard'
+  | 'home_mid_leaderboard'
+  | 'home_sidebar_tall'
+  | 'category_top_banner'
+  | 'category_sidebar_tall'
+  | 'article_inline_wide'
+  | 'article_sidebar_tall'
+  | 'article_footer_banner';
 
 export type Advertisement = {
   id: string;
   name?: string;
-  title?: string;
+  title?: LocalizedText;
+  description?: LocalizedText;
   type: AdvertisementType;
   position: AdPlacement;
   page?: string;
@@ -94,6 +136,9 @@ export type Advertisement = {
   imageUrl?: string;
   targetUrl?: string;
   linkUrl?: string;
+  openInNewTab?: boolean;
+  client?: string | { name?: string };
+  categories?: Array<string | Category>;
   activeFrom?: string;
   activeTo?: string;
   startDate?: string;
@@ -103,16 +148,22 @@ export type Advertisement = {
   priority?: number;
   impressions?: number;
   clicks?: number;
+  preset?: AdPresetKey;
 };
 
 export type AdvertisementPayload = {
   id?: string;
   name: string;
+  title?: LocalizedText;
+  description?: LocalizedText;
   type: AdvertisementType;
   position: AdPlacement;
   page?: string;
   image?: ImageAsset;
   linkUrl?: string;
+  openInNewTab?: boolean;
+  client?: string;
+  categories?: string[];
   startDate?: string;
   endDate?: string;
   isActive?: boolean;
@@ -126,7 +177,7 @@ export type Media = {
   filename?: string;
   url: string;
   alt?: LocalizedText;
-  caption?: string;
+  caption?: LocalizedText;
   folder?: string;
   type?: string;
   tags?: string[];
@@ -134,16 +185,22 @@ export type Media = {
 
 export type MediaUploadPayload = {
   file: File;
+  type?: 'image' | 'video' | 'document';
   alt?: LocalizedText;
+  caption?: LocalizedText;
   folder?: string;
   tags?: string[];
+  isPublic?: boolean;
+  cloudinaryId?: string;
 };
 
 export type MediaUpdatePayload = {
   id: string;
   alt?: LocalizedText;
+  caption?: LocalizedText;
   folder?: string;
   tags?: string[];
+  isPublic?: boolean;
 };
 
 export type User = {
@@ -159,6 +216,17 @@ export type DashboardOverview = {
   users?: Record<string, number>;
   ads?: Record<string, number>;
   media?: Record<string, number>;
+  advertisements?: number;
+  categories?: number;
+  totalViews?: number;
+  recentArticles?: Article[];
+};
+
+export type LayoutCuration = {
+  homepageLeadId?: string;
+  homepageSecondaryIds?: string[];
+  sectionPromoBySlug?: Record<string, string>;
+  mostReadOverrideIds?: string[];
 };
 
 export type ArticleStatPoint = {
@@ -191,7 +259,9 @@ export type AuthorActivityPoint = {
 
 export type AdPerformancePoint = {
   id: string;
+  adId?: string;
   name?: string;
+  title?: string;
   impressions?: number;
   clicks?: number;
   ctr?: number;
@@ -224,8 +294,12 @@ export type CategoryPayload = {
   slug: string;
   name: LocalizedText;
   description?: LocalizedText;
+  parent?: string | null;
   parentId?: string | null;
   order?: number;
   isActive?: boolean;
   showInMenu?: boolean;
+  image?: ImageAsset;
+  metaTitle?: LocalizedText;
+  metaDescription?: LocalizedText;
 };

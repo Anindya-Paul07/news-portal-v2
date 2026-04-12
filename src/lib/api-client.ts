@@ -1,5 +1,6 @@
 'use client';
 
+import { AppError, getDisplayErrorMessage } from '@/lib/errors';
 import { getInitialTokens, persistTokens, removeTokens } from '@/lib/session';
 import { ApiResponse } from '@/lib/types';
 
@@ -68,8 +69,26 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || response.statusText);
+      const rawText = await response.text();
+      let parsedMessage: string | undefined;
+      let parsedBody: unknown;
+
+      try {
+        parsedBody = rawText ? JSON.parse(rawText) : null;
+        parsedMessage =
+          parsedBody && typeof parsedBody === 'object' && 'message' in parsedBody && typeof parsedBody.message === 'string'
+            ? parsedBody.message
+            : undefined;
+      } catch {
+        parsedBody = rawText || null;
+      }
+
+      const message = parsedMessage || rawText || response.statusText || 'Request failed';
+      throw new AppError(message, {
+        status: response.status,
+        userMessage: getDisplayErrorMessage(message, 'default'),
+        details: parsedBody,
+      });
     }
 
     const json = await response.json().catch(() => ({}));
@@ -85,6 +104,7 @@ export class ApiClient {
           'Content-Type': 'application/json',
           Authorization: this.refreshToken ? `Bearer ${this.refreshToken}` : '',
         },
+        body: JSON.stringify({ refreshToken: this.refreshToken }),
       });
 
       if (!res.ok) return false;
@@ -94,14 +114,13 @@ export class ApiClient {
       if (!accessToken) return false;
       this.setTokens(accessToken, refreshToken || undefined);
       return true;
-    } catch (error) {
-      console.error('Refresh failed', error);
+    } catch {
       this.clearTokens();
       return false;
     }
   }
 
-  async get<T>(path: string, init?: RequestInit) {
+  async get<T>(path: string, init?: RequestOptions) {
     return this.request<T>(path, { ...init, method: 'GET' });
   }
 
@@ -125,7 +144,7 @@ export class ApiClient {
     });
   }
 
-  async delete<T>(path: string, init?: RequestInit) {
+  async delete<T>(path: string, init?: RequestOptions) {
     return this.request<T>(path, { ...init, method: 'DELETE' });
   }
 }

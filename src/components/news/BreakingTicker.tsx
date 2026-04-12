@@ -1,10 +1,9 @@
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
-import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { alpha, useTheme } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles';
 import { Article } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { getLocalizedText } from '@/lib/utils';
@@ -19,7 +18,6 @@ type BreakingTickerProps = {
 
 export function BreakingTicker({ items, condensed = false, loading = false, error = false }: BreakingTickerProps) {
   const { language } = useLanguage();
-  const theme = useTheme();
   if (!items?.length && !loading && !error) return null;
 
   const headlines = items.map((item) => ({
@@ -28,41 +26,33 @@ export function BreakingTicker({ items, condensed = false, loading = false, erro
     title: getLocalizedText(item.title, language),
   }));
 
-  const borderRadius =
-    typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius * (condensed ? 1.4 : 2) : theme.shape.borderRadius;
-
   return (
-    <Paper
-      variant="outlined"
+    <Box
       sx={{
-        mb: condensed ? 2 : 3,
-        px: condensed ? 1.5 : 2.5,
-        py: condensed ? 0.9 : 1.4,
-        borderColor: alpha(theme.palette.primary.main, 0.4),
-        bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.16 : 0.08),
-        color: 'text.primary',
+        px: condensed ? 0 : 0.4,
+        py: 0,
+        color: 'var(--news-ticker-text)',
         display: 'flex',
         alignItems: 'center',
         gap: condensed ? 1 : 2,
-        borderRadius,
-        boxShadow: condensed ? theme.shadows[1] : theme.shadows[3],
-        position: 'sticky',
-        top: condensed ? theme.spacing(1.5) : theme.spacing(2.5),
-        zIndex: 5,
-        backdropFilter: 'blur(6px)',
-        transition: 'all 200ms ease',
+        minHeight: condensed ? 32 : 38,
       }}
     >
       <Chip
-        label="Breaking"
-        color="primary"
+        label={language === 'bn' ? 'ব্রেকিং' : 'Breaking'}
         size="small"
         sx={{
-          fontWeight: 700,
-          letterSpacing: condensed ? 1 : 2,
+          height: condensed ? 22 : 24,
+          borderRadius: 0.5,
+          border: '1px solid rgba(255,255,255,0.85)',
+          bgcolor: alpha('#8f0c16', 0.9),
+          color: '#fff',
+          fontWeight: 800,
+          letterSpacing: 1.8,
           textTransform: 'uppercase',
-          borderRadius: 999,
-          px: condensed ? 0.5 : 1,
+          '& .MuiChip-label': {
+            px: 1.2,
+          },
         }}
       />
 
@@ -92,6 +82,7 @@ export function BreakingTicker({ items, condensed = false, loading = false, erro
               gap: 3,
               pr: 3,
               animation: 'ticker var(--marquee-duration, 22s) linear infinite',
+              color: 'var(--news-ticker-text)',
               '@keyframes ticker': {
                 '0%': { transform: 'translateX(0)' },
                 '100%': { transform: 'translateX(-50%)' },
@@ -108,20 +99,30 @@ export function BreakingTicker({ items, condensed = false, loading = false, erro
                   component={TransitionLink}
                   href={`/article/${item.identifier}`}
                   sx={{
-                    color: 'text.primary',
+                    color: 'var(--news-ticker-text)',
                     textDecoration: 'none',
-                    '&:hover': { color: 'secondary.main' },
+                    transition: 'color 180ms ease',
+                    '&:hover': { color: 'var(--news-ticker-hover)' },
                   }}
                 >
                   <Box
                     sx={{
-                      width: 8,
-                      height: 8,
+                      width: 7,
+                      height: 7,
                       borderRadius: '50%',
-                      bgcolor: 'primary.main',
+                      bgcolor: 'var(--news-red-300)',
+                      boxShadow: '0 0 0 2px rgba(255,255,255,0.08)',
                     }}
                   />
-                  <Typography variant={condensed ? 'caption' : 'body2'}>{item.title}</Typography>
+                  <Typography
+                    variant={condensed ? 'caption' : 'body2'}
+                    sx={{
+                      fontWeight: 700,
+                      letterSpacing: 0.1,
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
                 </Stack>
               ))}
             </Stack>
@@ -135,26 +136,36 @@ export function BreakingTicker({ items, condensed = false, loading = false, erro
                   component={TransitionLink}
                   href={`/article/${item.identifier}`}
                   sx={{
-                    color: 'text.primary',
+                    color: 'var(--news-ticker-text)',
                     textDecoration: 'none',
-                    '&:hover': { color: 'secondary.main' },
+                    transition: 'color 180ms ease',
+                    '&:hover': { color: 'var(--news-ticker-hover)' },
                   }}
                 >
                   <Box
                     sx={{
-                      width: 8,
-                      height: 8,
+                      width: 7,
+                      height: 7,
                       borderRadius: '50%',
-                      bgcolor: 'primary.main',
+                      bgcolor: 'var(--news-red-300)',
+                      boxShadow: '0 0 0 2px rgba(255,255,255,0.08)',
                     }}
                   />
-                  <Typography variant={condensed ? 'caption' : 'body2'}>{item.title}</Typography>
+                  <Typography
+                    variant={condensed ? 'caption' : 'body2'}
+                    sx={{
+                      fontWeight: 700,
+                      letterSpacing: 0.1,
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
                 </Stack>
               ))}
             </Stack>
           </Box>
         )}
       </Box>
-    </Paper>
+    </Box>
   );
 }

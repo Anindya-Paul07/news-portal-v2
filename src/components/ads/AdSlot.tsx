@@ -1,51 +1,180 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 import { useAds } from '@/hooks/api-hooks';
 import { apiClient } from '@/lib/api-client';
+import { AD_PRESETS, getAdCategoryIds, getAdPreset, inferAdPreset, type AdRenderMode } from '@/lib/ad-presets';
 import { sampleAds } from '@/lib/fallbacks';
 import { useLanguage } from '@/contexts/language-context';
 import { getLocalizedText } from '@/lib/utils';
-import { AdPlacement, AdvertisementType } from '@/lib/types';
+import type { AdPlacement, AdPresetKey, Advertisement } from '@/lib/types';
 
-type SlotConfig = { height: number; type: AdvertisementType; apiPosition?: AdPlacement; sizes: string };
+type LegacySlotKey = 'hero' | 'banner' | 'sidebar' | 'sidebar_middle' | 'in_content' | 'popup' | 'bottom';
 
-const slotConfig: Record<string, SlotConfig> = {
-  hero: { height: 320, type: 'banner', apiPosition: 'top', sizes: '(max-width: 600px) 100vw, 1200px' },
-  banner: { height: 160, type: 'banner', apiPosition: 'middle', sizes: '(max-width: 600px) 100vw, 1200px' },
-  sidebar: { height: 360, type: 'sidebar', apiPosition: 'sidebar_top', sizes: '(max-width: 600px) 100vw, 360px' },
-  in_content: { height: 260, type: 'in_content', apiPosition: 'middle', sizes: '(max-width: 600px) 100vw, 600px' },
-  popup: { height: 220, type: 'popup', apiPosition: 'middle', sizes: '(max-width: 600px) 100vw, 480px' },
+type LegacySlotConfig = {
+  preset: AdPresetKey;
+  position?: AdPlacement;
 };
 
-export function AdSlot({ position, page }: { position: string; page?: string }) {
-  const slot = slotConfig[position] || {
-    height: 200,
-    type: 'banner',
-    apiPosition: undefined,
-    sizes: '(max-width: 600px) 100vw, 600px',
-  };
-  const allowedPages = new Set(['home', 'article', 'all']);
-  const normalizedPage = page ? (allowedPages.has(page) ? page : 'all') : undefined;
+const legacySlotMap: Record<LegacySlotKey, LegacySlotConfig> = {
+  hero: { preset: 'home_top_leaderboard', position: 'top' },
+  banner: { preset: 'home_mid_leaderboard', position: 'middle' },
+  sidebar: { preset: 'home_sidebar_tall', position: 'sidebar_top' },
+  sidebar_middle: { preset: 'category_sidebar_tall', position: 'sidebar_middle' },
+  in_content: { preset: 'article_inline_wide', position: 'middle' },
+  popup: { preset: 'home_mid_leaderboard', position: 'middle' },
+  bottom: { preset: 'article_footer_banner', position: 'bottom' },
+};
+
+const renderModes: Record<
+  AdRenderMode,
+  { minHeight: number; sizes: string; imageClassName: string; contentPadding: number | string }
+> = {
+  leaderboard: {
+    minHeight: 180,
+    sizes: '(max-width: 600px) 100vw, 1200px',
+    imageClassName: 'object-cover',
+    contentPadding: 20,
+  },
+  sidebarTall: {
+    minHeight: 420,
+    sizes: '(max-width: 600px) 100vw, 360px',
+    imageClassName: 'object-cover',
+    contentPadding: 16,
+  },
+  inlineWide: {
+    minHeight: 220,
+    sizes: '(max-width: 600px) 100vw, 920px',
+    imageClassName: 'object-cover',
+    contentPadding: 18,
+  },
+  promoCompact: {
+    minHeight: 160,
+    sizes: '(max-width: 600px) 100vw, 560px',
+    imageClassName: 'object-cover',
+    contentPadding: 16,
+  },
+};
+
+const normalizePage = (page?: string) => {
+  if (!page) return undefined;
+  if (['home', 'article', 'category', 'all'].includes(page)) return page;
+  return 'all';
+};
+
+const isAdActive = (ad: Advertisement) => {
+  if (ad.isActive === false) return false;
+  const now = Date.now();
+  const start = ad.startDate || ad.activeFrom;
+  const end = ad.endDate || ad.activeTo;
+  if (start && Number.isFinite(Date.parse(start)) && Date.parse(start) > now) return false;
+  if (end && Number.isFinite(Date.parse(end)) && Date.parse(end) < now) return false;
+  return true;
+};
+
+const scoreAd = ({
+  ad,
+  preset,
+  page,
+  categoryId,
+}: {
+  ad: Advertisement;
+  preset: AdPresetKey;
+  page?: string;
+  categoryId?: string;
+}) => {
+  const inferredPreset = inferAdPreset(ad);
+  const adPages = ad.displayPages?.length ? ad.displayPages : ad.page ? [ad.page] : [];
+  const categories = getAdCategoryIds(ad);
+  const matchesPage = page ? adPages.includes(page) || adPages.includes('all') : true;
+  const matchesCategory = categoryId ? categories.includes(categoryId) : false;
+
+  let score = ad.priority ?? 0;
+  if (inferredPreset === preset) score += 60;
+  if (matchesPage) score += 25;
+  if (matchesCategory) score += 40;
+  if (!categories.length) score += 6;
+  return score;
+};
+
+const pickBestAd = ({
+  ads,
+  preset,
+  page,
+  categoryId,
+}: {
+  ads: Advertisement[];
+  preset: AdPresetKey;
+  page?: string;
+  categoryId?: string;
+}) => {
+  const activeAds = ads.filter(isAdActive);
+  if (!activeAds.length) return undefined;
+  return [...activeAds].sort((a, b) => scoreAd({ ad: b, preset, page, categoryId }) - scoreAd({ ad: a, preset, page, categoryId }))[0];
+};
+
+const getClientLabel = (client: Advertisement['client']) => {
+  if (!client) return '';
+  if (typeof client === 'string') return client;
+  if (typeof client === 'object' && 'name' in client && typeof client.name === 'string') return client.name;
+  return '';
+};
+
+export function AdSlot({
+  slot,
+  position,
+  page,
+  categoryId,
+  className,
+}: {
+  slot?: AdPresetKey;
+  position?: string;
+  page?: string;
+  categoryId?: string;
+  className?: string;
+}) {
+  const normalizedPage = normalizePage(page);
+  const legacy = position && position in legacySlotMap ? legacySlotMap[position as LegacySlotKey] : undefined;
+  const presetKey = slot ?? legacy?.preset ?? 'home_mid_leaderboard';
+  const preset = getAdPreset(presetKey) ?? AD_PRESETS.home_mid_leaderboard;
+  const queryPosition = legacy?.position ?? preset.position;
   const { data } = useAds({
-    type: slot.type,
-    position: slot.apiPosition,
-    page: normalizedPage,
+    type: preset.type,
+    position: queryPosition,
+    page: normalizedPage ?? preset.page,
+    categoryId,
   });
-  const isFallbackAd = !data || data.length === 0;
-  const fallbackAd = sampleAds.find((item) => item.position === (slot.apiPosition ?? position)) || sampleAds[0];
-  const ad = data?.[0] || fallbackAd;
-  const adTitle = ad.title || ad.name || 'Sponsored placement';
-  const { language } = useLanguage();
-  const imageUrl = ad.image?.url || ad.imageUrl;
-  const imageAlt = getLocalizedText(ad.image?.alt, language) || adTitle;
   const theme = useTheme();
+  const { language } = useLanguage();
+
+  const fallbackAd = useMemo(() => {
+    return (
+      sampleAds.find((item) => inferAdPreset(item) === preset.key) ||
+      sampleAds.find((item) => item.position === queryPosition) ||
+      sampleAds[0]
+    );
+  }, [preset.key, queryPosition]);
+
+  const ad = useMemo(
+    () => pickBestAd({ ads: data ?? [], preset: preset.key, page: normalizedPage ?? preset.page, categoryId }) || fallbackAd,
+    [categoryId, data, fallbackAd, normalizedPage, preset.key, preset.page],
+  );
+
+  const isFallbackAd = !data || data.length === 0 || ad?.id === fallbackAd?.id;
+  const imageUrl = ad?.image?.url || ad?.imageUrl;
+  const adTitle = getLocalizedText(ad?.title, language) || ad?.name || preset.label;
+  const adDescription = getLocalizedText(ad?.description, language);
+  const imageAlt = getLocalizedText(ad?.image?.alt, language) || adTitle;
+  const renderConfig = renderModes[preset.renderMode] ?? renderModes.promoCompact;
+  const target = ad?.linkUrl || ad?.targetUrl || '#';
+  const clientLabel = getClientLabel(ad?.client);
 
   useEffect(() => {
     if (!ad?.id || isFallbackAd) return;
@@ -57,58 +186,69 @@ export function AdSlot({ position, page }: { position: string; page?: string }) 
     apiClient.post(`/advertisements/${ad.id}/click`).catch(() => {});
   };
 
-  const height = slot.height;
-  const imageSizes = slot.sizes;
-
   return (
     <Paper
       variant="outlined"
+      className={className}
       sx={{
         position: 'relative',
         width: '100%',
-        height,
+        minHeight: renderConfig.minHeight,
         overflow: 'hidden',
         borderColor: 'divider',
         bgcolor: 'background.paper',
         borderRadius: 3,
-        boxShadow: theme.shadows[2],
+        boxShadow: theme.shadows[1],
       }}
     >
       {imageUrl ? (
         <Box
           component="a"
-          href={ad.linkUrl || ad.targetUrl || '#'}
-          target="_blank"
+          href={target}
+          target={ad?.openInNewTab === false ? undefined : '_blank'}
           rel="noreferrer"
           onClick={handleAdClick}
-          sx={{ display: 'block', position: 'relative', width: '100%', height: '100%' }}
-        >
-          <Image src={imageUrl} alt={imageAlt} fill className="object-cover" sizes={imageSizes} />
-        </Box>
-      ) : (
-        <Box
           sx={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            color: 'text.secondary',
+            display: 'block',
+            position: 'relative',
+            width: '100%',
+            aspectRatio: preset.preview.width / preset.preview.height,
+            minHeight: renderConfig.minHeight,
           }}
         >
-          <Typography variant="body2">{adTitle}</Typography>
-          <Chip
-            size="small"
-            label="Sponsored"
-            color="warning"
-            sx={{
-              fontWeight: 700,
-              letterSpacing: 1,
-            }}
-          />
+          <Image src={imageUrl} alt={imageAlt} fill className={renderConfig.imageClassName} sizes={renderConfig.sizes} />
         </Box>
+      ) : (
+        <Stack
+          spacing={1.25}
+          sx={{
+            minHeight: renderConfig.minHeight,
+            justifyContent: 'center',
+            px: renderConfig.contentPadding,
+            py: 3,
+            background:
+              preset.renderMode === 'sidebarTall'
+                ? 'linear-gradient(180deg, rgba(123,26,41,0.08) 0%, rgba(8,15,28,0.06) 100%)'
+                : 'linear-gradient(135deg, rgba(123,26,41,0.08) 0%, rgba(0,0,0,0.02) 100%)',
+          }}
+        >
+          <Typography variant="overline" sx={{ fontWeight: 900, letterSpacing: 2, color: 'text.secondary' }}>
+            Sponsored
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.15 }}>
+            {adTitle}
+          </Typography>
+          {adDescription ? (
+            <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: preset.renderMode === 'leaderboard' ? 560 : 320 }}>
+              {adDescription}
+            </Typography>
+          ) : null}
+          {clientLabel ? (
+            <Chip size="small" label={clientLabel} sx={{ width: 'fit-content', fontWeight: 700 }} />
+          ) : null}
+        </Stack>
       )}
+
       <Box
         sx={{
           position: 'absolute',

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import { getDisplayErrorMessage } from '@/lib/errors';
 import { ApiResponse, User } from '@/lib/types';
 import { useAlert } from '@/contexts/alert-context';
 
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       notify({ type: 'success', title: 'Welcome back', description: res.data.user.name });
     } catch (error) {
       setStatus('unauthenticated');
-      notify({ type: 'error', title: 'Login failed', description: getErrorMessage(error) });
+      notify({ type: 'error', title: 'Login failed', description: getDisplayErrorMessage(error, 'login') });
       throw error;
     }
   };
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       notify({ type: 'success', title: 'Welcome to The Contemporary News', description: res.data.user.name });
     } catch (error) {
       setStatus('unauthenticated');
-      notify({ type: 'error', title: 'Registration failed', description: getErrorMessage(error) });
+      notify({ type: 'error', title: 'Registration failed', description: getDisplayErrorMessage(error, 'register') });
       throw error;
     }
   };
@@ -106,17 +107,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProfile = async (payload: Partial<User>) => {
-    const res = await apiClient.put<ApiResponse<User>>('/auth/profile', payload);
-    setUser(res.data);
-    notify({ type: 'success', title: 'Profile updated' });
+    try {
+      const res = await apiClient.put<ApiResponse<User>>('/auth/profile', payload);
+      setUser(res.data);
+      notify({ type: 'success', title: 'Profile updated' });
+    } catch (error) {
+      notify({ type: 'error', title: 'Profile update failed', description: getDisplayErrorMessage(error, 'profile') });
+      throw error;
+    }
   };
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
-    await apiClient.put<ApiResponse<unknown>>('/auth/change-password', {
-      currentPassword,
-      newPassword,
-    });
-    notify({ type: 'success', title: 'Password updated' });
+    try {
+      await apiClient.put<ApiResponse<unknown>>('/auth/change-password', {
+        currentPassword,
+        newPassword,
+      });
+      notify({ type: 'success', title: 'Password updated' });
+    } catch (error) {
+      notify({ type: 'error', title: 'Password update failed', description: getDisplayErrorMessage(error, 'password') });
+      throw error;
+    }
   };
 
   return (
@@ -132,10 +143,4 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  return 'Something went wrong';
 }

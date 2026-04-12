@@ -1,43 +1,41 @@
 'use client';
 
-import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { useCategory, useCategoryArticles } from '@/hooks/api-hooks';
-import { useLanguage, type SupportedLanguage } from '@/contexts/language-context';
-import { getLocalizedText, resolveMediaUrl, formatDate } from '@/lib/utils';
+import { useParams } from 'next/navigation';
+import { Clock } from 'lucide-react';
 import { AdSlot } from '@/components/ads/AdSlot';
+import { ArticleCard } from '@/components/news/ArticleCard';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
-import { Clock, ChevronRight } from 'lucide-react';
-import { Article } from '@/lib/types';
+import { useCategory, useCategoryArticles } from '@/hooks/api-hooks';
+import { handleApiError } from '@/lib/query-config';
+import { type Article } from '@/lib/types';
+import { formatDate, getLocalizedText, resolveMediaUrl } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function CategoryPage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug as string;
   const { language } = useLanguage();
-
-  // Fetch Category Data
-  const { data: category, isLoading: isCategoryLoading } = useCategory(slug);
-  
-  // Fetch Articles for this Category
-  const { data: articles, isLoading: isArticlesLoading } = useCategoryArticles(slug, {
+  const { data: category, isLoading: isCategoryLoading, isError: isCategoryError, error: categoryError } = useCategory(slug);
+  const { data: articles, isLoading: isArticlesLoading, isError: isArticlesError, error: articlesError } = useCategoryArticles(slug, {
     limit: 15,
     sort: '-publishedAt',
-    status: 'published'
+    status: 'published',
   });
 
   const categoryName = category?.name ? getLocalizedText(category.name, language) : slug;
   const categoryDescription = category?.description ? getLocalizedText(category.description, language) : '';
-  
-  const articlesList = articles || [];
-  const heroArticle = articlesList[0];
-  const gridArticles = articlesList.slice(1);
+  const articlesList = articles ?? [];
+  const leadStory = articlesList[0];
+  const sideStories = articlesList.slice(1, 4);
+  const feedStories = articlesList.slice(4);
 
   if (isCategoryLoading || isArticlesLoading) {
     return (
-      <div className="min-h-screen bg-[var(--news-bg-light)] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--news-page)]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-4 border-[var(--news-red-700)] border-t-transparent rounded-full animate-spin" />
-          <p className="text-[var(--news-grey-600)] font-medium">Loading category...</p>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--news-red-700)] border-t-transparent" />
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--news-soft)]">Loading category</p>
         </div>
       </div>
     );
@@ -45,17 +43,22 @@ export default function CategoryPage() {
 
   if (!category && !isCategoryLoading) {
     return (
-      <div className="min-h-screen bg-[var(--news-bg-light)] flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-[var(--news-grey-900)] mb-2">Category Not Found</h1>
-          <p className="text-[var(--news-grey-600)] mb-6">
-            The category you are looking for does not exist or has been moved.
+      <div className="flex min-h-screen items-center justify-center bg-[var(--news-page)] px-4">
+        <div className="max-w-lg border border-[var(--news-grid)] bg-white p-8 text-center">
+          <p className="news-meta text-[var(--news-red-700)]">Category</p>
+          <h1 className="mt-3 [font-family:var(--font-serif)] text-4xl font-bold text-[var(--news-ink)]">
+            {isCategoryError || isArticlesError ? 'Unable to load section' : 'Category not found'}
+          </h1>
+          <p className="mt-4 text-base leading-7 text-[var(--news-muted)]">
+            {isCategoryError || isArticlesError
+              ? handleApiError(categoryError || articlesError)
+              : 'The section you requested is unavailable or has moved.'}
           </p>
-          <TransitionLink 
+          <TransitionLink
             href="/"
-            className="inline-flex items-center justify-center px-6 py-3 bg-[var(--news-red-700)] text-white font-bold uppercase tracking-wide text-sm hover:bg-[var(--news-red-800)] transition-colors"
+            className="mt-6 inline-flex items-center justify-center bg-[var(--news-red-700)] px-5 py-3 text-sm font-bold uppercase tracking-[0.16em] text-white transition-colors hover:bg-[var(--news-red-hover)]"
           >
-            Go Home
+            Return home
           </TransitionLink>
         </div>
       </div>
@@ -63,207 +66,171 @@ export default function CategoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--news-white)]">
-      
-      {/* ──────────────────────────────────────────────────────────────────────────
-          CATEGORY HEADER
-          ────────────────────────────────────────────────────────────────────────── */}
-      <div className="bg-[var(--news-bg-light)] border-b border-[var(--news-grey-200)]">
-        <div className="max-w-[1200px] mx-auto px-4 py-12 md:py-16">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-            <span className="inline-block w-12 h-1 bg-[var(--news-red-700)] mb-6"></span>
-            
-            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-black text-[var(--news-grey-900)] mb-4 leading-tight">
-              {categoryName}
-            </h1>
-            
-            {categoryDescription && (
-              <p className="text-lg text-[var(--news-grey-600)] leading-relaxed max-w-2xl font-serif">
-                {categoryDescription}
-              </p>
-            )}
+    <div className="min-h-screen bg-[var(--news-page)]">
+      <div className="border-b border-[var(--news-grid)] bg-[var(--news-paper)]">
+        <div className="mx-auto max-w-[1440px] px-4 py-10 md:py-14">
+          <p className="news-meta text-[var(--news-red-700)]">Section</p>
+          <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
+            <div>
+              <h1 className="[font-family:var(--font-serif)] text-4xl font-bold leading-none tracking-[-0.04em] text-[var(--news-ink)] md:text-6xl">
+                {categoryName}
+              </h1>
+              {categoryDescription ? (
+                <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--news-muted)] md:text-lg">
+                  {categoryDescription}
+                </p>
+              ) : null}
+            </div>
+            <p className="max-w-sm text-sm leading-6 text-[var(--news-soft)]">
+              {language === 'bn'
+                ? 'প্রধান প্রতিবেদন, দ্রুত আপডেট এবং গভীর বিশ্লেষণ একই নিউজরুম গ্রিডে সাজানো।'
+                : 'Lead coverage, rapid updates, and secondary reads arranged in the same newsroom grid as the homepage.'}
+            </p>
+          </div>
+          <div className="mt-8">
+            <AdSlot slot="category_top_banner" page="category" categoryId={category?.id} />
           </div>
         </div>
       </div>
 
-      <div className="max-w-[1240px] mx-auto px-4 py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-          
-          {/* ────────────────────────────────────────────────────────────────────────
-              MAIN CONTENT COLUMN (Articles)
-              ──────────────────────────────────────────────────────────────────────── */}
-          <div className="lg:col-span-8 space-y-12">
-            
-            {articlesList.length === 0 ? (
-              <div className="text-center py-12 bg-[var(--news-bg-light)] border border-[var(--news-grey-200)] p-8">
-                <p className="text-[var(--news-grey-600)] text-lg font-serif italic">
-                  No articles found in this category yet.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* HERO ARTICLE */}
-                {heroArticle && (
-                  <article className="group relative flex flex-col gap-4 mb-12 border-b border-[var(--news-grey-200)] pb-12">
-                    <TransitionLink href={`/article/${heroArticle.slug}`} className="block overflow-hidden relative aspect-video md:aspect-[21/9] w-full bg-[var(--news-grey-100)]">
-                      {heroArticle.featuredImage || heroArticle.coverImage ? (
-                        <Image
-                          src={resolveMediaUrl(heroArticle.featuredImage?.url || heroArticle.coverImage)}
-                          alt={getLocalizedText(heroArticle.featuredImage?.alt, language) || getLocalizedText(heroArticle.title, language)}
-                          fill
-                          className="object-cover transition-transform duration-700 group-hover:scale-105"
-                          sizes="(max-width: 768px) 100vw, 800px"
-                          priority
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[var(--news-grey-400)] bg-[var(--news-grey-100)]">
-                          <span className="text-4xl text-[var(--news-grey-300)] font-serif italic">NewsOS</span>
-                        </div>
-                      )}
-                    </TransitionLink>
+      <div className="mx-auto max-w-[1440px] px-4 py-8 md:py-10">
+        {articlesList.length === 0 ? (
+          <div className="border border-[var(--news-grid)] bg-white px-6 py-16 text-center">
+            <p className="news-meta text-[var(--news-red-700)]">{categoryName}</p>
+            <h2 className="mt-3 [font-family:var(--font-serif)] text-3xl font-bold text-[var(--news-ink)]">
+              No stories yet
+            </h2>
+            <p className="mt-4 text-[var(--news-muted)]">This section does not have published articles at the moment.</p>
+          </div>
+        ) : (
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_380px]">
+            <div>
+              {leadStory ? <CategoryLead article={leadStory} categoryName={categoryName} /> : null}
 
-                    <div className="flex flex-col gap-3 mt-2">
-                       <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-[var(--news-red-700)] font-sans">
-                          {heroArticle.isBreaking && (
-                            <span className="bg-[var(--news-red-700)] text-white px-2 py-0.5 animate-pulse">
-                              Breaking
-                            </span>
-                          )}
-                          <span>{categoryName}</span>
-                       </div>
-                       
-                       <TransitionLink href={`/article/${heroArticle.slug}`} className="group-hover:text-[var(--news-red-700)] transition-colors">
-                        <h2 className="text-3xl md:text-4xl font-black text-[var(--news-grey-900)] font-serif leading-tight">
-                          {getLocalizedText(heroArticle.title, language)}
-                        </h2>
-                       </TransitionLink>
+              {feedStories.length > 0 ? (
+                <div className="mt-8 border-t border-[var(--news-grid)] pt-8">
+                  <div className="mb-5 flex items-center justify-between border-b border-[var(--news-grid)] pb-2">
+                    <h2 className="news-section-title">{language === 'bn' ? 'সর্বশেষ' : 'Latest in section'}</h2>
+                  </div>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {feedStories.map((article) => (
+                      <ArticleCard key={article.id} article={article} className="border border-[var(--news-grid)] bg-white p-4" />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
 
-                       <p className="text-[var(--news-grey-600)] text-lg leading-relaxed line-clamp-3 font-serif max-w-3xl">
-                         {getLocalizedText(heroArticle.excerpt, language)}
-                       </p>
-
-                       <div className="flex items-center gap-4 mt-2 text-xs text-[var(--news-grey-500)] font-sans font-medium uppercase tracking-wide border-t border-[var(--news-grey-100)] pt-4">
-                          <span className="flex items-center gap-1">
-                             <Clock className="w-3.5 h-3.5" />
-                             {heroArticle.publishedAt ? formatDate(heroArticle.publishedAt) : 'Recently'}
-                          </span>
-                          {heroArticle.author && (
-                            <>
-                              <span className="text-[var(--news-grey-300)]">•</span>
-                              <span>{heroArticle.author.name}</span>
-                            </>
-                          )}
-                       </div>
-                    </div>
-                  </article>
-                )}
-
-                {/* ARTICLE GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
-                  {gridArticles.map((article) => (
-                    <CategoryArticleCard key={article.id} article={article} language={language} categoryName={categoryName} />
+            <aside className="space-y-6">
+              <div className="border border-[var(--news-grid)] bg-white p-5">
+                <h2 className="news-section-title border-b border-[var(--news-grid)] pb-2">
+                  {language === 'bn' ? 'শীর্ষ প্রতিবেদন' : 'Top stories'}
+                </h2>
+                <div className="mt-3">
+                  {sideStories.map((article) => (
+                    <CategoryBrief key={article.id} article={article} categoryName={categoryName} />
                   ))}
                 </div>
-              </>
-            )}
-
-            {/* Pagination Placeholder (Next/Prev) can go here if needed */}
-          </div>
-
-
-          {/* ────────────────────────────────────────────────────────────────────────
-              SIDEBAR
-              ──────────────────────────────────────────────────────────────────────── */}
-          <aside className="lg:col-span-4 space-y-10 pl-0 lg:pl-8 border-l-0 lg:border-l border-[var(--news-grey-200)]">
-            
-            {/* Sidebar Ad 1 */}
-            <div className="bg-[var(--news-bg-light)] flex items-center justify-center p-4 min-h-[300px] border border-[var(--news-grey-200)]">
-               <AdSlot position="sidebar" page="category" />
-            </div>
-
-            {/* Newsletter Simple Widget */}
-            <div className="bg-[var(--news-grey-900)] text-white p-6 md:p-8 text-center">
-              <h3 className="font-serif text-2xl font-bold mb-3 italic">The Red Wire</h3>
-              <p className="text-[var(--news-grey-400)] text-sm mb-6 font-sans">
-                Get the most independent news directly to your inbox. No noise, just facts.
-              </p>
-              <div className="flex flex-col gap-3">
-                <input 
-                  type="email" 
-                  placeholder="Your email address" 
-                  className="w-full bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.2)] text-white px-4 py-3 text-sm focus:outline-none focus:border-[var(--news-red-500)] transition-colors placeholder:text-[var(--news-grey-600)]"
-                />
-                <button className="w-full bg-[var(--news-red-700)] text-white font-bold uppercase tracking-wide text-xs py-3 hover:bg-[var(--news-red-600)] transition-colors">
-                  Subscribe
-                </button>
               </div>
-            </div>
 
-             {/* Sidebar Ad 2 */}
-             <div className="bg-[var(--news-bg-light)] flex items-center justify-center p-4 min-h-[300px] border border-[var(--news-grey-200)]">
-               <AdSlot position="sidebar_middle" page="category" />
-            </div>
+              <div className="border border-[var(--news-grid)] bg-[var(--news-paper)] p-4">
+                <AdSlot slot="category_sidebar_tall" page="category" categoryId={category?.id} />
+              </div>
 
-          </aside>
+              <div className="bg-[var(--news-black)] p-6 text-white">
+                <p className="news-meta text-[#f0c2c2]">The Red Wire</p>
+                <h3 className="mt-3 [font-family:var(--font-serif)] text-3xl font-bold leading-tight">
+                  Daily reporting with a cleaner editorial rhythm.
+                </h3>
+                <p className="mt-4 text-sm leading-6 text-white/68">
+                  Subscribe for essential reporting, sharper hierarchy, and fewer distractions.
+                </p>
+                <div className="mt-5 flex flex-col gap-3">
+                  <input
+                    type="email"
+                    placeholder="Your email address"
+                    className="border border-white/15 bg-white/8 px-4 py-3 text-sm text-white placeholder:text-white/38 focus:border-[var(--news-red-500)] focus:outline-none"
+                  />
+                  <button className="bg-[var(--news-red-700)] px-4 py-3 text-sm font-bold uppercase tracking-[0.16em] text-white transition-colors hover:bg-[var(--news-red-hover)]">
+                    Subscribe
+                  </button>
+                </div>
+              </div>
 
-        </div>
-      </div>
-      
-      {/* Footer Ad */}
-      <div className="max-w-[1240px] mx-auto px-4 pb-12">
-          <AdSlot position="bottom" page="category" />
+              <div className="border border-[var(--news-grid)] bg-white p-4">
+                <AdSlot slot="category_sidebar_tall" page="category" categoryId={category?.id} />
+              </div>
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SUB-COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
+function CategoryLead({ article, categoryName }: { article: Article; categoryName: string }) {
+  const { language } = useLanguage();
+  const title = getLocalizedText(article.title, language);
+  const excerpt = getLocalizedText(article.excerpt, language);
+  const imageUrl = resolveMediaUrl(article.featuredImage?.url || article.coverImage);
+  const imageAlt = getLocalizedText(article.featuredImage?.alt, language) || title;
 
-function CategoryArticleCard({ article, language, categoryName }: { article: Article; language: SupportedLanguage; categoryName: string }) {
   return (
-    <article className="group flex flex-col h-full">
-      <TransitionLink href={`/article/${article.slug}`} className="block overflow-hidden relative aspect-[3/2] w-full bg-[var(--news-grey-100)] mb-4">
-        {article.featuredImage || article.coverImage ? (
-          <Image
-            src={resolveMediaUrl(article.featuredImage?.url || article.coverImage)}
-            alt={getLocalizedText(article.featuredImage?.alt, language) || getLocalizedText(article.title, language)}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, 400px"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-[var(--news-grey-100)]">
-             <span className="text-2xl text-[var(--news-grey-300)] font-serif italic opacity-50">NewsOS</span>
+    <article className="border-b border-[var(--news-grid)] pb-8">
+      <TransitionLink href={`/article/${article.slug || article.id}`} className="group block">
+        <div className="relative aspect-[16/10] overflow-hidden bg-[var(--news-gray-100)]">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={imageAlt}
+              fill
+              priority
+              sizes="(min-width: 1024px) 62vw, 100vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="h-full w-full bg-[linear-gradient(135deg,var(--news-red-900),var(--news-black))]" />
+          )}
+        </div>
+        <div className="pt-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="news-kicker bg-[var(--news-red-700)] text-white">{categoryName}</span>
+            {article.isBreaking ? <span className="news-meta text-[var(--news-red-700)]">Breaking</span> : null}
           </div>
-        )}
+          <h2 className="mt-4 [font-family:var(--font-serif)] text-3xl font-bold leading-tight text-[var(--news-ink)] md:text-5xl">
+            {title}
+          </h2>
+          {excerpt ? <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--news-muted)]">{excerpt}</p> : null}
+          <div className="mt-4 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[var(--news-soft)]">
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              {article.publishedAt ? formatDate(article.publishedAt, language) : 'Recent'}
+            </span>
+            {article.author?.name ? <span>{article.author.name}</span> : null}
+          </div>
+        </div>
       </TransitionLink>
-
-      <div className="flex flex-col flex-grow">
-        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--news-red-700)] mb-2 font-sans">
-             {article.isBreaking && (
-                <span className="bg-[var(--news-red-700)] text-white px-1.5 py-0.5">
-                  Live
-                </span>
-             )}
-             <span>{categoryName}</span>
-        </div>
-
-        <TransitionLink href={`/article/${article.slug}`} className="group-hover:text-[var(--news-red-700)] transition-colors mb-2">
-          <h3 className="text-xl font-bold text-[var(--news-grey-900)] font-serif leading-snug">
-            {getLocalizedText(article.title, language)}
-          </h3>
-        </TransitionLink>
-
-        <p className="text-[var(--news-grey-600)] text-sm leading-relaxed line-clamp-3 mb-4 font-serif flex-grow">
-           {getLocalizedText(article.excerpt, language)}
-        </p>
-
-        <div className="flex items-center gap-2 text-[10px] text-[var(--news-grey-400)] font-sans font-bold uppercase tracking-wide mt-auto">
-            <span>{article.publishedAt ? formatDate(article.publishedAt) : 'Just Now'}</span>
-        </div>
-      </div>
     </article>
+  );
+}
+
+function CategoryBrief({ article, categoryName }: { article: Article; categoryName: string }) {
+  const { language } = useLanguage();
+  return (
+    <TransitionLink
+      href={`/article/${article.slug || article.id}`}
+      className="group block border-b border-[var(--news-grid)] py-4 last:border-b-0 last:pb-0 first:pt-1"
+    >
+      <p className="news-meta text-[var(--news-red-700)]">{categoryName}</p>
+      <h3 className="mt-2 [font-family:var(--font-serif)] text-xl font-bold leading-tight text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)]">
+        {getLocalizedText(article.title, language)}
+      </h3>
+      <p className="mt-3 text-sm leading-6 text-[var(--news-muted)] line-clamp-2">
+        {getLocalizedText(article.excerpt, language)}
+      </p>
+      <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--news-soft)]">
+        {article.publishedAt ? formatDate(article.publishedAt, language) : 'Recent'}
+      </p>
+    </TransitionLink>
   );
 }

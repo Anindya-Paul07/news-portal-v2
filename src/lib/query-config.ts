@@ -1,3 +1,5 @@
+import { getDisplayErrorMessage } from '@/lib/errors';
+
 /**
  * Enterprise-Grade API Configuration
  * Centralized query configuration for professional newsroom operations
@@ -50,15 +52,7 @@ export const QUERY_CONFIGS = {
  * Error handler for API operations
  */
 export const handleApiError = (error: unknown): string => {
-  if (error instanceof Error) {
-    try {
-      const parsed = JSON.parse(error.message);
-      return parsed.message || 'Operation failed';
-    } catch {
-      return error.message || 'An unexpected error occurred';
-    }
-  }
-  return 'An unexpected error occurred';
+  return getDisplayErrorMessage(error, 'fetch');
 };
 
 /**

@@ -26,7 +26,7 @@ interface LanguageTabsProps {
 export function LanguageTabs({ tabs, defaultTab }: LanguageTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.value || '');
 
-  const activeContent = tabs.find((tab) => tab.value === activeTab)?.content;
+  const activeContent = tabs.find((tab) => tab.value === activeTab);
 
   return (
     <div className="border border-[var(--newsos-border-default)]">
@@ -53,7 +53,7 @@ export function LanguageTabs({ tabs, defaultTab }: LanguageTabsProps) {
 
       {/* Tab Content */}
       <div className="bg-[var(--newsos-bg-primary)]">
-        {activeContent}
+        {activeContent ? <div key={activeContent.value}>{activeContent.content}</div> : null}
       </div>
     </div>
   );

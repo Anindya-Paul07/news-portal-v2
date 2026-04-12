@@ -3,11 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { SyntheticEvent, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { SyntheticEvent, useEffect, useMemo, useState, type FormEvent } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -20,436 +19,413 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { alpha, useTheme } from '@mui/material/styles';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
+import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
 import { useMenuCategories } from '@/hooks/api-hooks';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { Button } from '@/components/ui/Button';
-import { getLocalizedText } from '@/lib/utils';
 import { canAccessAdmin } from '@/lib/rbac';
+import { getLocalizedText } from '@/lib/utils';
 
 export function Header() {
-  const { data: menu } = useMenuCategories();
+  const theme = useTheme();
+  const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
   const pathname = usePathname();
   const router = useRouter();
+  const { data: menu } = useMenuCategories();
   const { user, logout } = useAuth();
   const { language, toggleLanguage } = useLanguage();
   const [keyword, setKeyword] = useState('');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [navHidden, setNavHidden] = useState(false);
   const [compact, setCompact] = useState(false);
-  const lastScroll = useRef(0);
-  const theme = useTheme();
-  const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
-  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
 
-  const onSearch = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const trimmed = keyword.trim();
-    if (!trimmed) return;
-    router.push(`/search?query=${encodeURIComponent(trimmed)}`);
-    setSearchOpen(false);
-  };
-
-  const navItems = useMemo(() => {
-    if (menu && menu.length > 0) return menu;
-    return [];
-  }, [menu]);
+  const navItems = useMemo(() => menu ?? [], [menu]);
   const dateline = useMemo(() => {
     const now = new Date();
-    return new Intl.DateTimeFormat('en-GB', {
+    return new Intl.DateTimeFormat(language === 'bn' ? 'bn-BD' : 'en-GB', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
-      timeZone: 'UTC',
+      timeZone: 'Asia/Dhaka',
     }).format(now);
-  }, []);
+  }, [language]);
 
   const navValue = useMemo(() => {
-    const active = navItems?.find((cat) => pathname.includes(`/category/${cat.slug}`));
+    const active = navItems.find((cat) => pathname.includes(`/category/${cat.slug}`));
     return active ? active.slug : false;
   }, [navItems, pathname]);
+
+  useEffect(() => {
+    const handleScroll = () => setCompact(window.scrollY > 24);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleNavChange = (_: SyntheticEvent | null, slug: string) => {
     setMobileNavOpen(false);
     router.push(`/category/${slug}`);
   };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const current = window.scrollY;
-      setCompact(current > 40);
-      if (current > lastScroll.current + 12 && current > 160) {
-        setNavHidden(true);
-      } else if (current < lastScroll.current - 12) {
-        setNavHidden(false);
-      }
-      lastScroll.current = current;
-    };
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const onSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = keyword.trim();
+    if (!trimmed) return;
+    router.push(`/search?query=${encodeURIComponent(trimmed)}`);
+    setSearchOpen(false);
+  };
 
   return (
     <AppBar
       position="sticky"
-      color="primary"
+      color="transparent"
       enableColorOnDark
       sx={{
-        color: 'primary.contrastText',
-        bgcolor: 'primary.main',
-        backgroundImage: `linear-gradient(125deg, ${alpha(
-          theme.palette.primary.main,
-          0.95,
-        )}, ${alpha(theme.palette.secondary.main, 0.9)})`,
-        boxShadow: `0 12px 30px ${alpha(theme.palette.primary.main, 0.25)}`,
-        backdropFilter: 'blur(14px)',
-        borderBottom: `1px solid ${alpha(theme.palette.common.white, 0.16)}`,
-        transition: 'padding 200ms ease',
+        bgcolor: 'var(--news-page)',
+        color: 'var(--news-ink)',
+        boxShadow: 'none',
+        borderBottom: '1px solid var(--news-grid-strong)',
       }}
     >
-      <Toolbar disableGutters>
-        <Container maxWidth="lg" sx={{ py: compact ? 0.25 : 1, transition: 'padding 200ms ease' }}>
-          <Stack spacing={compact ? 1 : 1.25}>
-            {isSmUp ? (
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                spacing={1.5}
-                sx={{ flexWrap: 'wrap', rowGap: 1 }}
+      <Box sx={{ bgcolor: 'var(--news-black)', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <Container maxWidth="xl">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            spacing={2}
+            sx={{
+              minHeight: 36,
+              py: 0.75,
+              fontSize: '0.72rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.16em',
+              color: 'rgba(255,255,255,0.78)',
+            }}
+          >
+            <Typography component="p" sx={{ fontSize: 'inherit', fontWeight: 700, letterSpacing: 'inherit' }}>
+              {language === 'bn' ? 'দ্য কনটেম্পোরারি | লাইভ আপডেট' : 'The Contemporary | Live updates'}
+            </Typography>
+            {isMdUp ? (
+              <Typography component="p" sx={{ fontSize: 'inherit', fontWeight: 600, letterSpacing: 'inherit' }}>
+                {dateline}
+              </Typography>
+            ) : null}
+          </Stack>
+        </Container>
+      </Box>
+
+      <Toolbar disableGutters sx={{ minHeight: 'unset' }}>
+        <Container maxWidth="xl" sx={{ py: compact ? 1 : 1.5, transition: 'padding 180ms ease' }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'auto 1fr auto', md: 'auto 1fr auto' },
+              alignItems: 'center',
+              gap: { xs: 1, md: 2 },
+            }}
+          >
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <IconButton
+                aria-label="Toggle navigation menu"
+                onClick={() => setMobileNavOpen(true)}
+                sx={{
+                  border: '1px solid var(--news-grid)',
+                  color: 'var(--news-ink)',
+                  borderRadius: 0,
+                }}
               >
-                <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flex: '0 0 auto' }}>
-                  <IconButton
-                    aria-label="Open search"
-                    onClick={() => setSearchOpen(true)}
-                    sx={{ color: 'primary.contrastText' }}
-                  >
-                    <SearchRoundedIcon />
-                  </IconButton>
-                  <IconButton
-                    aria-label="Toggle navigation menu"
-                    onClick={() => setMobileNavOpen(true)}
-                    sx={{ color: 'primary.contrastText' }}
-                  >
-                    {mobileNavOpen ? <CloseRoundedIcon /> : <MenuRoundedIcon />}
-                  </IconButton>
-                </Stack>
+                <MenuRoundedIcon />
+              </IconButton>
+              <IconButton
+                aria-label="Open search"
+                onClick={() => setSearchOpen(true)}
+                sx={{
+                  border: '1px solid var(--news-grid)',
+                  color: 'var(--news-ink)',
+                  borderRadius: 0,
+                }}
+              >
+                <SearchRoundedIcon />
+              </IconButton>
+            </Stack>
 
-                <Stack spacing={0.25} alignItems="center" sx={{ flex: '1 1 260px', minWidth: 0 }}>
-                  <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-                      <Box
-                        sx={{
-                          width: compact ? 40 : 56,
-                          height: compact ? 40 : 56,
-                          borderRadius: 0,
-                          bgcolor: 'transparent',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: 'none',
-                          overflow: 'visible',
-                          transition: 'all 200ms ease',
-                          flex: '0 0 auto',
-                        }}
-                      >
-                        <Image
-                          src="/logo.png"
-                          alt="The Contemporary logo"
-                          width={128}
-                          height={128}
-                          priority
-                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                        />
-                      </Box>
-                      <Typography
-                        variant={compact ? 'body1' : 'h6'}
-                        sx={{
-                          fontWeight: 800,
-                          letterSpacing: compact ? 0.5 : 0,
-                          minWidth: 0,
-                          textAlign: 'center',
-                          display: '-webkit-box',
-                          WebkitBoxOrient: 'vertical',
-                          WebkitLineClamp: 1,
-                          overflow: 'hidden',
-                        }}
-                      >
-                        The Contemporary
-                      </Typography>
-                    </Stack>
-                  </Link>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      letterSpacing: 1.5,
-                      color: 'primary.contrastText',
-                      opacity: compact ? 0.85 : 1,
-                      textAlign: 'center',
-                      px: 1,
-                    }}
-                  >
-                    {dateline}
-                  </Typography>
-                </Stack>
-
+            <Box sx={{ display: 'flex', justifyContent: 'center', minWidth: 0 }}>
+              <Link href="/" style={{ color: 'inherit', textDecoration: 'none', width: '100%' }}>
                 <Stack
                   direction="row"
-                  spacing={1}
+                  spacing={1.25}
                   alignItems="center"
-                  justifyContent="flex-end"
-                  sx={{ flex: '0 0 auto', flexWrap: 'wrap', rowGap: 1 }}
+                  justifyContent="center"
+                  sx={{ minWidth: 0, textAlign: 'center' }}
                 >
-                  <ThemeToggle />
-                  <Button
-                    variant="outline"
-                    size="small"
-                    onClick={toggleLanguage}
+                  <Box
                     sx={{
-                      color: 'primary.contrastText',
-                      borderColor: alpha(theme.palette.primary.contrastText, 0.5),
-                      '&:hover': { borderColor: 'secondary.light' },
+                      width: { xs: compact ? 48 : 64, sm: compact ? 58 : 74, md: compact ? 72 : 104 },
+                      height: { xs: compact ? 48 : 64, sm: compact ? 58 : 74, md: compact ? 72 : 104 },
+                      position: 'relative',
+                      flexShrink: 0,
                     }}
                   >
-                    {language === 'en' ? 'বাংলা' : 'EN'}
-                  </Button>
-                  {user ? (
-                    <>
-                      <Button variant="ghost" size="small" onClick={logout} sx={{ color: 'primary.contrastText' }}>
-                        Logout
-                      </Button>
-                      {canAccessAdmin(user.role) && (
-                        <Button variant="secondary" size="small" onClick={() => router.push('/admin')}>
-                          Admin
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <Link href="/auth/login" style={{ textDecoration: 'none' }}>
-                      <Button variant="secondary" size="small">
-                        Login
-                      </Button>
-                    </Link>
-                  )}
-                </Stack>
-              </Stack>
-            ) : (
-              <Stack spacing={1}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-                  <Stack direction="row" spacing={0.5} alignItems="center">
-                    <IconButton
-                      aria-label="Open search"
-                      onClick={() => setSearchOpen(true)}
-                      sx={{ color: 'primary.contrastText' }}
-                    >
-                      <SearchRoundedIcon />
-                    </IconButton>
-                    <IconButton
-                      aria-label="Toggle navigation menu"
-                      onClick={() => setMobileNavOpen(true)}
-                      sx={{ color: 'primary.contrastText' }}
-                    >
-                      {mobileNavOpen ? <CloseRoundedIcon /> : <MenuRoundedIcon />}
-                    </IconButton>
-                  </Stack>
-
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    <ThemeToggle />
-                    <Button
-                      variant="outline"
-                      size="small"
-                      onClick={toggleLanguage}
+                    <Image src="/logo.png" alt="The Contemporary logo" fill priority style={{ objectFit: 'contain' }} />
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
                       sx={{
-                        color: 'primary.contrastText',
-                        borderColor: alpha(theme.palette.primary.contrastText, 0.5),
-                        '&:hover': { borderColor: 'secondary.light' },
+                        fontFamily: 'var(--font-serif)',
+                        fontSize: { xs: compact ? '1.15rem' : '1.32rem', sm: compact ? '1.6rem' : '2rem', md: compact ? '2.25rem' : '3rem' },
+                        lineHeight: 1,
+                        fontWeight: 700,
+                        letterSpacing: '-0.04em',
+                        color: 'var(--news-ink)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                     >
-                      {language === 'en' ? 'বাংলা' : 'EN'}
-                    </Button>
-                    {user ? (
-                      <>
-                        <Button variant="ghost" size="small" onClick={logout} sx={{ color: 'primary.contrastText' }}>
-                          Logout
-                        </Button>
-                        {canAccessAdmin(user.role) && (
-                          <Button variant="secondary" size="small" onClick={() => router.push('/admin')}>
-                            Admin
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <Link href="/auth/login" style={{ textDecoration: 'none' }}>
-                        <Button variant="secondary" size="small">
-                          Login
-                        </Button>
-                      </Link>
-                    )}
-                  </Stack>
+                      The Contemporary
+                    </Typography>
+                    <Typography
+                      sx={{
+                        mt: 0.5,
+                        display: { xs: 'none', sm: 'block' },
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.22em',
+                        textTransform: 'uppercase',
+                        color: 'var(--news-soft)',
+                      }}
+                    >
+                      {language === 'bn' ? 'বাংলাদেশ ও বিশ্বের সংবাদ' : 'Bangladesh and the world'}
+                    </Typography>
+                  </Box>
                 </Stack>
-
-                <Stack spacing={0.25} alignItems="center">
-                  <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Box
-                        sx={{
-                          width: compact ? 36 : 48,
-                          height: compact ? 36 : 48,
-                          borderRadius: 0,
-                          bgcolor: 'transparent',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: 'none',
-                          overflow: 'visible',
-                          transition: 'all 200ms ease',
-                        }}
-                      >
-                        <Image
-                          src="/logo.png"
-                          alt="The Contemporary logo"
-                          width={128}
-                          height={128}
-                          priority
-                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                        />
-                      </Box>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 800,
-                          textAlign: 'center',
-                        }}
-                      >
-                        The Contemporary
-                      </Typography>
-                    </Stack>
-                  </Link>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      letterSpacing: 1.25,
-                      color: 'primary.contrastText',
-                      opacity: compact ? 0.85 : 1,
-                      textAlign: 'center',
-                      px: 1,
-                    }}
-                  >
-                    {dateline}
-                  </Typography>
-                </Stack>
-              </Stack>
-            )}
-
-            <Box
-              sx={{
-                display: navHidden ? 'none' : 'block',
-                transition: 'opacity 200ms ease',
-              }}
-            >
-              <Divider sx={{ borderColor: 'primary.contrastText', opacity: 0.15 }} />
+              </Link>
             </Box>
 
-            <Box
-              sx={{
-                transition: 'max-height 280ms ease, opacity 200ms ease',
-                maxHeight: navHidden ? 0 : 120,
-                opacity: navHidden ? 0 : 1,
-                overflow: 'hidden',
-                display: 'flex',
-                justifyContent: 'center',
-              }}
-            >
-                {isMdUp ? (
-                  <Tabs
-                    value={navValue}
-                    onChange={handleNavChange}
-                    variant="scrollable"
-                  scrollButtons="auto"
-                  allowScrollButtonsMobile
-                  textColor="inherit"
-                  indicatorColor="secondary"
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end" sx={{ minWidth: 0 }}>
+              <ThemeToggle />
+              <Button
+                variant="outline"
+                size="small"
+                onClick={toggleLanguage}
+                sx={{
+                  borderRadius: 0,
+                  borderColor: 'var(--news-grid-strong)',
+                  color: 'var(--news-ink)',
+                  minWidth: 'unset',
+                  px: { xs: 1.2, md: 1.6 },
+                }}
+              >
+                {language === 'en' ? 'বাংলা' : 'EN'}
+              </Button>
+              {user ? (
+                <>
+                  {isMdUp ? (
+                    <Button variant="ghost" size="small" onClick={logout} sx={{ borderRadius: 0, color: 'var(--news-ink)' }}>
+                      Logout
+                    </Button>
+                  ) : (
+                    <IconButton
+                      aria-label="Logout"
+                      onClick={logout}
+                      sx={{
+                        border: '1px solid var(--news-grid-strong)',
+                        color: 'var(--news-ink)',
+                        borderRadius: 0,
+                      }}
+                    >
+                      <LogoutRoundedIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                  {canAccessAdmin(user.role) ? (
+                    isMdUp ? (
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={() => router.push('/admin')}
+                        sx={{
+                          borderRadius: 0,
+                          bgcolor: 'var(--news-red-700)',
+                          color: '#fff',
+                          '&:hover': { bgcolor: 'var(--news-red-hover)' },
+                        }}
+                      >
+                        Admin
+                      </Button>
+                    ) : (
+                      <IconButton
+                        aria-label="Open admin"
+                        onClick={() => router.push('/admin')}
+                        sx={{
+                          border: '1px solid var(--news-red-700)',
+                          bgcolor: 'var(--news-red-700)',
+                          color: '#fff',
+                          borderRadius: 0,
+                          '&:hover': { bgcolor: 'var(--news-red-hover)' },
+                        }}
+                      >
+                        <AdminPanelSettingsRoundedIcon fontSize="small" />
+                      </IconButton>
+                    )
+                  ) : null}
+                </>
+              ) : (
+                <IconButton
+                  component={Link}
+                  href="/auth/login"
+                  aria-label="Login"
                   sx={{
-                    '.MuiTab-root': {
-                      fontWeight: 700,
-                      textTransform: 'none',
-                      minHeight: compact ? 30 : 36,
-                      borderRadius: 2,
-                      px: compact ? 1.5 : 2,
-                      mx: 0.25,
-                      transition: 'box-shadow 200ms ease, background-color 200ms ease, color 150ms ease',
-                      '&:hover': {
-                        boxShadow: `0 0 14px ${alpha(theme.palette.secondary.light, 0.45)}`,
-                        backgroundColor: alpha(theme.palette.secondary.main, 0.18),
-                      },
-                    },
-                    '.Mui-selected': {
-                      color: 'secondary.contrastText',
-                      backgroundColor: alpha(theme.palette.secondary.main, 0.24),
-                      boxShadow: `0 0 16px ${alpha(theme.palette.secondary.main, 0.55)}`,
-                    },
-                    '.MuiTabs-indicator': {
-                      height: 3,
-                      borderRadius: 2,
-                    },
+                    border: '1px solid var(--news-red-700)',
+                    bgcolor: 'var(--news-red-700)',
+                    color: '#fff',
+                    borderRadius: 0,
+                    display: { xs: 'inline-flex', md: 'none' },
+                    '&:hover': { bgcolor: 'var(--news-red-hover)' },
                   }}
                 >
-                  {navItems?.map((cat) => (
-                    <Tab key={cat.id} value={cat.slug} label={getLocalizedText(cat.name, language)} />
-                  ))}
-                </Tabs>
+                  <LoginRoundedIcon fontSize="small" />
+                </IconButton>
+              )}
+              {!user ? (
+                <Link href="/auth/login" style={{ textDecoration: 'none' }}>
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    sx={{
+                      borderRadius: 0,
+                      bgcolor: 'var(--news-red-700)',
+                      color: '#fff',
+                      display: { xs: 'none', md: 'inline-flex' },
+                      '&:hover': { bgcolor: 'var(--news-red-hover)' },
+                    }}
+                  >
+                    Login
+                  </Button>
+                </Link>
               ) : null}
-            </Box>
-          </Stack>
+            </Stack>
+          </Box>
         </Container>
       </Toolbar>
 
+      <Box
+        sx={{
+          borderTop: '1px solid var(--news-grid)',
+          borderBottom: '2px solid var(--news-black)',
+          bgcolor: 'var(--news-paper)',
+        }}
+      >
+        <Container maxWidth="xl">
+          <Tabs
+            value={navValue}
+            onChange={handleNavChange}
+            variant="scrollable"
+            scrollButtons={false}
+            allowScrollButtonsMobile
+            textColor="inherit"
+            sx={{
+              minHeight: { xs: 44, md: 48 },
+              '.MuiTabs-scroller': {
+                overflowX: 'auto !important',
+              },
+              '.MuiTab-root': {
+                minHeight: { xs: 44, md: 48 },
+                px: { xs: 1.5, md: 2 },
+                color: 'var(--news-ink)',
+                fontSize: { xs: '0.78rem', md: '0.85rem' },
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+              },
+              '.Mui-selected': {
+                color: 'var(--news-red-700)',
+              },
+              '.MuiTabs-indicator': {
+                height: 3,
+                backgroundColor: 'var(--news-red-700)',
+              },
+            }}
+          >
+            {navItems.map((cat) => (
+              <Tab key={cat.id} value={cat.slug} label={getLocalizedText(cat.name, language)} />
+            ))}
+          </Tabs>
+        </Container>
+      </Box>
+
       <Drawer
-        anchor="top"
+        anchor="left"
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
         PaperProps={{
           sx: {
-            bgcolor: 'background.default',
-            color: 'text.primary',
-            pt: 1,
+            width: { xs: '88vw', sm: 420 },
+            bgcolor: 'var(--news-page)',
+            color: 'var(--news-ink)',
           },
         }}
       >
-        <Container maxWidth="lg">
-          <Stack spacing={1.25} py={1.5}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                Sections
+        <Box sx={{ borderBottom: '1px solid var(--news-grid)', px: 3, py: 2.5 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Box>
+              <Typography sx={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--news-red-700)' }}>
+                {language === 'bn' ? 'সেকশন' : 'Sections'}
               </Typography>
-              <IconButton aria-label="Close menu" onClick={() => setMobileNavOpen(false)}>
-                <CloseRoundedIcon />
-              </IconButton>
-            </Stack>
-            {navItems?.map((cat) => (
-              <Button
-                key={cat.id}
-                variant="ghost"
-                onClick={() => handleNavChange(null, cat.slug)}
-                sx={{
-                  justifyContent: 'space-between',
-                  width: '100%',
-                  px: 1.5,
-                }}
-              >
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {getLocalizedText(cat.name, language)}
-                </Typography>
-              </Button>
-            ))}
+              <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-serif)', fontSize: '1.7rem', fontWeight: 700 }}>
+                The Contemporary
+              </Typography>
+            </Box>
+            <IconButton aria-label="Close menu" onClick={() => setMobileNavOpen(false)}>
+              <CloseRoundedIcon />
+            </IconButton>
           </Stack>
-        </Container>
+        </Box>
+        <Stack spacing={0} sx={{ px: 3, py: 2 }}>
+          {navItems.map((cat) => (
+            <Button
+              key={cat.id}
+              variant="ghost"
+              onClick={() => handleNavChange(null, cat.slug)}
+              sx={{
+                justifyContent: 'flex-start',
+                width: '100%',
+                borderRadius: 0,
+                borderBottom: '1px solid var(--news-grid)',
+                px: 0,
+                py: 1.7,
+                color: 'var(--news-ink)',
+              }}
+            >
+              <Typography sx={{ fontSize: '1rem', fontWeight: 700 }}>
+                {getLocalizedText(cat.name, language)}
+              </Typography>
+            </Button>
+          ))}
+          {user ? (
+            <Button
+              variant="ghost"
+              onClick={logout}
+              sx={{
+                justifyContent: 'flex-start',
+                width: '100%',
+                borderRadius: 0,
+                px: 0,
+                py: 1.7,
+                color: 'var(--news-ink)',
+              }}
+            >
+              Logout
+            </Button>
+          ) : null}
+        </Stack>
       </Drawer>
 
       <Drawer
@@ -458,18 +434,23 @@ export function Header() {
         onClose={() => setSearchOpen(false)}
         PaperProps={{
           sx: {
-            bgcolor: 'background.paper',
-            color: 'text.primary',
-            pt: 2,
+            bgcolor: 'var(--news-page)',
+            color: 'var(--news-ink)',
+            borderBottom: '1px solid var(--news-grid-strong)',
           },
         }}
       >
         <Container maxWidth="md">
-          <Stack spacing={2} py={2}>
+          <Stack spacing={2} py={3}>
             <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                Search The Contemporary
-              </Typography>
+              <Box>
+                <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--news-red-700)' }}>
+                  Search
+                </Typography>
+                <Typography sx={{ mt: 0.75, fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 700 }}>
+                  {language === 'bn' ? 'সংবাদ খুঁজুন' : 'Search the news'}
+                </Typography>
+              </Box>
               <IconButton aria-label="Close search" onClick={() => setSearchOpen(false)}>
                 <CloseRoundedIcon />
               </IconButton>
@@ -479,17 +460,23 @@ export function Header() {
                 fullWidth
                 size="medium"
                 autoFocus
-                placeholder="Search news, categories, authors"
+                placeholder={language === 'bn' ? 'শিরোনাম, বিষয়, বিভাগ' : 'Headlines, topics, sections'}
                 value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
+                onChange={(event) => setKeyword(event.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchRoundedIcon color="secondary" />
+                      <SearchRoundedIcon sx={{ color: 'var(--news-red-700)' }} />
                     </InputAdornment>
                   ),
                 }}
                 inputProps={{ 'aria-label': 'Search news' }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 0,
+                    bgcolor: alpha(theme.palette.common.white, 0.7),
+                  },
+                }}
               />
             </Box>
           </Stack>

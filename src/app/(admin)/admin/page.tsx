@@ -18,6 +18,8 @@ import {
 import { AdminShell } from '@/components/layout/AdminShell';
 import { ArticleCard } from '@/components/news/ArticleCard'; // Now Tailwind based
 import { useLanguage } from '@/contexts/language-context';
+import { ErrorState } from '@/components/states/ErrorState';
+import { getDisplayErrorMessage } from '@/lib/errors';
 import { getLocalizedText } from '@/lib/utils';
 import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
@@ -137,11 +139,11 @@ export default function AdminDashboard() {
   const [trafficWindow, setTrafficWindow] = useState<TrafficWindow>('7d');
 
   // -- Data --
-  const { data: overview } = useDashboardOverview();
-  const { data: trending } = useTrendingArticles();
-  const { data: ads } = useAdminAds();
-  const { data: media } = useMediaLibrary({ limit: 4 });
-  const { data: categories } = useAdminCategories();
+  const { data: overview, isError: isOverviewError, error: overviewError, refetch: refetchOverview } = useDashboardOverview();
+  const { data: trending, isError: isTrendingError, error: trendingError, refetch: refetchTrending } = useTrendingArticles();
+  const { data: ads, isError: isAdsError, error: adsError, refetch: refetchAds } = useAdminAds();
+  const { data: media, isError: isMediaError, error: mediaError, refetch: refetchMedia } = useMediaLibrary({ limit: 4 });
+  const { data: categories, isError: isCategoriesError, error: categoriesError, refetch: refetchCategories } = useAdminCategories();
   
   // Computed Params
   const articleStatsRange = useMemo(() => {
@@ -222,6 +224,20 @@ export default function AdminDashboard() {
 
   return (
     <AdminShell title="Dashboard" description="Pulse of your newsroom and monetization.">
+      {isOverviewError || isTrendingError || isAdsError || isMediaError || isCategoriesError ? (
+        <div className="mb-6">
+          <ErrorState
+            title={getDisplayErrorMessage(overviewError || trendingError || adsError || mediaError || categoriesError, 'fetch')}
+            onRetry={() => {
+              refetchOverview();
+              refetchTrending();
+              refetchAds();
+              refetchMedia();
+              refetchCategories();
+            }}
+          />
+        </div>
+      ) : null}
       
       {/* Overview Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

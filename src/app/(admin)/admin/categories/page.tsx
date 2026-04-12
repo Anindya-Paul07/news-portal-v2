@@ -19,15 +19,17 @@ import { AdminShell } from '@/components/layout/AdminShell';
 import { useAdminCategories, useCategoryTree, useSaveCategory, useDeleteCategory } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
 import { useAlert } from '@/contexts/alert-context';
+import { getDisplayErrorMessage } from '@/lib/errors';
 import { getLocalizedText } from '@/lib/utils';
 import { EmptyState } from '@/components/states/EmptyState';
+import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingBlock } from '@/components/states/LoadingBlock';
 import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
 export default function CategoriesPage() {
   useAdminAreaGuard('categories');
-  const { data: categories } = useAdminCategories();
-  const { data: tree } = useCategoryTree();
+  const { data: categories, isError: isCategoriesError, error: categoriesError, refetch: refetchCategories } = useAdminCategories();
+  const { data: tree, isError: isTreeError, error: treeError, refetch: refetchTree } = useCategoryTree();
   const { mutateAsync: saveCategory } = useSaveCategory();
   const { mutateAsync: deleteCategory } = useDeleteCategory();
   const { notify } = useAlert();
@@ -47,33 +49,42 @@ export default function CategoriesPage() {
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await saveCategory({
-      id: editingId || undefined,
-      slug: draft.slug,
-      name: { en: draft.nameEn, bn: draft.nameBn },
-      description: { en: draft.descriptionEn, bn: draft.descriptionBn },
-      parentId: draft.parentId || null,
-      order: draft.order,
-      showInMenu: draft.showInMenu,
-      isActive: draft.isActive,
-    });
-    setDraft({
-      nameEn: '',
-      nameBn: '',
-      slug: '',
-      descriptionEn: '',
-      descriptionBn: '',
-      parentId: '',
-      order: 1,
-      showInMenu: true,
-      isActive: true,
-    });
-    setEditingId(null);
-    notify({
-      type: 'success',
-      title: editingId ? 'Category updated' : 'Category saved',
-      description: 'Menu structure refreshed.',
-    });
+    try {
+      await saveCategory({
+        id: editingId || undefined,
+        slug: draft.slug,
+        name: { en: draft.nameEn, bn: draft.nameBn },
+        description: { en: draft.descriptionEn, bn: draft.descriptionBn },
+        parent: draft.parentId || null,
+        parentId: draft.parentId || null,
+        order: draft.order,
+        showInMenu: draft.showInMenu,
+        isActive: draft.isActive,
+      });
+      setDraft({
+        nameEn: '',
+        nameBn: '',
+        slug: '',
+        descriptionEn: '',
+        descriptionBn: '',
+        parentId: '',
+        order: 1,
+        showInMenu: true,
+        isActive: true,
+      });
+      setEditingId(null);
+      notify({
+        type: 'success',
+        title: editingId ? 'Category updated' : 'Category saved',
+        description: 'Menu structure refreshed.',
+      });
+    } catch (error) {
+      notify({
+        type: 'error',
+        title: editingId ? 'Category update failed' : 'Category save failed',
+        description: getDisplayErrorMessage(error, 'category-save'),
+      });
+    }
   };
 
   const handleEdit = (categoryId: string) => {
@@ -115,7 +126,7 @@ export default function CategoriesPage() {
         });
       }
     } catch (error) {
-      notify({ type: 'error', title: 'Delete failed', description: error instanceof Error ? error.message : undefined });
+      notify({ type: 'error', title: 'Delete failed', description: getDisplayErrorMessage(error, 'category-delete') });
     }
   };
 
@@ -200,6 +211,7 @@ export default function CategoriesPage() {
                   label="Name (BN)"
                   value={draft.nameBn}
                   onChange={(e) => setDraft((d) => ({ ...d, nameBn: e.target.value }))}
+                  required
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -312,6 +324,15 @@ export default function CategoriesPage() {
       >
         📂 Existing Categories
       </Typography>
+      {(isCategoriesError || isTreeError) && (
+        <ErrorState
+          title={getDisplayErrorMessage(categoriesError || treeError, 'fetch')}
+          onRetry={() => {
+            refetchCategories();
+            refetchTree();
+          }}
+        />
+      )}
       {!categories && <LoadingBlock lines={3} />}
       {categories?.length === 0 && <EmptyState title="No categories yet" description="Add your first category to start." />}
       <Grid container spacing={2.5}>

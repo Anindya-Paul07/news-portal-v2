@@ -1,9 +1,9 @@
 import type { Role } from '@/lib/types';
 
-export type AdminArea = 'dashboard' | 'articles' | 'categories' | 'ads' | 'media' | 'users' | 'settings';
+export type AdminArea = 'dashboard' | 'articles' | 'categories' | 'ads' | 'media' | 'reels' | 'users' | 'settings';
 
 export function isEditorRole(role: Role | null | undefined) {
-  return role === 'editorial' || role === 'journalist';
+  return role === 'editorial';
 }
 
 export function canAccessAdmin(role: Role | null | undefined) {
@@ -21,7 +21,7 @@ export function canAccessAdminArea(role: Role | null | undefined, area: AdminAre
   if (!role) return false;
   if (role === 'super_admin') return true;
   if (role === 'admin') return area !== 'users';
-  if (isEditorRole(role)) return area === 'articles' || area === 'settings';
+  if (isEditorRole(role)) return area === 'articles' || area === 'media';
   return false;
 }
 
@@ -32,4 +32,3 @@ export function canDeleteArticle(role: Role | null | undefined) {
 export function canManageUsers(role: Role | null | undefined) {
   return role === 'super_admin';
 }
-

@@ -10,6 +10,7 @@ import { AdminShell } from '@/components/layout/AdminShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/contexts/auth-context';
+import { getDisplayErrorMessage } from '@/lib/errors';
 import { ErrorState } from '@/components/states/ErrorState';
 import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
 
@@ -38,7 +39,7 @@ export default function SettingsPage() {
       setConfirmPassword('');
     } catch (error) {
       setStatus('error');
-      setMessage(error instanceof Error ? error.message : 'Unable to update password.');
+      setMessage(getDisplayErrorMessage(error, 'password'));
     }
   };
 
