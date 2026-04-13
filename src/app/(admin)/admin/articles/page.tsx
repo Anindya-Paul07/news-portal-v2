@@ -29,6 +29,7 @@ import PhotoLibraryRoundedIcon from '@mui/icons-material/PhotoLibraryRounded';
  */
 
 type FilterType = 'all' | 'draft' | 'published' | 'breaking' | 'my-desk';
+type MobilePane = 'list' | 'editor';
 
 const DEFAULT_ARTICLE_LIMIT = 10;
 
@@ -92,6 +93,7 @@ export default function ArticlesPage() {
   };
 
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [mobilePane, setMobilePane] = useState<MobilePane>('list');
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -121,6 +123,7 @@ export default function ArticlesPage() {
     setActiveFilter(filter);
     setSelectedArticleId(null);
     setIsEditing(false);
+    setMobilePane('list');
   };
 
   // Helper to safely get string from LocalizedText
@@ -178,6 +181,7 @@ export default function ArticlesPage() {
       isTrending: article.isTrending || false,
     });
     setIsEditing(true);
+    setMobilePane('editor');
   };
 
   const handleNew = () => {
@@ -185,12 +189,14 @@ export default function ArticlesPage() {
     setDraft(initialDraft);
     setIsEditing(true);
     setSelectedArticleId(null);
+    setMobilePane('editor');
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditingId(null);
     setDraft(initialDraft);
+    setMobilePane('list');
   };
 
   const handleSave = async (e: FormEvent) => {
@@ -229,6 +235,7 @@ export default function ArticlesPage() {
       setIsEditing(false);
       setEditingId(null);
       setDraft(initialDraft);
+      setMobilePane('list');
     } catch (error) {
       showAlert(getDisplayErrorMessage(error, 'article-save'), 'error', 'Save failed');
     }
@@ -237,23 +244,41 @@ export default function ArticlesPage() {
   return (
     <AdminShell title="Articles" description="Manage news articles">
       {/* 3-Pane Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[200px_400px_1fr] h-[calc(100vh-44px-32px)] overflow-hidden">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden lg:grid lg:grid-cols-[200px_400px_1fr] lg:grid-rows-1">
+        <div className="flex border-b border-[var(--newsos-border-default)] bg-[var(--newsos-bg-secondary)] p-2 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobilePane('list')}
+            className={`flex-1 rounded-l-[8px] border px-3 py-2 text-xs font-bold uppercase tracking-wide ${mobilePane === 'list' ? 'border-[var(--newsos-accent-primary)] bg-[var(--newsos-bg-active)] text-[var(--newsos-accent-primary)]' : 'border-[var(--newsos-border-default)] text-[var(--newsos-text-tertiary)]'}`}
+          >
+            List ({filteredArticles.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobilePane('editor')}
+            className={`flex-1 rounded-r-[8px] border border-l-0 px-3 py-2 text-xs font-bold uppercase tracking-wide ${mobilePane === 'editor' ? 'border-[var(--newsos-accent-primary)] bg-[var(--newsos-bg-active)] text-[var(--newsos-accent-primary)]' : 'border-[var(--newsos-border-default)] text-[var(--newsos-text-tertiary)]'}`}
+          >
+            {isEditing ? 'Edit' : selectedArticle ? 'Preview' : 'Editor'}
+          </button>
+        </div>
         
         {/* ═══ PANE 1: FILTERS ═══ */}
-        <aside className="hidden lg:block border-r border-[var(--newsos-border-default)] overflow-y-auto bg-[var(--newsos-bg-secondary)]">
-          <div className="sticky top-0 bg-[var(--newsos-bg-secondary)] border-b border-[var(--newsos-border-default)] px-3 py-2 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)]">
+        <aside className={`${mobilePane === 'list' ? 'block' : 'hidden'} overflow-x-auto border-b border-[var(--newsos-border-default)] bg-[var(--newsos-bg-secondary)] lg:block lg:overflow-y-auto lg:border-b-0 lg:border-r`}>
+          <div className="sticky top-0 hidden border-b border-[var(--newsos-border-default)] bg-[var(--newsos-bg-secondary)] px-3 py-2 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] lg:block">
             Filters
           </div>
           
-          <FilterItem label="All Articles" count={totalArticles} active={activeFilter === 'all'} onClick={() => handleFilterChange('all')} />
-          <FilterItem label="Drafts" count={articles.filter((a) => a.status === 'draft').length} active={activeFilter === 'draft'} onClick={() => handleFilterChange('draft')} />
-          <FilterItem label="Published" count={articles.filter((a) => a.status === 'published').length} active={activeFilter === 'published'} onClick={() => handleFilterChange('published')} />
-          <FilterItem label="Breaking" count={articles.filter((a) => a.isBreaking).length} active={activeFilter === 'breaking'} onClick={() => handleFilterChange('breaking')} />
-          <FilterItem label="My Desk" count={articles.filter((a) => a.author?.id === user?.id).length} active={activeFilter === 'my-desk'} onClick={() => handleFilterChange('my-desk')} />
+          <div className="flex gap-2 px-3 py-2 lg:block lg:p-0">
+            <FilterItem label="All Articles" count={totalArticles} active={activeFilter === 'all'} onClick={() => handleFilterChange('all')} />
+            <FilterItem label="Drafts" count={articles.filter((a) => a.status === 'draft').length} active={activeFilter === 'draft'} onClick={() => handleFilterChange('draft')} />
+            <FilterItem label="Published" count={articles.filter((a) => a.status === 'published').length} active={activeFilter === 'published'} onClick={() => handleFilterChange('published')} />
+            <FilterItem label="Breaking" count={articles.filter((a) => a.isBreaking).length} active={activeFilter === 'breaking'} onClick={() => handleFilterChange('breaking')} />
+            <FilterItem label="My Desk" count={articles.filter((a) => a.author?.id === user?.id).length} active={activeFilter === 'my-desk'} onClick={() => handleFilterChange('my-desk')} />
+          </div>
         </aside>
 
         {/* ═══ PANE 2: THE WIRE ═══ */}
-        <div className="hidden lg:flex min-h-0 flex-col border-r border-[var(--newsos-border-default)] bg-[var(--newsos-bg-primary)]">
+        <div className={`${mobilePane === 'list' ? 'flex' : 'hidden'} min-h-0 flex-1 flex-col border-b border-[var(--newsos-border-default)] bg-[var(--newsos-bg-primary)] lg:flex lg:border-b-0 lg:border-r`}>
           <div className="sticky top-0 z-10 bg-[var(--newsos-bg-primary)] border-b border-[var(--newsos-border-default)] px-3 py-2 flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)]">
               The Wire ({filteredArticles.length})
@@ -276,7 +301,7 @@ export default function ArticlesPage() {
               filteredArticles.map((article) => (
                 <div
                   key={article.id}
-                  onClick={() => { setSelectedArticleId(article.id); setIsEditing(false); }}
+                  onClick={() => { setSelectedArticleId(article.id); setIsEditing(false); setMobilePane('editor'); }}
                   className={`px-3 py-2.5 border-b border-[var(--newsos-border-default)] cursor-pointer transition-all ${selectedArticleId === article.id && !isEditing ? 'bg-[var(--newsos-bg-active)] border-l-2 border-l-[var(--newsos-accent-primary)] pl-[10px]' : 'hover:bg-[var(--newsos-bg-hover)]'}`}
                 >
                   <div className="flex items-start gap-2 mb-1.5">
@@ -338,7 +363,7 @@ export default function ArticlesPage() {
         </div>
 
         {/* ═══ PANE 3: PREVIEW/EDIT ═══ */}
-        <div className="overflow-y-auto bg-[var(--newsos-bg-primary)]">
+        <div className={`${mobilePane === 'editor' ? 'block' : 'hidden'} min-h-0 flex-1 overflow-y-auto bg-[var(--newsos-bg-primary)] lg:block`}>
           {isArticlesError || isCategoriesError ? (
             <div className="p-4">
               <ErrorState
@@ -368,9 +393,9 @@ export default function ArticlesPage() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 space-y-4 overflow-y-auto p-3 sm:p-4">
                 {/* Title Fields */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Title (English) *</label>
                     <input type="text" value={draft.titleEn} onChange={(e) => setDraft({ ...draft, titleEn: e.target.value })} className="w-full px-3 py-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-sm focus:outline-none focus:border-[var(--newsos-accent-primary)]" placeholder="Enter title..." />
@@ -382,7 +407,7 @@ export default function ArticlesPage() {
                 </div>
 
                 {/* Slug + Dropdowns */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div>
                     <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Slug</label>
                     <input type="text" value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} className="w-full px-3 py-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-sm focus:outline-none focus:border-[var(--newsos-accent-primary)]" placeholder="slug" />
@@ -447,7 +472,7 @@ export default function ArticlesPage() {
                 <div>
                   <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Featured Image</label>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <label className={`flex items-center gap-2 px-3 py-2 border border-[var(--newsos-border-default)] cursor-pointer hover:bg-[var(--newsos-bg-hover)] transition-colors ${uploadMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}>
                         <CloudUploadRoundedIcon className="text-[var(--newsos-accent-primary)]" sx={{ fontSize: 18 }} />
                         <span className="text-xs font-bold text-[var(--newsos-text-primary)] uppercase tracking-wide">
@@ -469,7 +494,7 @@ export default function ArticlesPage() {
                         <PhotoLibraryRoundedIcon sx={{ fontSize: 18 }} />
                         Library
                       </button>
-                      <span className="text-[0.65rem] text-[var(--newsos-text-tertiary)]">
+                      <span className="w-full text-[0.65rem] text-[var(--newsos-text-tertiary)] sm:w-auto">
                         upload, choose from library, or paste URL below
                       </span>
                     </div>
@@ -498,7 +523,7 @@ export default function ArticlesPage() {
                 </div>
 
                 {/* Flags */}
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={draft.isFeatured} onChange={(e) => setDraft({ ...draft, isFeatured: e.target.checked })} className="w-4 h-4" />
                     <span className="text-xs text-[var(--newsos-text-primary)]">Featured</span>
@@ -583,9 +608,13 @@ export default function ArticlesPage() {
 
 function FilterItem({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
   return (
-    <div onClick={onClick} className={`flex items-center justify-between px-3 py-2 border-b border-[var(--newsos-border-default)] cursor-pointer text-[0.813rem] transition-all ${active ? 'bg-[var(--newsos-bg-active)] border-l-2 border-l-[var(--newsos-accent-primary)] pl-[10px] font-bold' : 'hover:bg-[var(--newsos-bg-hover)]'}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex shrink-0 items-center justify-between gap-3 rounded-t-[8px] border px-3 py-2 text-left text-[0.813rem] transition-all lg:w-full lg:rounded-none lg:border-x-0 lg:border-t-0 ${active ? 'border-[var(--newsos-accent-primary)] bg-[var(--newsos-bg-active)] font-bold text-[var(--newsos-accent-primary)] lg:border-l-2 lg:pl-[10px]' : 'border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] hover:bg-[var(--newsos-bg-hover)]'}`}
+    >
       <span>{label}</span>
       <span className="text-xs font-bold text-[var(--newsos-text-tertiary)]">{count}</span>
-    </div>
+    </button>
   );
 }

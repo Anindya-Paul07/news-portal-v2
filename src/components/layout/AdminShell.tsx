@@ -43,7 +43,7 @@ export function AdminShell({
   const filteredNav = nav.filter((item) => canAccessAdminArea(user?.role, item.area));
 
   return (
-    <div className="grid grid-rows-[1fr_32px] lg:grid-cols-[280px_1fr] lg:grid-rows-[1fr_32px] h-screen w-screen overflow-hidden bg-[var(--newsos-bg-primary)] text-[var(--newsos-text-primary)]">
+    <div className="grid h-screen w-screen grid-rows-[1fr_32px] overflow-hidden bg-[var(--newsos-bg-primary)] text-[var(--newsos-text-primary)] lg:grid-cols-[280px_1fr] lg:grid-rows-[1fr_32px]">
       
       {/* ═══ SIDEBAR (Desktop Only) ═══ */}
       <aside className="hidden lg:flex flex-col bg-[var(--newsos-bg-sidebar,var(--newsos-bg-primary))] border-r border-[var(--newsos-border-default)] overflow-y-auto">
@@ -99,11 +99,20 @@ export function AdminShell({
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className="flex flex-col overflow-y-auto bg-[var(--newsos-bg-primary)] lg:col-start-2">
+      <main className="flex min-h-0 flex-col overflow-hidden bg-[var(--newsos-bg-primary)] lg:col-start-2">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-[var(--newsos-bg-primary)] border-b border-[var(--newsos-border-default)] px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+        <header className="z-10 border-b border-[var(--newsos-border-default)] bg-[var(--newsos-bg-primary)] px-3 py-3 sm:px-4">
+          <div className="flex items-center gap-3">
+            {/* Mobile Menu Button */}
+            <button
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] border border-[var(--newsos-border-default)] bg-[var(--newsos-bg-secondary)] text-[var(--newsos-text-primary)] shadow-sm lg:hidden"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open admin navigation"
+            >
+              <MenuRoundedIcon />
+            </button>
+
+            <div className="min-w-0 flex-1">
               <h1 className="text-sm font-bold uppercase tracking-wide text-[var(--newsos-text-primary)]">
                 {title}
               </h1>
@@ -113,19 +122,12 @@ export function AdminShell({
                 </p>
               )}
             </div>
-            
-            {/* Mobile Menu Button */}
-            <button
-              className="lg:hidden flex items-center justify-center p-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] cursor-pointer"
-              onClick={() => setMobileMenuOpen(true)}
-            >
-              <MenuRoundedIcon />
-            </button>
           </div>
+
         </header>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {children}
         </div>
       </main>
