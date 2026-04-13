@@ -10,6 +10,7 @@ import {
   ApiResponse,
   Article,
   ArticlePayload,
+  Pagination,
   Category,
   CategoryPayload,
   DashboardOverview,
@@ -199,6 +200,19 @@ export const useAdminArticles = (
   useQuery({
     queryKey: ['admin', 'articles', params],
     queryFn: () => fetcher<Article[]>(`/articles${buildQuery(params)}`),
+    enabled: options?.enabled ?? true,
+  });
+
+export const usePaginatedAdminArticles = (
+  params?: Record<string, string | number | boolean | undefined>,
+  options?: { enabled?: boolean },
+) =>
+  useQuery({
+    queryKey: ['admin', 'articles', 'paginated', params],
+    queryFn: async (): Promise<{ articles: Article[]; pagination?: Pagination }> => {
+      const response = await apiClient.get<ApiResponse<Article[]>>(`/articles${buildQuery(params)}`);
+      return { articles: response.data, pagination: response.pagination };
+    },
     enabled: options?.enabled ?? true,
   });
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Hind_Siliguri, Noto_Serif_Bengali, Playfair_Display, Work_Sans } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import "./globals.css";
+import "swiper/css";
 import { Providers } from "./providers";
 
 const playfair = Playfair_Display({

@@ -5,7 +5,7 @@ import { AdminShell } from '@/components/layout/AdminShell';
 import { RichTextEditor } from '@/components/editor/RichTextEditor';
 import { LanguageTabs } from '@/components/editor/LanguageTabs';
 import { MediaPickerDialog } from '@/components/media/MediaPickerDialog';
-import { useAdminArticles, useAdminCategories, useDeleteArticle, useSaveArticle, useUploadMedia } from '@/hooks/api-hooks';
+import { useAdminCategories, useDeleteArticle, usePaginatedAdminArticles, useSaveArticle, useUploadMedia } from '@/hooks/api-hooks';
 import { useAlert } from '@/contexts/alert-context';
 import { useAuth } from '@/contexts/auth-context';
 import { useAdminAreaGuard } from '@/hooks/useAdminAreaGuard';
@@ -29,6 +29,8 @@ import PhotoLibraryRoundedIcon from '@mui/icons-material/PhotoLibraryRounded';
  */
 
 type FilterType = 'all' | 'draft' | 'published' | 'breaking' | 'my-desk';
+
+const DEFAULT_ARTICLE_LIMIT = 10;
 
 const statusColors: Record<ArticleStatus, string> = {
   draft: 'var(--newsos-status-draft)',
@@ -58,7 +60,17 @@ export default function ArticlesPage() {
 
   const { user } = useAuth();
   const { showAlert } = useAlert();
-  const { data: articles, isLoading, isError: isArticlesError, error: articlesError, refetch: refetchArticles } = useAdminArticles();
+  const [articlePage, setArticlePage] = useState(1);
+  const [articleLimit, setArticleLimit] = useState(DEFAULT_ARTICLE_LIMIT);
+  const {
+    data: articleResult,
+    isLoading,
+    isError: isArticlesError,
+    error: articlesError,
+    refetch: refetchArticles,
+  } = usePaginatedAdminArticles({ page: articlePage, limit: articleLimit });
+  const articles = articleResult?.articles ?? [];
+  const pagination = articleResult?.pagination;
   const { data: categories, isError: isCategoriesError, error: categoriesError, refetch: refetchCategories } = useAdminCategories();
   const deleteMutation = useDeleteArticle();
   const saveMutation = useSaveArticle();
@@ -86,6 +98,31 @@ export default function ArticlesPage() {
   const [draft, setDraft] = useState(initialDraft);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
+  const totalArticles = pagination?.total ?? articles.length;
+  const currentPage = pagination?.page ?? articlePage;
+  const currentLimit = pagination?.limit ?? articleLimit;
+  const totalPages = Math.max(1, pagination?.totalPages ?? Math.ceil(totalArticles / currentLimit));
+
+  const moveToPage = (page: number) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setArticlePage(nextPage);
+    setSelectedArticleId(null);
+    setIsEditing(false);
+  };
+
+  const handleLimitChange = (limit: number) => {
+    setArticleLimit(limit);
+    setArticlePage(1);
+    setSelectedArticleId(null);
+    setIsEditing(false);
+  };
+
+  const handleFilterChange = (filter: FilterType) => {
+    setActiveFilter(filter);
+    setSelectedArticleId(null);
+    setIsEditing(false);
+  };
+
   // Helper to safely get string from LocalizedText
   const getStr = (text: LocalizedText | undefined | null, lang: 'en' | 'bn'): string => {
     if (!text) return '';
@@ -99,7 +136,7 @@ export default function ArticlesPage() {
   };
 
   // Filter articles
-  const filteredArticles = (articles || []).filter((article) => {
+  const filteredArticles = articles.filter((article) => {
     if (activeFilter === 'all') return true;
     if (activeFilter === 'draft') return article.status === 'draft';
     if (activeFilter === 'published') return article.status === 'published';
@@ -208,15 +245,15 @@ export default function ArticlesPage() {
             Filters
           </div>
           
-          <FilterItem label="All Articles" count={articles?.length || 0} active={activeFilter === 'all'} onClick={() => setActiveFilter('all')} />
-          <FilterItem label="Drafts" count={articles?.filter((a) => a.status === 'draft').length || 0} active={activeFilter === 'draft'} onClick={() => setActiveFilter('draft')} />
-          <FilterItem label="Published" count={articles?.filter((a) => a.status === 'published').length || 0} active={activeFilter === 'published'} onClick={() => setActiveFilter('published')} />
-          <FilterItem label="Breaking" count={articles?.filter((a) => a.isBreaking).length || 0} active={activeFilter === 'breaking'} onClick={() => setActiveFilter('breaking')} />
-          <FilterItem label="My Desk" count={articles?.filter((a) => a.author?.id === user?.id).length || 0} active={activeFilter === 'my-desk'} onClick={() => setActiveFilter('my-desk')} />
+          <FilterItem label="All Articles" count={totalArticles} active={activeFilter === 'all'} onClick={() => handleFilterChange('all')} />
+          <FilterItem label="Drafts" count={articles.filter((a) => a.status === 'draft').length} active={activeFilter === 'draft'} onClick={() => handleFilterChange('draft')} />
+          <FilterItem label="Published" count={articles.filter((a) => a.status === 'published').length} active={activeFilter === 'published'} onClick={() => handleFilterChange('published')} />
+          <FilterItem label="Breaking" count={articles.filter((a) => a.isBreaking).length} active={activeFilter === 'breaking'} onClick={() => handleFilterChange('breaking')} />
+          <FilterItem label="My Desk" count={articles.filter((a) => a.author?.id === user?.id).length} active={activeFilter === 'my-desk'} onClick={() => handleFilterChange('my-desk')} />
         </aside>
 
         {/* ═══ PANE 2: THE WIRE ═══ */}
-        <div className="hidden lg:block border-r border-[var(--newsos-border-default)] overflow-y-auto bg-[var(--newsos-bg-primary)]">
+        <div className="hidden lg:flex min-h-0 flex-col border-r border-[var(--newsos-border-default)] bg-[var(--newsos-bg-primary)]">
           <div className="sticky top-0 z-10 bg-[var(--newsos-bg-primary)] border-b border-[var(--newsos-border-default)] px-3 py-2 flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)]">
               The Wire ({filteredArticles.length})
@@ -230,33 +267,74 @@ export default function ArticlesPage() {
             </button>
           </div>
 
-          {isLoading ? (
-            <div className="p-5 text-center text-[var(--newsos-text-tertiary)]">Loading articles...</div>
-          ) : filteredArticles.length === 0 ? (
-            <div className="p-5 text-center text-[var(--newsos-text-tertiary)]">No articles found</div>
-          ) : (
-            filteredArticles.map((article) => (
-              <div
-                key={article.id}
-                onClick={() => { setSelectedArticleId(article.id); setIsEditing(false); }}
-                className={`px-3 py-2.5 border-b border-[var(--newsos-border-default)] cursor-pointer transition-all ${selectedArticleId === article.id && !isEditing ? 'bg-[var(--newsos-bg-active)] border-l-2 border-l-[var(--newsos-accent-primary)] pl-[10px]' : 'hover:bg-[var(--newsos-bg-hover)]'}`}
-              >
-                <div className="flex items-start gap-2 mb-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0" style={{ background: article.status ? statusColors[article.status] : statusColors.draft }} />
-                  <div className="text-[0.813rem] font-semibold text-[var(--newsos-text-primary)] leading-tight flex-1">
-                    {getStr(article.title, 'en') || getStr(article.title, 'bn') || 'Untitled'}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {isLoading ? (
+              <div className="p-5 text-center text-[var(--newsos-text-tertiary)]">Loading articles...</div>
+            ) : filteredArticles.length === 0 ? (
+              <div className="p-5 text-center text-[var(--newsos-text-tertiary)]">No articles found</div>
+            ) : (
+              filteredArticles.map((article) => (
+                <div
+                  key={article.id}
+                  onClick={() => { setSelectedArticleId(article.id); setIsEditing(false); }}
+                  className={`px-3 py-2.5 border-b border-[var(--newsos-border-default)] cursor-pointer transition-all ${selectedArticleId === article.id && !isEditing ? 'bg-[var(--newsos-bg-active)] border-l-2 border-l-[var(--newsos-accent-primary)] pl-[10px]' : 'hover:bg-[var(--newsos-bg-hover)]'}`}
+                >
+                  <div className="flex items-start gap-2 mb-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0" style={{ background: article.status ? statusColors[article.status] : statusColors.draft }} />
+                    <div className="text-[0.813rem] font-semibold text-[var(--newsos-text-primary)] leading-tight flex-1">
+                      {getStr(article.title, 'en') || getStr(article.title, 'bn') || 'Untitled'}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-[0.688rem] text-[var(--newsos-text-tertiary)] ml-[14px]">
+                    <span>{(article.status || 'draft').toUpperCase()}</span>
+                    {article.isBreaking && <span className="px-1.5 py-0.5 bg-[var(--newsos-status-live)] text-white text-[0.65rem] font-bold uppercase tracking-wide">BREAKING</span>}
+                    {article.isFeatured && <span className="px-1.5 py-0.5 bg-[var(--newsos-bg-hover)] text-[0.65rem] font-bold uppercase tracking-wide">FEATURED</span>}
+                    <span>•</span>
+                    <span>{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'Unscheduled'}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-[0.688rem] text-[var(--newsos-text-tertiary)] ml-[14px]">
-                  <span>{(article.status || 'draft').toUpperCase()}</span>
-                  {article.isBreaking && <span className="px-1.5 py-0.5 bg-[var(--newsos-status-live)] text-white text-[0.65rem] font-bold uppercase tracking-wide">BREAKING</span>}
-                  {article.isFeatured && <span className="px-1.5 py-0.5 bg-[var(--newsos-bg-hover)] text-[0.65rem] font-bold uppercase tracking-wide">FEATURED</span>}
-                  <span>•</span>
-                  <span>{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'Unscheduled'}</span>
-                </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
+
+          <div className="border-t border-[var(--newsos-border-default)] bg-[var(--newsos-bg-primary)] px-3 py-2">
+            <div className="mb-2 flex items-center justify-between text-[0.688rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)]">
+              <span>
+                Page {currentPage} / {totalPages}
+              </span>
+              <span>{totalArticles} total</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => moveToPage(currentPage - 1)}
+                disabled={currentPage <= 1 || isLoading}
+                className="flex-1 border border-[var(--newsos-border-default)] px-2 py-1.5 text-[0.688rem] font-bold uppercase tracking-wide text-[var(--newsos-text-primary)] hover:bg-[var(--newsos-bg-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Prev
+              </button>
+              <select
+                value={articleLimit}
+                onChange={(event) => handleLimitChange(Number(event.target.value))}
+                className="border border-[var(--newsos-border-default)] bg-[var(--newsos-bg-primary)] px-2 py-1.5 text-[0.688rem] font-bold text-[var(--newsos-text-primary)]"
+                aria-label="Articles per page"
+              >
+                {[10, 20, 50, 100].map((limit) => (
+                  <option key={limit} value={limit}>
+                    {limit}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => moveToPage(currentPage + 1)}
+                disabled={currentPage >= totalPages || isLoading}
+                className="flex-1 border border-[var(--newsos-border-default)] px-2 py-1.5 text-[0.688rem] font-bold uppercase tracking-wide text-[var(--newsos-text-primary)] hover:bg-[var(--newsos-bg-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* ═══ PANE 3: PREVIEW/EDIT ═══ */}
