@@ -223,6 +223,7 @@ export type DashboardOverview = {
 };
 
 export type LayoutCuration = {
+  adsEnabled?: boolean;
   homepageLeadId?: string;
   homepageSecondaryIds?: string[];
   sectionPromoBySlug?: Record<string, string>;

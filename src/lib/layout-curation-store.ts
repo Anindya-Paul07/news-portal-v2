@@ -8,6 +8,7 @@ const sanitize = (value: unknown): LayoutCuration => {
   if (!value || typeof value !== 'object') return {};
   const draft = value as LayoutCuration;
   return {
+    adsEnabled: typeof draft.adsEnabled === 'boolean' ? draft.adsEnabled : undefined,
     homepageLeadId: typeof draft.homepageLeadId === 'string' ? draft.homepageLeadId : undefined,
     homepageSecondaryIds: Array.isArray(draft.homepageSecondaryIds)
       ? draft.homepageSecondaryIds.filter((item): item is string => typeof item === 'string').slice(0, 3)

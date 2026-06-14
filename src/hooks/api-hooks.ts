@@ -127,10 +127,14 @@ export const useSearchArticles = (term: string, filters?: Record<string, string 
     queryFn: () => fetcher<Article[]>(`/articles/search/query${buildQuery({ q: term, ...filters })}`),
   });
 
-export const useAds = (params?: { type?: AdvertisementType; position?: AdPlacement; page?: string; categoryId?: string }) =>
+export const useAds = (
+  params?: { type?: AdvertisementType; position?: AdPlacement; page?: string; categoryId?: string },
+  options?: { enabled?: boolean },
+) =>
   useQuery({
     queryKey: ['ads', 'active', params],
     queryFn: () => fetcher<Advertisement[]>(`/advertisements/active${buildQuery(params)}`),
+    enabled: options?.enabled ?? true,
   });
 
 export const useDashboardOverview = () =>
@@ -293,6 +297,7 @@ export const useSaveLayoutSettings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', 'layout'] });
+      queryClient.invalidateQueries({ queryKey: ['ads'] });
     },
   });
 };

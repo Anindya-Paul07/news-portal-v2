@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUpRight, PlayCircle, Star, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PlayCircle, Star, TrendingUp } from 'lucide-react';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { BreakingTicker } from '@/components/news/BreakingTicker';
 import type { FbShort } from '@/components/news/FbShortsRail';
@@ -60,48 +60,6 @@ function StoryImage({
   );
 }
 
-function LeadStory({ article, language }: StoryCardProps) {
-  const title = getStoryTitle(article, language);
-  const excerpt = getStoryExcerpt(article, language);
-
-  return (
-    <TransitionLink href={getArticleHref(article)} className="group block h-full border-b border-[var(--news-grid)] pb-6 md:pb-8 lg:border-b-0 lg:border-r lg:pr-8">
-      <div className="relative aspect-[16/10] overflow-hidden bg-[var(--news-gray-200)]">
-        <StoryImage article={article} alt={title} priority sizes="(min-width: 1280px) 56vw, (min-width: 1024px) 58vw, 100vw" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
-        <div className="absolute left-0 top-0 flex gap-2 p-4">
-          {article.isBreaking ? (
-            <span className="news-kicker bg-[var(--news-red-700)] text-white">
-              {language === 'bn' ? 'ব্রেকিং' : 'Breaking'}
-            </span>
-          ) : null}
-          <span className="news-kicker bg-white/90 text-[var(--news-ink)]">
-            {getCategoryName(article, language)}
-          </span>
-        </div>
-      </div>
-
-      <div className="grid gap-4 pt-5 md:grid-cols-[minmax(0,1fr)_220px] md:items-end">
-        <div>
-          <h1 className="[font-family:var(--font-serif)] text-[2rem] font-bold leading-[1.02] tracking-[-0.03em] text-[var(--news-ink)] md:text-[3.4rem]">
-            {title}
-          </h1>
-          {excerpt ? (
-            <div 
-              className="mt-4 max-w-3xl text-base leading-7 text-[var(--news-muted)] md:text-lg [&>p]:m-0"
-              dangerouslySetInnerHTML={{ __html: excerpt }}
-            />
-          ) : null}
-        </div>
-        <div className="border-t border-[var(--news-grid)] pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--news-soft)] md:border-l md:border-t-0 md:pl-5 md:pt-0">
-          <p>{formatDate(article.publishedAt, language)}</p>
-          <p className="mt-2 text-[var(--news-red-700)]">{language === 'bn' ? 'বিশেষ প্রতিবেদন' : 'Lead coverage'}</p>
-        </div>
-      </div>
-    </TransitionLink>
-  );
-}
-
 function SideStory({ article, language, compact = false }: StoryCardProps) {
   const title = getStoryTitle(article, language);
 
@@ -145,6 +103,107 @@ function BriefCard({ article, language }: StoryCardProps) {
       </h3>
       <p className="news-meta mt-3 text-[var(--news-soft)]">{formatDate(article.publishedAt, language)}</p>
     </TransitionLink>
+  );
+}
+
+function HomepageLeadCarousel({ articles, language }: { articles: Article[]; language: 'en' | 'bn' }) {
+  const slides = articles
+    .filter((article, index, source) => source.findIndex((entry) => entry.id === article.id) === index)
+    .slice(0, 4);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % slides.length);
+    }, 7500);
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
+
+  useEffect(() => {
+    if (activeIndex >= slides.length) setActiveIndex(0);
+  }, [activeIndex, slides.length]);
+
+  if (slides.length === 0) return null;
+
+  const activeArticle = slides[activeIndex];
+  const title = getStoryTitle(activeArticle, language);
+  const excerpt = getStoryExcerpt(activeArticle, language);
+
+  const goToSlide = (direction: 'prev' | 'next') => {
+    setActiveIndex((current) => {
+      if (direction === 'next') return (current + 1) % slides.length;
+      return current === 0 ? slides.length - 1 : current - 1;
+    });
+  };
+
+  return (
+    <div className="relative bg-[var(--news-white)] px-4 py-8 md:px-10 md:py-10 lg:px-12">
+      <div className="mx-auto max-w-[920px] text-center">
+        <p className="text-sm font-bold text-[var(--news-mahogany)] md:text-base">
+          {getCategoryName(activeArticle, language)}
+        </p>
+        <TransitionLink href={getArticleHref(activeArticle)} className="group mt-2 block">
+          <h1 className="[font-family:var(--font-serif)] text-[2.25rem] font-bold leading-[1.15] tracking-[-0.03em] text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)] md:text-[3.5rem] lg:text-[4rem]">
+            {title}
+          </h1>
+        </TransitionLink>
+
+        <div className="relative mt-7">
+          <TransitionLink
+            href={getArticleHref(activeArticle)}
+            className="group relative block aspect-[16/9] overflow-hidden bg-[var(--news-gray-200)]"
+          >
+            <StoryImage article={activeArticle} alt={title} priority sizes="(min-width: 1280px) 820px, (min-width: 1024px) 64vw, 100vw" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-80" />
+          </TransitionLink>
+
+          {slides.length > 1 ? (
+            <>
+              <button
+                type="button"
+                aria-label={language === 'bn' ? 'আগের স্লাইড' : 'Previous slide'}
+                onClick={() => goToSlide('prev')}
+                className="absolute left-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center text-[var(--news-mahogany)] transition-colors hover:text-[var(--news-red-700)] md:-left-16 md:h-14 md:w-14"
+              >
+                <ChevronLeft className="h-9 w-9 md:h-12 md:w-12" strokeWidth={1.6} />
+              </button>
+              <button
+                type="button"
+                aria-label={language === 'bn' ? 'পরের স্লাইড' : 'Next slide'}
+                onClick={() => goToSlide('next')}
+                className="absolute right-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center text-[var(--news-mahogany)] transition-colors hover:text-[var(--news-red-700)] md:-right-16 md:h-14 md:w-14"
+              >
+                <ChevronRight className="h-9 w-9 md:h-12 md:w-12" strokeWidth={1.6} />
+              </button>
+            </>
+          ) : null}
+        </div>
+
+        {excerpt ? (
+          <div
+            className="mx-auto mt-5 max-w-[760px] text-base leading-8 text-[var(--news-ink)] md:text-lg [&>p]:m-0"
+            dangerouslySetInnerHTML={{ __html: excerpt }}
+          />
+        ) : null}
+
+        {slides.length > 1 ? (
+          <div className="mt-7 flex items-center justify-center gap-4">
+            {slides.map((article, dotIndex) => (
+              <button
+                key={article.id}
+                type="button"
+                aria-label={`${language === 'bn' ? 'স্লাইডে যান' : 'Go to slide'} ${dotIndex + 1}`}
+                onClick={() => setActiveIndex(dotIndex)}
+                className={`h-3.5 w-3.5 rounded-full border-2 border-[var(--news-mahogany)] transition-colors ${
+                  dotIndex === activeIndex ? 'bg-[var(--news-mahogany)]' : 'bg-transparent'
+                }`}
+              />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -257,13 +316,16 @@ export default function HomePage() {
   const curatedMostRead = findCuratedArticles(rankedStories, curation.mostReadOverrideIds);
 
   const leadStory = curatedLead ?? rankedStories[0];
-  const usedIds = new Set(leadStory ? [leadStory.id] : []);
-  const heroStack = [
-    ...curatedSecondary.filter((article) => !usedIds.has(article.id)),
-    ...rankedStories.filter((article) => !usedIds.has(article.id) && !curatedSecondary.some((entry) => entry.id === article.id)),
+  const carouselStories = [
+    ...(leadStory ? [leadStory] : []),
+    ...curatedSecondary.filter((article) => article.id !== leadStory?.id),
+    ...rankedStories.filter((article) => article.id !== leadStory?.id && !curatedSecondary.some((entry) => entry.id === article.id)),
   ]
     .filter((article, index, source) => source.findIndex((item) => item.id === article.id) === index)
     .slice(0, 3);
+  const usedIds = new Set(carouselStories.map((article) => article.id));
+
+  const heroStack = rankedStories.filter((article) => !usedIds.has(article.id)).slice(0, 3);
   heroStack.forEach((article) => usedIds.add(article.id));
 
   const editorsPick = rankedStories.find((article) => !usedIds.has(article.id)) ?? trendingList[0];
@@ -276,7 +338,7 @@ export default function HomePage() {
   featureStrip.forEach((article) => usedIds.add(article.id));
 
   const mostRead = [...curatedMostRead, ...trendingList.filter((article) => !curatedMostRead.some((entry) => entry.id === article.id))].slice(0, 6);
-  const latestFeed = rankedStories.filter((article) => ![leadStory, ...heroStack, editorsPick].filter(Boolean).some((item) => item?.id === article.id)).slice(0, 8);
+  const latestFeed = rankedStories.filter((article) => ![...carouselStories, ...heroStack, editorsPick].filter(Boolean).some((item) => item?.id === article.id)).slice(0, 8);
   const sectionPromoBySlug = curation.sectionPromoBySlug ?? {};
 
   const categoryClusters = (() => {
@@ -330,32 +392,19 @@ export default function HomePage() {
             {handleApiError(latestQuery.error || trendingQuery.error)}
           </div>
         ) : null}
-        <section className="mb-8">
-          <AdSlot slot="home_top_leaderboard" page="home" />
-        </section>
         <section className="border-b border-[var(--news-grid)] pb-8 md:pb-10">
-          <div className="mb-5 grid gap-3 border-b border-[var(--news-grid)] pb-4 md:grid-cols-[1fr_auto] md:items-end">
-            <div>
-              <p className="news-meta text-[var(--news-red-700)]">{language === 'bn' ? 'হোমপেজ এডিশন' : 'Homepage edition'}</p>
-              <h1 className="mt-1 [font-family:var(--font-serif)] text-3xl font-bold leading-none tracking-[-0.04em] text-[var(--news-ink)] md:text-5xl">
-                {language === 'bn' ? 'সুশৃঙ্খল, দৃঢ়, নিউজরুম-ধাঁচের প্রকাশ' : 'A tighter, bolder newsroom front page'}
-              </h1>
-            </div>
-            <p className="max-w-md text-sm leading-6 text-[var(--news-muted)]">
-              {language === 'bn'
-                ? 'বিবিসি-ধাঁচের গল্পের স্তরবিন্যাস, সিএনএন-ধাঁচের ভিজ্যুয়াল জরুরিতা, এবং মোবাইলে নিয়ন্ত্রিত প্রবাহ।'
-                : 'Editorial hierarchy inspired by established news sites, with stronger urgency cues and cleaner mobile flow.'}
-            </p>
-          </div>
-
-          {leadStory ? (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)] lg:gap-8">
-              <LeadStory article={leadStory} language={language} />
-              <aside className="flex flex-col justify-between">
+          {carouselStories.length > 0 ? (
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_410px]">
+              <HomepageLeadCarousel articles={carouselStories} language={language} />
+              <aside className="border-l-0 lg:border-l lg:border-[var(--news-grid)] lg:pl-6">
+                <div className="mb-7 bg-[var(--news-white)] p-2">
+                  <AdSlot slot="home_top_leaderboard" page="home" />
+                </div>
                 <div>
-                  <div className="mb-4 flex items-center justify-between border-b border-[var(--news-grid)] pb-2">
-                    <h2 className="news-section-title">{language === 'bn' ? 'শীর্ষ প্রতিবেদন' : 'Top stories'}</h2>
-                    <ArrowUpRight className="h-4 w-4 text-[var(--news-red-700)]" />
+                  <div className="mb-5 border-b border-[var(--news-ink)] pb-2">
+                    <h2 className="text-lg font-bold text-[var(--news-mahogany)]">
+                      {language === 'bn' ? 'টপ পিক' : 'Top stories'}
+                    </h2>
                   </div>
                   {heroStack.map((article) => (
                     <SideStory key={article.id} article={article} language={language} compact />
@@ -383,15 +432,15 @@ export default function HomePage() {
               </aside>
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)] lg:gap-8">
-              <div className="aspect-[16/10] animate-pulse bg-[var(--news-gray-200)]" />
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_410px]">
+              <div className="min-h-[620px] animate-pulse bg-[var(--news-white)]" />
               <div className="h-full min-h-[420px] animate-pulse bg-[var(--news-gray-100)]" />
             </div>
           )}
         </section>
 
         <TrendingCarousel
-          articles={(trendingList.length ? trendingList : [leadStory, ...heroStack, editorsPick, ...quickBriefs, ...featureStrip]).filter(
+          articles={(trendingList.length ? trendingList : [...carouselStories, ...heroStack, editorsPick, ...quickBriefs, ...featureStrip]).filter(
             (article): article is Article => Boolean(article),
           )}
           language={language}

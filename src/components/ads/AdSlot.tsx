@@ -8,10 +8,11 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
-import { useAds } from '@/hooks/api-hooks';
+import { useAds, useLayoutSettings } from '@/hooks/api-hooks';
 import { apiClient } from '@/lib/api-client';
 import { AD_PRESETS, getAdCategoryIds, getAdPreset, inferAdPreset, type AdRenderMode } from '@/lib/ad-presets';
 import { sampleAds } from '@/lib/fallbacks';
+import { readLayoutCuration } from '@/lib/layout-curation-store';
 import { useLanguage } from '@/contexts/language-context';
 import { getLocalizedText } from '@/lib/utils';
 import type { AdPlacement, AdPresetKey, Advertisement } from '@/lib/types';
@@ -145,12 +146,15 @@ export function AdSlot({
   const presetKey = slot ?? legacy?.preset ?? 'home_mid_leaderboard';
   const preset = getAdPreset(presetKey) ?? AD_PRESETS.home_mid_leaderboard;
   const queryPosition = legacy?.position ?? preset.position;
+  const localCuration = readLayoutCuration();
+  const { data: layoutSettings } = useLayoutSettings();
+  const adsEnabled = layoutSettings?.adsEnabled ?? localCuration.adsEnabled ?? true;
   const { data } = useAds({
     type: preset.type,
     position: queryPosition,
     page: normalizedPage ?? preset.page,
     categoryId,
-  });
+  }, { enabled: adsEnabled });
   const theme = useTheme();
   const { language } = useLanguage();
 
@@ -177,14 +181,16 @@ export function AdSlot({
   const clientLabel = getClientLabel(ad?.client);
 
   useEffect(() => {
-    if (!ad?.id || isFallbackAd) return;
+    if (!adsEnabled || !ad?.id || isFallbackAd) return;
     apiClient.post(`/advertisements/${ad.id}/impression`).catch(() => {});
-  }, [ad?.id, isFallbackAd]);
+  }, [ad?.id, adsEnabled, isFallbackAd]);
 
   const handleAdClick = () => {
     if (!ad?.id || isFallbackAd) return;
     apiClient.post(`/advertisements/${ad.id}/click`).catch(() => {});
   };
+
+  if (!adsEnabled) return null;
 
   return (
     <Paper

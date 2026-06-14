@@ -28,6 +28,7 @@ import {
   useAnalyticsAdsSummary,
   useAnalyticsAdsTop,
   useDeleteAd,
+  useLayoutSettings,
   useSaveAd,
   useSaveLayoutSettings,
 } from '@/hooks/api-hooks';
@@ -182,6 +183,7 @@ export default function AdsPage() {
   const { data: articles } = useAdminArticles({ status: 'published', limit: 50, sort: '-publishedAt' }, { enabled: canLoadAds });
   const { data: analyticsSummary } = useAnalyticsAdsSummary({ enabled: canLoadAds });
   const { data: analyticsTop } = useAnalyticsAdsTop({ limit: 6, sort: 'impressions', order: 'desc' }, { enabled: canLoadAds });
+  const { data: layoutSettings } = useLayoutSettings({ enabled: canLoadAds });
   const { mutateAsync: saveAd } = useSaveAd();
   const { mutateAsync: saveLayoutSettings } = useSaveLayoutSettings();
   const { mutateAsync: deleteAd } = useDeleteAd();
@@ -297,7 +299,8 @@ export default function AdsPage() {
   const selectedPreset = AD_PRESETS[draft.preset];
   const articleOptions = articles ?? [];
   const categoryOptions = categories ?? [];
-  const curation = curationDraft ?? readLayoutCuration();
+  const curation = curationDraft ?? layoutSettings ?? readLayoutCuration();
+  const adsEnabled = curation.adsEnabled ?? true;
   const categoryFilterOptions: Array<[string, string]> = [
     ['all', 'All categories'],
     ...categoryOptions.map((category) => [category.id, getCategoryLabel(category)] as [string, string]),
@@ -318,6 +321,32 @@ export default function AdsPage() {
       notify({
         type: 'error',
         title: 'Layout settings save failed',
+        description: getDisplayErrorMessage(saveError, 'default'),
+      });
+    }
+  };
+
+  const toggleAdsVisibility = async () => {
+    const nextCuration = { ...curation, adsEnabled: !adsEnabled };
+    setCurationDraft(nextCuration);
+    writeLayoutCuration(nextCuration);
+
+    try {
+      const saved = await saveLayoutSettings(nextCuration);
+      writeLayoutCuration(saved);
+      setCurationDraft(saved);
+      notify({
+        type: 'success',
+        title: saved.adsEnabled === false ? 'Ads hidden' : 'Ads visible',
+        description:
+          saved.adsEnabled === false
+            ? 'Public ad slots are temporarily turned off.'
+            : 'Public ad slots are turned back on.',
+      });
+    } catch (saveError) {
+      notify({
+        type: 'error',
+        title: 'Ad visibility save failed',
         description: getDisplayErrorMessage(saveError, 'default'),
       });
     }
@@ -602,6 +631,25 @@ export default function AdsPage() {
 
           <Grid size={{ xs: 12, xl: 4 }}>
             <Stack spacing={3}>
+              <Card elevation={3} sx={{ borderRadius: 4 }}>
+                <CardHeader
+                  title="Public ad visibility"
+                  subheader="Temporarily hide every public ad slot without deleting campaigns."
+                />
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Chip
+                      label={adsEnabled ? 'Ads are visible' : 'Ads are hidden'}
+                      color={adsEnabled ? 'success' : 'warning'}
+                      sx={{ width: 'fit-content', fontWeight: 800 }}
+                    />
+                    <Button onClick={toggleAdsVisibility}>
+                      {adsEnabled ? 'Hide all ads' : 'Show all ads'}
+                    </Button>
+                  </Stack>
+                </CardContent>
+              </Card>
+
               <Card elevation={3} sx={{ borderRadius: 4 }}>
                 <CardHeader title="Inventory snapshot" subheader="Read-only performance summary from current analytics." />
                 <CardContent>

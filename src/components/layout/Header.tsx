@@ -98,7 +98,7 @@ export function Header() {
         <Container maxWidth="xl">
           <Stack
             direction="row"
-            justifyContent="space-between"
+            justifyContent="flex-start"
             alignItems="center"
             spacing={2}
             sx={{
@@ -111,13 +111,8 @@ export function Header() {
             }}
           >
             <Typography component="p" sx={{ fontSize: 'inherit', fontWeight: 700, letterSpacing: 'inherit' }}>
-              {language === 'bn' ? 'দ্য কনটেম্পোরারি | লাইভ আপডেট' : 'The Contemporary | Live updates'}
+              {dateline}
             </Typography>
-            {isMdUp ? (
-              <Typography component="p" sx={{ fontSize: 'inherit', fontWeight: 600, letterSpacing: 'inherit' }}>
-                {dateline}
-              </Typography>
-            ) : null}
           </Stack>
         </Container>
       </Box>

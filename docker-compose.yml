@@ -3,7 +3,7 @@ services:
     build: .
     container_name: contemporary-web
     environment:
-      NEXT_PUBLIC_API_BASE: https://backoffice.thecontemporary.news
+      NEXT_PUBLIC_API_BASE: http://localhost:5000/api
     restart: unless-stopped
     # optional: remove host port if you only need internal access
     ports:
