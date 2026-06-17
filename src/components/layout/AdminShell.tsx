@@ -19,7 +19,7 @@ import SignalCellularAltRoundedIcon from '@mui/icons-material/SignalCellularAltR
 const nav: Array<{ label: string; href: string; area: AdminArea }> = [
   { label: 'Dashboard', href: '/admin', area: 'dashboard' },
   { label: 'Articles', href: '/admin/articles', area: 'articles' },
-  { label: 'Reels', href: '/admin/reels', area: 'reels' },
+  { label: 'YouTube Articles', href: '/admin/reels', area: 'reels' },
   { label: 'Categories', href: '/admin/categories', area: 'categories' },
   { label: 'Advertisements', href: '/admin/ads', area: 'ads' },
   { label: 'Media Library', href: '/admin/media', area: 'media' },
@@ -40,7 +40,10 @@ export function AdminShell({
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const filteredNav = nav.filter((item) => canAccessAdminArea(user?.role, item.area));
+  const filteredNav = nav.filter((item) => {
+    if (item.area === 'settings') return true;
+    return canAccessAdminArea(user?.role, item.area);
+  });
 
   return (
     <div className="grid h-screen w-screen grid-rows-[1fr_32px] overflow-hidden bg-[var(--newsos-bg-primary)] text-[var(--newsos-text-primary)] lg:grid-cols-[280px_1fr] lg:grid-rows-[1fr_32px]">

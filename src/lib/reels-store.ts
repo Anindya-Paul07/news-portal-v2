@@ -129,6 +129,19 @@ export const fetchReels = async (): Promise<ReelSyncResult> => {
   }
 };
 
+export const fetchReelById = async (id: string): Promise<ReelItem | null> => {
+  try {
+    const response = await apiClient.get<ApiResponse<unknown> | unknown>(`/reels/${id}`, { skipAuth: true });
+    const data =
+      response && typeof response === 'object' && 'data' in response
+        ? (response as ApiResponse<unknown>).data
+        : response;
+    return normalizeReel(data as BackendReel);
+  } catch {
+    return readReels().find((item) => item.id === id) ?? null;
+  }
+};
+
 export const saveReel = async (payload: ReelDraft, editingId?: string | null): Promise<ReelSyncResult> => {
   try {
     const response = editingId

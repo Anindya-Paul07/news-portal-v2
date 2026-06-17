@@ -226,6 +226,14 @@ export type LayoutCuration = {
   adsEnabled?: boolean;
   homepageLeadId?: string;
   homepageSecondaryIds?: string[];
+  homepageTopPickCategorySlug?: string;
+  onThisDay?: {
+    enabled?: boolean;
+    date?: LocalizedText;
+    kicker?: LocalizedText;
+    title?: LocalizedText;
+    description?: LocalizedText;
+  };
   sectionPromoBySlug?: Record<string, string>;
   mostReadOverrideIds?: string[];
 };

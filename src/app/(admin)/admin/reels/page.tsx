@@ -60,14 +60,14 @@ export default function ReelsPage() {
 
   const handleSave = async () => {
     if (!draft.title.trim()) {
-      notify({ type: 'error', title: 'Missing title', description: 'Give this reel a clear title.' });
+      notify({ type: 'error', title: 'Missing title', description: 'Give this YouTube article a clear title.' });
       return;
     }
 
     if (!draft.videoUrl.trim() || !isSupportedReelUrl(draft.videoUrl.trim())) {
       notify({
         type: 'error',
-        title: 'Invalid reel URL',
+        title: 'Invalid YouTube article URL',
         description: 'Use a valid YouTube or Facebook video URL.',
       });
       return;
@@ -85,11 +85,11 @@ export default function ReelsPage() {
     setStorageSource(result.source);
     notify({
       type: 'success',
-      title: editingId ? 'Reel updated' : 'Reel added',
+      title: editingId ? 'YouTube article updated' : 'YouTube article added',
       description:
         result.source === 'api'
-          ? 'This reel is now saved through the backend reels API.'
-          : 'The reels API was not reachable, so this reel was saved locally in this browser.',
+          ? 'This YouTube article is now saved through the backend video API.'
+          : 'The video API was not reachable, so this YouTube article was saved locally in this browser.',
     });
     resetDraft();
   };
@@ -112,30 +112,30 @@ export default function ReelsPage() {
     if (editingId === id) resetDraft();
     notify({
       type: 'success',
-      title: 'Reel removed',
+      title: 'YouTube article removed',
       description:
         result.source === 'api'
-          ? 'The backend reels collection was updated.'
-          : 'The reels API was not reachable, so only the local copy was updated.',
+          ? 'The backend video collection was updated.'
+          : 'The video API was not reachable, so only the local copy was updated.',
     });
   };
 
   return (
     <AdminShell
-      title="Reels"
-      description="Manage YouTube/Facebook reels for the public Shorts shelf."
+      title="YouTube Articles"
+      description="Manage video article entries for the public YouTube section."
     >
       {storageSource === 'local' ? (
         <Alert severity="warning" sx={{ mb: 3, borderRadius: 3 }}>
-          The reels endpoint was not reachable, so this screen is using a browser-local fallback. When the backend
+          The video endpoint was not reachable, so this screen is using a browser-local fallback. When the backend
           route is available at <strong>/api/v1/reels</strong>, this page will use it automatically.
         </Alert>
       ) : null}
 
       <Card elevation={4} sx={{ borderRadius: 3, mb: 4 }}>
         <CardHeader
-          title={editingId ? 'Edit Reel' : 'Add Reel'}
-          subheader="Backend payload: title, url, optional description, optional active status."
+          title={editingId ? 'Edit YouTube Article' : 'Add YouTube Article'}
+          subheader="Backend payload: title, video URL, optional description, optional active status."
         />
         <CardContent>
           <Grid container spacing={2.5}>
@@ -171,13 +171,13 @@ export default function ReelsPage() {
                     onChange={(e) => setDraft((prev) => ({ ...prev, isActive: e.target.checked }))}
                   />
                 }
-                label="Active on public Shorts shelf"
+                label="Active on public YouTube articles section"
               />
             </Grid>
           </Grid>
 
           <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
-            <Button onClick={handleSave}>{editingId ? 'Update reel' : 'Add reel'}</Button>
+            <Button onClick={handleSave}>{editingId ? 'Update YouTube article' : 'Add YouTube article'}</Button>
             {editingId ? (
               <Button variant="outline" onClick={resetDraft}>
                 Cancel edit
@@ -188,11 +188,11 @@ export default function ReelsPage() {
       </Card>
 
       <Card elevation={2} sx={{ borderRadius: 3 }}>
-        <CardHeader title={`Saved Reels (${sortedItems.length})`} />
+        <CardHeader title={`Saved YouTube Articles (${sortedItems.length})`} />
         <CardContent>
           {sortedItems.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
-              No reels yet. Add your first reel above.
+              No YouTube articles yet. Add your first video article above.
             </Typography>
           ) : (
             <Stack spacing={2}>

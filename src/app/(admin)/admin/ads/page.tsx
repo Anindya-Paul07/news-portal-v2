@@ -738,6 +738,28 @@ export default function AdsPage() {
                       </FormControl>
                     ))}
 
+                    <FormControl fullWidth size="small">
+                      <InputLabel id="curation-top-pick-category">Homepage right rail category</InputLabel>
+                      <Select
+                        labelId="curation-top-pick-category"
+                        label="Homepage right rail category"
+                        value={curation.homepageTopPickCategorySlug || ''}
+                        onChange={(e) =>
+                          setCurationDraft((current) => ({
+                            ...(current ?? curation),
+                            homepageTopPickCategorySlug: String(e.target.value) || undefined,
+                          }))
+                        }
+                      >
+                        <MenuItem value="">Automatic</MenuItem>
+                        {categoryOptions.map((category) => (
+                          <MenuItem key={category.id} value={category.slug}>
+                            {getCategoryLabel(category)}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
                     {[0, 1, 2].map((index) => (
                       <FormControl fullWidth size="small" key={`most-read-${index}`}>
                         <InputLabel id={`curation-most-read-${index}`}>Most-read override {index + 1}</InputLabel>

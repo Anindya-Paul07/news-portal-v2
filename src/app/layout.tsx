@@ -76,6 +76,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${playfair.variable} ${workSans.variable} ${bengaliSans.variable} ${bengaliSerif.variable} antialiased bg-[var(--color-surface)] text-[var(--color-ink)]`}
       >
         <AppRouterCacheProvider>

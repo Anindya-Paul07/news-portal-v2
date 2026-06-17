@@ -11,8 +11,8 @@ export function useAdminAreaGuard(area: AdminArea) {
 
   useEffect(() => {
     if (status !== 'authenticated') return;
+    if (!user?.role) return;
     if (canAccessAdminArea(user?.role, area)) return;
     router.replace(getAdminLandingRoute(user?.role));
   }, [area, router, status, user?.role]);
 }
-

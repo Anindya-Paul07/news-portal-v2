@@ -4,6 +4,16 @@ import type { Article, LayoutCuration } from '@/lib/types';
 
 const STORAGE_KEY = 'news-portal-layout-curation-v1';
 
+const sanitizeLocalizedText = (value: unknown) => {
+  if (typeof value === 'string') return value;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      ([key, text]) => typeof key === 'string' && typeof text === 'string',
+    ),
+  );
+};
+
 const sanitize = (value: unknown): LayoutCuration => {
   if (!value || typeof value !== 'object') return {};
   const draft = value as LayoutCuration;
@@ -13,6 +23,18 @@ const sanitize = (value: unknown): LayoutCuration => {
     homepageSecondaryIds: Array.isArray(draft.homepageSecondaryIds)
       ? draft.homepageSecondaryIds.filter((item): item is string => typeof item === 'string').slice(0, 3)
       : [],
+    homepageTopPickCategorySlug:
+      typeof draft.homepageTopPickCategorySlug === 'string' ? draft.homepageTopPickCategorySlug : undefined,
+    onThisDay:
+      draft.onThisDay && typeof draft.onThisDay === 'object'
+        ? {
+            enabled: typeof draft.onThisDay.enabled === 'boolean' ? draft.onThisDay.enabled : undefined,
+            date: sanitizeLocalizedText(draft.onThisDay.date),
+            kicker: sanitizeLocalizedText(draft.onThisDay.kicker),
+            title: sanitizeLocalizedText(draft.onThisDay.title),
+            description: sanitizeLocalizedText(draft.onThisDay.description),
+          }
+        : undefined,
     sectionPromoBySlug:
       draft.sectionPromoBySlug && typeof draft.sectionPromoBySlug === 'object'
         ? Object.fromEntries(

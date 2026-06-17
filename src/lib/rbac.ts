@@ -21,8 +21,12 @@ export function canAccessAdminArea(role: Role | null | undefined, area: AdminAre
   if (!role) return false;
   if (role === 'super_admin') return true;
   if (role === 'admin') return area !== 'users';
-  if (isEditorRole(role)) return area === 'articles' || area === 'media';
+  if (isEditorRole(role)) return area === 'articles' || area === 'media' || area === 'settings';
   return false;
+}
+
+export function canManageSettings(role: Role | null | undefined) {
+  return role === 'super_admin' || role === 'admin';
 }
 
 export function canDeleteArticle(role: Role | null | undefined) {
