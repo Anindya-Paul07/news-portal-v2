@@ -374,7 +374,7 @@ export function Header() {
               <Typography sx={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--news-red-700)' }}>
                 {language === 'bn' ? 'সেকশন' : 'Sections'}
               </Typography>
-              <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-serif)', fontSize: '1.7rem', fontWeight: 700 }}>
+              <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-serif)', fontSize: '1.7rem', fontWeight: 700, color: 'var(--news-ink)' }}>
                 The Contemporary
               </Typography>
             </Box>
@@ -399,7 +399,7 @@ export function Header() {
                 color: 'var(--news-ink)',
               }}
             >
-              <Typography sx={{ fontSize: '1rem', fontWeight: 700 }}>
+              <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: 'inherit' }}>
                 {getLocalizedText(cat.name, language)}
               </Typography>
             </Button>
@@ -420,6 +420,30 @@ export function Header() {
               Logout
             </Button>
           ) : null}
+          {/* Static Links */}
+          {[
+            { href: '/about', label: language === 'bn' ? 'আমাদের কথা' : 'About Us' },
+            { href: '/contact', label: language === 'bn' ? 'যোগাযোগ' : 'Contact' },
+          ].map((link) => (
+            <Button
+              key={link.href}
+              variant="ghost"
+              onClick={() => { setMobileNavOpen(false); router.push(link.href); }}
+              sx={{
+                justifyContent: 'flex-start',
+                width: '100%',
+                borderRadius: 0,
+                borderTop: '1px solid var(--news-grid)',
+                px: 0,
+                py: 1.7,
+                color: 'var(--news-ink)',
+              }}
+            >
+              <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: 'inherit' }}>
+                {link.label}
+              </Typography>
+            </Button>
+          ))}
         </Stack>
       </Drawer>
 
@@ -469,7 +493,10 @@ export function Header() {
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 0,
-                    bgcolor: alpha(theme.palette.common.white, 0.7),
+                    bgcolor: theme.palette.mode === 'dark' ? 'var(--news-paper)' : 'rgba(255, 255, 255, 0.7)',
+                    '& input': {
+                      color: 'var(--news-ink)',
+                    },
                   },
                 }}
               />

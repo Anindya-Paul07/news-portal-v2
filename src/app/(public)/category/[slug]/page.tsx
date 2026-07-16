@@ -44,7 +44,7 @@ export default function CategoryPage() {
   if (!category && !isCategoryLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--news-page)] px-4">
-        <div className="max-w-lg border border-[var(--news-grid)] bg-white p-8 text-center">
+        <div className="max-w-lg border border-[var(--news-grid)] bg-[var(--news-white)] p-8 text-center">
           <p className="news-meta text-[var(--news-red-700)]">Category</p>
           <h1 className="mt-3 [font-family:var(--font-serif)] text-4xl font-bold text-[var(--news-ink)]">
             {isCategoryError || isArticlesError ? 'Unable to load section' : 'Category not found'}
@@ -95,7 +95,7 @@ export default function CategoryPage() {
 
       <div className="mx-auto max-w-[1440px] px-4 py-8 md:py-10">
         {articlesList.length === 0 ? (
-          <div className="border border-[var(--news-grid)] bg-white px-6 py-16 text-center">
+          <div className="border border-[var(--news-grid)] bg-[var(--news-white)] px-6 py-16 text-center">
             <p className="news-meta text-[var(--news-red-700)]">{categoryName}</p>
             <h2 className="mt-3 [font-family:var(--font-serif)] text-3xl font-bold text-[var(--news-ink)]">
               No stories yet
@@ -114,7 +114,7 @@ export default function CategoryPage() {
                   </div>
                   <div className="grid gap-6 md:grid-cols-2">
                     {feedStories.map((article) => (
-                      <ArticleCard key={article.id} article={article} className="border border-[var(--news-grid)] bg-white p-4" />
+                      <ArticleCard key={article.id} article={article} className="border border-[var(--news-grid)] bg-[var(--news-white)] p-4" />
                     ))}
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export default function CategoryPage() {
             </div>
 
             <aside className="space-y-6">
-              <div className="border border-[var(--news-grid)] bg-white p-5">
+              <div className="border border-[var(--news-grid)] bg-[var(--news-white)] p-5">
                 <h2 className="news-section-title border-b border-[var(--news-grid)] pb-2">
                   {language === 'bn' ? 'শীর্ষ প্রতিবেদন' : 'Top stories'}
                 </h2>
@@ -157,7 +157,7 @@ export default function CategoryPage() {
                 </div>
               </div>
 
-              <div className="border border-[var(--news-grid)] bg-white p-4">
+              <div className="border border-[var(--news-grid)] bg-[var(--news-white)] p-4">
                 <AdSlot slot="category_sidebar_tall" page="category" categoryId={category?.id} />
               </div>
             </aside>

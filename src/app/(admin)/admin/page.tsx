@@ -39,7 +39,7 @@ import { type LucideIcon, FileText, MonitorPlay, Activity } from 'lucide-react';
 
 function StatTile({ label, value, icon: Icon }: { label: string; value: number | string; icon?: LucideIcon }) {
   return (
-    <div className="bg-white p-6 rounded-lg border border-[var(--newsos-border-default)] shadow-sm hover:shadow-md transition-shadow group">
+    <div className="bg-[var(--newsos-bg-secondary)] p-6 rounded-lg border border-[var(--newsos-border-default)] shadow-sm hover:shadow-md transition-shadow group">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-bold uppercase tracking-widest text-[var(--newsos-text-tertiary)]">{label}</span>
         {Icon && <Icon className="w-4 h-4 text-[var(--newsos-text-tertiary)] group-hover:text-[var(--newsos-accent-primary)] transition-colors" />}
@@ -84,7 +84,7 @@ function SparklineMetricCard({ label, value, change, data, loading, emptyMessage
   const isPositive = showTrend && change! >= 0;
 
   return (
-    <div className="bg-white p-5 rounded-lg border border-[var(--newsos-border-default)] shadow-sm h-full flex flex-col justify-between">
+    <div className="bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)] shadow-sm h-full flex flex-col justify-between">
       <div>
         <div className="text-xs font-bold uppercase tracking-widest text-[var(--newsos-text-tertiary)] mb-1">
           {label}
@@ -248,7 +248,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Filters Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 mb-6 bg-white p-3 rounded-lg border border-[var(--newsos-border-default)]">
+      <div className="flex flex-wrap items-center gap-3 mb-6 bg-[var(--newsos-bg-secondary)] p-3 rounded-lg border border-[var(--newsos-border-default)]">
         <div className="flex items-center gap-2 mr-4">
           <span className="text-xs font-bold text-[var(--newsos-text-tertiary)] uppercase">Range:</span>
           {[7, 14, 30].map((option) => (
@@ -321,19 +321,19 @@ export default function AdminDashboard() {
 
       {/* Status Meters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-5 rounded-lg border border-[var(--newsos-border-default)]">
+        <div className="bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)]">
           <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-[var(--newsos-text-primary)]">Articles Status</h3>
           {Object.entries(articleStats).map(([key, value]) => (
             <Meter key={key} label={key} value={value || 0} max={maxArticle} color="bg-blue-500" />
           ))}
         </div>
-        <div className="bg-white p-5 rounded-lg border border-[var(--newsos-border-default)]">
+        <div className="bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)]">
            <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-[var(--newsos-text-primary)]">Users by Role</h3>
            {Object.entries(userStats).map(([key, value]) => (
             <Meter key={key} label={key} value={value || 0} max={maxUsers} color="bg-purple-500" />
           ))}
         </div>
-        <div className="bg-white p-5 rounded-lg border border-[var(--newsos-border-default)]">
+        <div className="bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)]">
            <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-[var(--newsos-text-primary)]">Ad Inventory</h3>
            {Object.entries(adStats).map(([key, value]) => (
             <Meter key={key} label={key} value={value || 0} max={maxAds} color="bg-amber-500" />
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
       {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Publishing Cadence */}
-        <div className="lg:col-span-2 bg-white p-5 rounded-lg border border-[var(--newsos-border-default)]">
+        <div className="lg:col-span-2 bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)]">
            <h3 className="text-sm font-bold uppercase tracking-wide mb-4">Publishing Cadence</h3>
            <div className="h-[300px] w-full">
              {articleBarData.length > 0 ? (
@@ -363,7 +363,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Category Mix */}
-        <div className="bg-white p-5 rounded-lg border border-[var(--newsos-border-default)]">
+        <div className="bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)]">
            <h3 className="text-sm font-bold uppercase tracking-wide mb-4">Category Mix</h3>
            <div className="h-[300px] w-full">
              {categoryPieData.length > 0 ? (
@@ -390,7 +390,7 @@ export default function AdminDashboard() {
 
       {/* Traffic & Authors */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-         <div className="bg-white p-5 rounded-lg border border-[var(--newsos-border-default)]">
+         <div className="bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)]">
             <h3 className="text-sm font-bold uppercase tracking-wide mb-4">Content Traffic</h3>
             <div className="h-[300px] w-full">
               {trafficData.length > 0 ? (
@@ -405,7 +405,7 @@ export default function AdminDashboard() {
             </div>
          </div>
 
-         <div className="bg-white p-5 rounded-lg border border-[var(--newsos-border-default)]">
+         <div className="bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)]">
             <h3 className="text-sm font-bold uppercase tracking-wide mb-4">Author Activity</h3>
             <div className="h-[300px] w-full">
                {authorActivity && authorActivity.length > 0 ? (
@@ -436,7 +436,7 @@ export default function AdminDashboard() {
 
         <div>
            <h3 className="text-lg font-bold mb-4">Ad Performance (CTR)</h3>
-           <div className="bg-white rounded-lg border border-[var(--newsos-border-default)] overflow-hidden">
+           <div className="bg-[var(--newsos-bg-secondary)] rounded-lg border border-[var(--newsos-border-default)] overflow-hidden">
              {topAds && topAds.length > 0 ? (
                 <div>
                    <div className="h-[200px] border-b border-gray-100 p-2">

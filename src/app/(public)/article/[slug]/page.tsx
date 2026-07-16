@@ -133,7 +133,7 @@ export default function ArticlePage() {
                   </TransitionLink>
                 </div>
 
-                <h1 className="font-['var(--font-playfair)'] text-[var(--news-black)] text-3xl md:text-5xl font-bold leading-tight mb-4">
+                <h1 className="font-['var(--font-playfair)'] text-[var(--news-ink)] text-3xl md:text-5xl font-bold leading-tight mb-4">
                   {title}
                 </h1>
 
@@ -199,17 +199,17 @@ export default function ArticlePage() {
               {/* Article Body */}
               <div 
                 className="prose prose-lg max-w-none 
-                  prose-headings:font-['var(--font-playfair)'] prose-headings:font-bold prose-headings:text-[var(--news-black)]
+                  prose-headings:font-['var(--font-playfair)'] prose-headings:font-bold prose-headings:text-[var(--news-ink)]
                   prose-p:font-['Georgia'] prose-p:text-[var(--news-darkgray)] prose-p:text-lg prose-p:leading-8 prose-p:mb-6
                   prose-a:text-[var(--news-red-700)] prose-a:font-bold prose-a:no-underline prose-a:border-b-2 prose-a:border-[var(--news-red-200)] hover:prose-a:border-[var(--news-red-700)] hover:prose-a:bg-[var(--news-red-50)] prose-a:transition-all
-                  prose-blockquote:border-l-4 prose-blockquote:border-[var(--news-red-700)] prose-blockquote:bg-[var(--news-offwhite)] prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:my-8 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:font-['var(--font-playfair)'] prose-blockquote:text-xl prose-blockquote:text-[var(--news-black)]
+                  prose-blockquote:border-l-4 prose-blockquote:border-[var(--news-red-700)] prose-blockquote:bg-[var(--news-offwhite)] prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:my-8 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:font-['var(--font-playfair)'] prose-blockquote:text-xl prose-blockquote:text-[var(--news-ink)]
                   prose-img:rounded-sm prose-img:w-full prose-img:shadow-md
                   prose-strong:text-[var(--news-red-700)]
-                  font-serif text-[var(--news-black)]"
+                  font-serif text-[var(--news-ink)]"
                 dangerouslySetInnerHTML={{ __html: bodyHtml }}
               />
 
-              {/* Newsletter Callout */}
+              {/* Newsletter Callout commented out at client request
               <div className="my-10 p-8 bg-[var(--news-red-700)] text-white rounded-sm text-center">
                   <Mail className="w-8 h-8 mx-auto mb-4 text-white/80" />
                   <h3 className="font-['var(--font-playfair)'] text-2xl font-bold mb-2">Get the Red Wire</h3>
@@ -217,12 +217,17 @@ export default function ArticlePage() {
                     Essential news, expert analysis, and exclusive content delivered straight to your inbox.
                   </p>
                   <div className="flex max-w-sm mx-auto gap-2">
-                    <input type="email" placeholder="Your email" className="flex-1 px-4 py-2 text-black rounded-sm focus:outline-none" />
-                    <button className="bg-black text-white px-6 py-2 font-bold uppercase text-sm tracking-wide hover:bg-gray-900 transition-colors">
+                    <input 
+                      type="email" 
+                      placeholder="Your email" 
+                      className="flex-1 h-10 px-4 bg-black/25 border border-white/10 text-white placeholder:text-white/50 rounded-sm focus:border-white/40 focus:outline-none text-sm transition-colors" 
+                    />
+                    <button className="h-10 bg-black text-white px-6 font-bold uppercase text-sm tracking-wide hover:bg-gray-900 transition-colors rounded-sm flex items-center justify-center">
                       Join
                     </button>
                   </div>
               </div>
+              */}
 
               {/* In-content Ad */}
               <div className="my-8 py-8 border-t border-[var(--news-gray-200)] text-center">
@@ -258,7 +263,7 @@ export default function ArticlePage() {
                              <ArrowRight size={16} className="text-[var(--news-red-700)] -ml-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1" />
                           </div>
                           <div>
-                             <h4 className="font-['var(--font-work-sans)'] font-bold text-sm leading-snug text-[var(--news-black)] group-hover:text-[var(--news-red-700)] transition-colors line-clamp-3">
+                             <h4 className="font-['var(--font-work-sans)'] font-bold text-sm leading-snug text-[var(--news-ink)] group-hover:text-[var(--news-red-700)] transition-colors line-clamp-3">
                                {getLocalizedText(story.title, language)}
                              </h4>
                              <span className="text-xs text-[var(--news-gray-500)] mt-1 block group-hover:text-[var(--news-red-400)]">
@@ -280,7 +285,7 @@ export default function ArticlePage() {
                 
                 {/* Explore Categories */}
                 <div className="p-6 border border-[var(--news-gray-200)]">
-                   <h3 className="font-['var(--font-work-sans)'] font-bold text-sm uppercase tracking-wide mb-4 text-[var(--news-black)]">
+                   <h3 className="font-['var(--font-work-sans)'] font-bold text-sm uppercase tracking-wide mb-4 text-[var(--news-ink)]">
                      Explore More
                    </h3>
                    <div className="flex flex-wrap gap-2">
@@ -288,7 +293,7 @@ export default function ArticlePage() {
                         <TransitionLink 
                           key={cat}
                           href={`/category/${cat.toLowerCase()}`} 
-                          className="px-3 py-1 bg-white border border-[var(--news-gray-300)] text-xs font-bold text-[var(--news-gray-600)] hover:border-[var(--news-red-700)] hover:bg-[var(--news-red-700)] hover:text-white transition-all duration-300 uppercase"
+                          className="px-3 py-1 bg-[var(--news-white)] border border-[var(--news-gray-300)] text-xs font-bold text-[var(--news-ink)] hover:border-[var(--news-red-700)] hover:bg-[var(--news-red-700)] hover:text-white transition-all duration-300 uppercase"
                         >
                           {cat}
                         </TransitionLink>
