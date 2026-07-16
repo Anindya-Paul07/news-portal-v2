@@ -420,6 +420,30 @@ export function Header() {
               Logout
             </Button>
           ) : null}
+          {/* Static Links */}
+          {[
+            { href: '/about', label: language === 'bn' ? 'আমাদের কথা' : 'About Us' },
+            { href: '/contact', label: language === 'bn' ? 'যোগাযোগ' : 'Contact' },
+          ].map((link) => (
+            <Button
+              key={link.href}
+              variant="ghost"
+              onClick={() => { setMobileNavOpen(false); router.push(link.href); }}
+              sx={{
+                justifyContent: 'flex-start',
+                width: '100%',
+                borderRadius: 0,
+                borderTop: '1px solid var(--news-grid)',
+                px: 0,
+                py: 1.7,
+                color: 'var(--news-ink)',
+              }}
+            >
+              <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: 'inherit' }}>
+                {link.label}
+              </Typography>
+            </Button>
+          ))}
         </Stack>
       </Drawer>
 

@@ -3,13 +3,14 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { Mail } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 
-const footerNav = [
-  { label: 'About', href: '/about' },
-  { label: 'Editorial Standards', href: '/standards' },
-  { label: 'Advertise', href: '/advertise' },
-  { label: 'Careers', href: '/careers' },
-  { label: 'Contact', href: '/contact' },
+const footerNavLinks = [
+  { labelEn: 'About', labelBn: 'আমাদের কথা', href: '/about' },
+  { labelEn: 'Editorial Standards', labelBn: 'সম্পাদকীয় মানদণ্ড', href: '/standards' },
+  { labelEn: 'Advertise', labelBn: 'বিজ্ঞাপন', href: '/advertise' },
+  { labelEn: 'Careers', labelBn: 'ক্যারিয়ার', href: '/careers' },
+  { labelEn: 'Contact', labelBn: 'যোগাযোগ', href: '/contact' },
 ];
 
 const socialLinks = [
@@ -22,6 +23,7 @@ const socialLinks = [
 ];
 
 export function Footer() {
+  const { language } = useLanguage();
   const [email, setEmail] = useState('');
   const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -138,12 +140,12 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="news-meta text-[var(--news-footer-accent)]">Navigate</h4>
+            <h4 className="news-meta text-[var(--news-footer-accent)]">{language === 'bn' ? 'নেভিগেট' : 'Navigate'}</h4>
             <ul className="mt-4 space-y-3">
-              {footerNav.map((link) => (
+              {footerNavLinks.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm text-[var(--news-footer-muted)] transition-colors hover:text-[var(--news-footer-text)]">
-                    {link.label}
+                    {language === 'bn' ? link.labelBn : link.labelEn}
                   </Link>
                 </li>
               ))}
@@ -182,13 +184,13 @@ export function Footer() {
           <p>© {new Date().getFullYear()} The Contemporary. All rights reserved.</p>
           <div className="flex flex-wrap gap-4">
             <Link href="/privacy" className="transition-colors hover:text-[var(--news-footer-text)]">
-              Privacy Policy
+              {language === 'bn' ? 'গোপনীয়তার নীতিমালা' : 'Privacy Policy'}
             </Link>
             <Link href="/terms" className="transition-colors hover:text-[var(--news-footer-text)]">
-              Terms of Service
+              {language === 'bn' ? 'সেবার শর্তাবলী' : 'Terms of Service'}
             </Link>
             <Link href="/cookies" className="transition-colors hover:text-[var(--news-footer-text)]">
-              Cookie Policy
+              {language === 'bn' ? 'কুকি নীতিমালা' : 'Cookie Policy'}
             </Link>
           </div>
         </div>

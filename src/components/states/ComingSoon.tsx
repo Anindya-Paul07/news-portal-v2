@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import { useLanguage } from '@/contexts/language-context';
 
 type ComingSoonProps = {
   title?: string;
@@ -13,7 +14,12 @@ type ComingSoonProps = {
   ctaLabel?: string;
 };
 
-export function ComingSoon({ title, description, ctaHref = '/', ctaLabel = 'Back to home' }: ComingSoonProps) {
+export function ComingSoon({ title, description, ctaHref = '/', ctaLabel }: ComingSoonProps) {
+  const { language } = useLanguage();
+  const isBn = language === 'bn';
+
+  const resolvedCtaLabel = ctaLabel ?? (isBn ? 'হোমপেজে ফিরুন' : 'Back to home');
+
   return (
     <Box
       sx={{
@@ -27,7 +33,7 @@ export function ComingSoon({ title, description, ctaHref = '/', ctaLabel = 'Back
     >
       <Stack spacing={2} sx={{ maxWidth: 560 }}>
         <Typography variant="overline" sx={{ letterSpacing: 6, color: 'text.secondary' }}>
-          Coming Soon
+          {isBn ? 'শীঘ্রই আসছে' : 'Coming Soon'}
         </Typography>
         <Typography variant="h3" sx={{ fontWeight: 800 }}>
           {title || 'This section is on the way'}
@@ -38,7 +44,7 @@ export function ComingSoon({ title, description, ctaHref = '/', ctaLabel = 'Back
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" sx={{ mt: 1 }}>
           <Button component={Link} href={ctaHref} variant="contained" size="large">
-            {ctaLabel}
+            {resolvedCtaLabel}
           </Button>
         </Stack>
       </Stack>
