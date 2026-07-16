@@ -209,7 +209,7 @@ export default function ArticlePage() {
                 dangerouslySetInnerHTML={{ __html: bodyHtml }}
               />
 
-              {/* Newsletter Callout */}
+              {/* Newsletter Callout commented out at client request
               <div className="my-10 p-8 bg-[var(--news-red-700)] text-white rounded-sm text-center">
                   <Mail className="w-8 h-8 mx-auto mb-4 text-white/80" />
                   <h3 className="font-['var(--font-playfair)'] text-2xl font-bold mb-2">Get the Red Wire</h3>
@@ -227,6 +227,7 @@ export default function ArticlePage() {
                     </button>
                   </div>
               </div>
+              */}
 
               {/* In-content Ad */}
               <div className="my-8 py-8 border-t border-[var(--news-gray-200)] text-center">

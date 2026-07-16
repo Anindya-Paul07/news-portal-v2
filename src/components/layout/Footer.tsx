@@ -64,6 +64,7 @@ export function Footer() {
             </p>
           </div>
 
+          {/* Newsletter Form commented out at client request
           <form onSubmit={handleSubscribe} className="border border-[var(--news-footer-border)] bg-[var(--news-footer-surface)] p-5">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center bg-[var(--news-red-700)] text-white">
@@ -120,6 +121,7 @@ export function Footer() {
               .
             </p>
           </form>
+          */}
         </div>
 
         <div className="grid gap-8 py-8 md:grid-cols-[minmax(0,1fr)_200px_240px_180px] md:py-10">
