@@ -17,7 +17,7 @@ export function ArticleCard({ article, className = '' }: { article: Article; cla
   const readTime = article.readTime ?? article.readingTime;
 
   return (
-    <article className={`group flex h-full flex-col bg-white transition-transform duration-300 md:hover:-translate-y-1 ${className}`}>
+    <article className={`group flex h-full flex-col bg-[var(--news-white)] transition-transform duration-300 md:hover:-translate-y-1 ${className}`}>
       {/* Image Container */}
       <TransitionLink 
         href={`/article/${article.slug || article.id}`}
@@ -66,9 +66,9 @@ export function ArticleCard({ article, className = '' }: { article: Article; cla
         {/* Title */}
         <TransitionLink 
           href={`/article/${article.slug || article.id}`} 
-          className="mb-3 block group-hover:text-[var(--news-red-700)] transition-colors"
+          className="mb-3 block transition-colors"
         >
-          <h3 className="[font-family:var(--font-serif)] text-xl font-bold leading-snug text-[var(--news-ink)] line-clamp-3">
+          <h3 className="[font-family:var(--font-serif)] text-xl font-bold leading-snug text-[var(--news-ink)] group-hover:text-[var(--news-red-700)] transition-colors line-clamp-3">
             {title}
           </h3>
         </TransitionLink>

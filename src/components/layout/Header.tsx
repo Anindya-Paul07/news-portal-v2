@@ -374,7 +374,7 @@ export function Header() {
               <Typography sx={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--news-red-700)' }}>
                 {language === 'bn' ? 'সেকশন' : 'Sections'}
               </Typography>
-              <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-serif)', fontSize: '1.7rem', fontWeight: 700 }}>
+              <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-serif)', fontSize: '1.7rem', fontWeight: 700, color: 'var(--news-ink)' }}>
                 The Contemporary
               </Typography>
             </Box>
@@ -399,7 +399,7 @@ export function Header() {
                 color: 'var(--news-ink)',
               }}
             >
-              <Typography sx={{ fontSize: '1rem', fontWeight: 700 }}>
+              <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: 'inherit' }}>
                 {getLocalizedText(cat.name, language)}
               </Typography>
             </Button>
@@ -469,7 +469,10 @@ export function Header() {
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 0,
-                    bgcolor: alpha(theme.palette.common.white, 0.7),
+                    bgcolor: theme.palette.mode === 'dark' ? 'var(--news-paper)' : 'rgba(255, 255, 255, 0.7)',
+                    '& input': {
+                      color: 'var(--news-ink)',
+                    },
                   },
                 }}
               />

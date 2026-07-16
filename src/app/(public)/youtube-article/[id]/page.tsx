@@ -90,7 +90,7 @@ export default function YouTubeArticlePage() {
                   </span>
                 </div>
 
-                <h1 className="[font-family:var(--font-serif)] text-3xl font-bold leading-tight text-[var(--news-black)] md:text-5xl">
+                <h1 className="[font-family:var(--font-serif)] text-3xl font-bold leading-tight text-[var(--news-ink)] md:text-5xl">
                   {item.title}
                 </h1>
 
@@ -136,7 +136,7 @@ export default function YouTubeArticlePage() {
               </div>
 
               {item.description ? (
-                <div className="prose prose-lg max-w-none font-serif text-[var(--news-black)] prose-p:text-lg prose-p:leading-8">
+                <div className="prose prose-lg max-w-none font-serif text-[var(--news-ink)] prose-p:text-lg prose-p:leading-8">
                   <p>{item.description}</p>
                 </div>
               ) : null}
@@ -180,7 +180,7 @@ export default function YouTubeArticlePage() {
                       <div className="relative aspect-[16/10] w-28 shrink-0 overflow-hidden bg-[var(--news-gray-200)]">
                         <VideoThumb item={entry} />
                       </div>
-                      <h4 className="line-clamp-3 text-sm font-bold leading-snug text-[var(--news-black)] transition-colors group-hover:text-[var(--news-red-700)]">
+                      <h4 className="line-clamp-3 text-sm font-bold leading-snug text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)]">
                         {entry.title}
                       </h4>
                     </TransitionLink>

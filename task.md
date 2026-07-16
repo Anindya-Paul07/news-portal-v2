@@ -74,6 +74,8 @@ API endpoints (v1) and frontend wiring guide
 - Advertisements (`/advertisements`): public `GET /active` (filters: type, position, page) to render slots. Protected: `GET /` list with filters, `GET /stats` (admin/super_admin), `GET /:id`, `POST /`, `PUT /:id`, `DELETE /:id`, `POST /:id/impression`, `POST /:id/click`. Frontend: public ad components call `/active` to fetch ads; track interactions with impression/click endpoints. Admin ads list/editor uses CRUD and stats.
 - Media (`/media`): protected only. `GET /` list with filters (type, folder, uploadedBy, search, sort, pagination); `GET /:id`; `POST /upload` single upload (multer), `POST /upload/multiple`; `PUT /:id` update metadata (alt/caption/tags/folder/isPublic); `DELETE /:id`. Frontend: admin Media library uses list/upload/update/delete; media picker in article/ads forms.
 - Dashboard (`/dashboard`): protected admin/super_admin. `GET /overview` for aggregated metrics (articles, users, ads, media). Frontend: admin dashboard widgets.
+- [x] Modify admin dashboard `admin/page.tsx` to replace `bg-white` with `bg-[var(--newsos-bg-secondary)]`
+- [x] Verify the fixes manually in the browser in dark mode
 
 API request/response patterns
 - Responses: typically `{ success: boolean, message, data }` (see `sendResponse` utils). Errors: standardized via `errorHandler`.

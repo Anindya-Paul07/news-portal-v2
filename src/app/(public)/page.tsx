@@ -360,7 +360,7 @@ function TrendingCarousel({ articles, language }: { articles: Article[]; languag
                 <div className="relative aspect-[16/10] overflow-hidden bg-[var(--news-gray-200)]">
                   <StoryImage article={article} alt={title} sizes="(min-width: 1024px) 32vw, 82vw" />
                   <div className="absolute left-3 top-3">
-                    <span className="news-kicker bg-white/92 text-[var(--news-ink)]">
+                    <span className="news-kicker bg-white/92 dark:bg-black/80 text-[var(--news-ink)]">
                       {getCategoryName(article, language)}
                     </span>
                   </div>

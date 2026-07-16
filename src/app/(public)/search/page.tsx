@@ -83,7 +83,7 @@ function SearchContent() {
                 value={term}
                 onChange={(event) => setTerm(event.target.value)}
                 placeholder={language === 'bn' ? 'খুঁজুন প্রতিবেদন, বিষয়, লেখক' : 'Search reports, topics, authors'}
-                className="w-full border border-[var(--news-grid-strong)] bg-white py-4 pl-12 pr-4 text-lg text-[var(--news-ink)] placeholder:text-[var(--news-soft)] focus:border-[var(--news-red-700)] focus:outline-none"
+                className="w-full border border-[var(--news-grid-strong)] bg-[var(--news-paper)] py-4 pl-12 pr-4 text-lg text-[var(--news-ink)] placeholder:text-[var(--news-soft)] focus:border-[var(--news-red-700)] focus:outline-none"
               />
             </div>
 
@@ -92,7 +92,7 @@ function SearchContent() {
                 <Filter className="h-3.5 w-3.5" />
                 Filters
               </span>
-              <div className="flex border border-[var(--news-grid-strong)] bg-white p-1">
+              <div className="flex border border-[var(--news-grid-strong)] bg-[var(--news-white)] p-1">
                 {[
                   { key: 'relevance', label: language === 'bn' ? 'সাজেস্টেড' : 'Recommended' },
                   { key: 'date', label: language === 'bn' ? 'সর্বশেষ' : 'Newest' },
@@ -117,7 +117,7 @@ function SearchContent() {
               type="button"
               onClick={() => router.replace(`/search?query=${encodeURIComponent(term)}&sort=${sort}`)}
               className={`px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] ${
-                !category ? 'bg-[var(--news-red-700)] text-white' : 'border border-[var(--news-grid)] bg-white text-[var(--news-soft)]'
+                !category ? 'bg-[var(--news-red-700)] text-white' : 'border border-[var(--news-grid)] bg-[var(--news-white)] text-[var(--news-soft)]'
               }`}
             >
               {language === 'bn' ? 'সব' : 'All'}
@@ -134,7 +134,7 @@ function SearchContent() {
                 className={`px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] ${
                   category === cat.slug
                     ? 'bg-[var(--news-red-700)] text-white'
-                    : 'border border-[var(--news-grid)] bg-white text-[var(--news-soft)]'
+                    : 'border border-[var(--news-grid)] bg-[var(--news-white)] text-[var(--news-soft)]'
                 }`}
               >
                 {getLocalizedText(cat.name, language)}
@@ -163,7 +163,7 @@ function SearchContent() {
             {isSearchLoading ? (
               <div className="grid gap-6 md:grid-cols-2">
                 {Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className="animate-pulse border border-[var(--news-grid)] bg-white p-4">
+                  <div key={index} className="animate-pulse border border-[var(--news-grid)] bg-[var(--news-white)] p-4">
                     <div className="aspect-[4/3] bg-[var(--news-gray-100)]" />
                     <div className="mt-4 h-4 w-20 bg-[var(--news-gray-100)]" />
                     <div className="mt-3 h-6 w-full bg-[var(--news-gray-100)]" />
@@ -172,7 +172,7 @@ function SearchContent() {
                 ))}
               </div>
             ) : isSearchError ? (
-              <div className="border border-[var(--news-grid)] bg-white px-6 py-16 text-center">
+              <div className="border border-[var(--news-grid)] bg-[var(--news-white)] px-6 py-16 text-center">
                 <h3 className="mt-2 [font-family:var(--font-serif)] text-3xl font-bold text-[var(--news-ink)]">
                   {language === 'bn' ? 'অনুসন্ধান লোড করা যায়নি' : 'Search is unavailable'}
                 </h3>
@@ -181,11 +181,11 @@ function SearchContent() {
             ) : resultItems.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2">
                 {resultItems.map((article) => (
-                  <ArticleCard key={article.id} article={article} className="border border-[var(--news-grid)] bg-white p-4" />
+                  <ArticleCard key={article.id} article={article} className="border border-[var(--news-grid)] bg-[var(--news-white)] p-4" />
                 ))}
               </div>
             ) : (
-              <div className="border border-[var(--news-grid)] bg-white px-6 py-16 text-center">
+              <div className="border border-[var(--news-grid)] bg-[var(--news-white)] px-6 py-16 text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--news-paper)] text-[var(--news-soft)]">
                   <Search className="h-6 w-6" />
                 </div>
@@ -206,7 +206,7 @@ function SearchContent() {
               <AdSlot position="sidebar" page="search" />
             </div>
 
-            <div className="border border-[var(--news-grid)] bg-white p-5">
+            <div className="border border-[var(--news-grid)] bg-[var(--news-white)] p-5">
               <h3 className="news-section-title border-b border-[var(--news-grid)] pb-2">
                 {language === 'bn' ? 'জাস্ট ইন' : 'Just in'}
               </h3>
