@@ -33,6 +33,25 @@ import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 // Icons
 import { type LucideIcon, FileText, MonitorPlay, Activity } from 'lucide-react';
 
+const CATEGORY_COLORS = [
+  '#2563eb', // Blue
+  '#0d9488', // Teal
+  '#7c3aed', // Purple
+  '#f59e0b', // Amber
+  '#e11d48', // Rose
+  '#059669', // Emerald
+  '#0284c7', // Sky
+  '#d97706', // Orange
+  '#4f46e5', // Indigo
+  '#db2777', // Pink
+  '#65a30d', // Lime
+  '#8b5cf6', // Violet
+  '#0891b2', // Cyan
+  '#dc2626', // Red
+  '#64748b', // Slate
+  '#ca8a04', // Yellow
+];
+
 /* ─────────────────────────────────────────────────────────────────────────────
    INTERNAL COMPONENTS (Tailwind)
    ───────────────────────────────────────────────────────────────────────────── */
@@ -52,16 +71,17 @@ function StatTile({ label, value, icon: Icon }: { label: string; value: number |
 }
 
 function Meter({ label, value, max, color = 'bg-blue-500' }: { label: string; value: number; max: number; color?: string }) {
-  const percent = max > 0 ? Math.min(100, Math.max(2, (value / max) * 100)) : 0;
+  const percent = max > 0 ? Math.min(100, Math.max(value > 0 ? 4 : 0, (value / max) * 100)) : 0;
+  const formattedLabel = label.replace(/_/g, ' ');
   return (
-    <div className="mb-4">
-      <div className="flex justify-between items-end mb-1">
-        <span className="text-xs font-bold text-[var(--newsos-text-primary)]">{label}</span>
-        <span className="text-xs font-mono text-[var(--newsos-text-secondary)]">{value}</span>
+    <div className="mb-3.5 last:mb-0">
+      <div className="flex justify-between items-end mb-1.5">
+        <span className="text-xs font-bold capitalize text-[var(--newsos-text-primary)]">{formattedLabel}</span>
+        <span className="text-xs font-mono font-semibold text-[var(--newsos-text-secondary)]">{value}</span>
       </div>
-      <div className="h-1.5 w-full bg-[var(--newsos-bg-secondary)] rounded-full overflow-hidden">
+      <div className="h-2 w-full bg-[var(--newsos-bg-primary)] border border-[var(--newsos-border-default)] rounded-full overflow-hidden">
         <div 
-          className={`h-full rounded-full ${color}`} 
+          className={`h-full rounded-full ${color} transition-all duration-500`} 
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -179,9 +199,31 @@ export default function AdminDashboard() {
       label: getLocalizedText(category.name, language) || 'Desk',
     })) ?? [];
 
-  const articleStats = overview?.articles || {};
-  const userStats = overview?.users || {};
-  const adStats = overview?.ads || {};
+  const articleStats: Record<string, number> = overview?.articles || {};
+  const userStats: Record<string, number> = useMemo(() => {
+    if (overview?.users && typeof overview.users === 'object') {
+      return overview.users;
+    }
+    if (typeof overview?.users === 'number') {
+      return { total: overview.users };
+    }
+    return { total: 0 };
+  }, [overview?.users]);
+
+  const adStats: Record<string, number> = useMemo(() => {
+    if (overview?.ads && typeof overview.ads === 'object' && Object.keys(overview.ads).length > 0) {
+      return overview.ads;
+    }
+    const total = typeof overview?.advertisements === 'number' ? overview.advertisements : (ads?.length ?? 0);
+    const active = ads?.filter((a) => a.isActive)?.length ?? total;
+    const inactive = Math.max(0, total - active);
+    return {
+      total,
+      active,
+      inactive,
+    };
+  }, [overview?.ads, overview?.advertisements, ads]);
+
   const maxArticle = Math.max(...Object.values(articleStats), 0);
   const maxUsers = Math.max(...Object.values(userStats), 0);
   const maxAds = Math.max(...Object.values(adStats), 0);
@@ -190,11 +232,20 @@ export default function AdminDashboard() {
   const articleBarData = articleStatsSeries ?? [];
   const articleLabels = articleBarData.map((point) => formatDateLabel(point.date));
   
-  const categoryPieData = categoryDistribution?.map((category, index) => ({
-      id: category.categoryId,
-      value: category.count ?? 0,
-      label: getLocalizedText(category.categoryName, language) || `Category ${index + 1}`,
-    })) ?? [];
+  const categoryPieData = useMemo(() => {
+    return (
+      categoryDistribution?.map((category, index) => ({
+        id: category.categoryId,
+        value: category.count ?? 0,
+        label: getLocalizedText(category.categoryName, language) || `Category ${index + 1}`,
+        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+      })) ?? []
+    );
+  }, [categoryDistribution, language]);
+
+  const totalCategoryArticles = useMemo(() => {
+    return categoryPieData.reduce((acc, item) => acc + (item.value || 0), 0);
+  }, [categoryPieData]);
     
   const trafficData = trafficTrends ?? [];
   const trafficLabels = trafficData.map((point) => formatDateLabel(point.date));
@@ -243,8 +294,8 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatTile label="Published Content" value={overview?.articles?.published || 0} icon={FileText} />
         <StatTile label="Drafts" value={overview?.articles?.draft || 0} icon={FileText} />
-        <StatTile label="Active Ads" value={overview?.ads?.active || ads?.length || 0} icon={Activity} />
-        <StatTile label="Media Assets" value={overview?.media?.library || media?.length || 0} icon={MonitorPlay} />
+        <StatTile label="Active Ads" value={overview?.ads?.active ?? adStats?.active ?? ads?.length ?? 0} icon={Activity} />
+        <StatTile label="Media Assets" value={overview?.media?.library ?? overview?.media?.total ?? (typeof overview?.media === 'number' ? overview.media : 0) ?? media?.length ?? 0} icon={MonitorPlay} />
       </div>
 
       {/* Filters Toolbar */}
@@ -363,28 +414,78 @@ export default function AdminDashboard() {
         </div>
 
         {/* Category Mix */}
-        <div className="bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)]">
-           <h3 className="text-sm font-bold uppercase tracking-wide mb-4">Category Mix</h3>
-           <div className="h-[300px] w-full">
-             {categoryPieData.length > 0 ? (
-               <PieChart
-                 series={[
-                   {
-                     data: categoryPieData.map((item) => ({
-                       id: item.id,
-                       value: item.value || 0,
-                       label: item.label,
-                     })),
-                     innerRadius: 60,
-                     paddingAngle: 2,
-                   },
-                 ]}
-                 slotProps={{ legend: { position: { vertical: 'bottom', horizontal: 'middle' }, itemMarkWidth: 10, itemMarkHeight: 10 } }}
-               />
-             ) : (
-                <div className="h-full flex items-center justify-center text-sm text-gray-400 font-mono">No categories</div>
-             )}
+        <div className="bg-[var(--newsos-bg-secondary)] p-5 rounded-lg border border-[var(--newsos-border-default)] flex flex-col justify-between">
+           <div className="flex items-center justify-between mb-2">
+             <h3 className="text-sm font-bold uppercase tracking-wide text-[var(--newsos-text-primary)]">Category Mix</h3>
+             <span className="text-xs font-mono font-bold text-[var(--newsos-text-tertiary)] bg-[var(--newsos-bg-primary)] px-2 py-0.5 rounded border border-[var(--newsos-border-default)]">
+               {totalCategoryArticles} stories
+             </span>
            </div>
+
+           {categoryPieData.length > 0 ? (
+             <div className="flex flex-col">
+               <div className="relative flex items-center justify-center h-[180px] w-full">
+                 <PieChart
+                   series={[
+                     {
+                       data: categoryPieData,
+                       innerRadius: 55,
+                       outerRadius: 80,
+                       paddingAngle: 2,
+                       cornerRadius: 4,
+                       highlightScope: { fade: 'global', highlight: 'item' },
+                     },
+                   ]}
+                   slotProps={{
+                     legend: { hidden: true },
+                   }}
+                   margin={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                 />
+                 {/* Center Total Counter */}
+                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                   <span className="text-xl font-black font-mono text-[var(--newsos-text-primary)] leading-tight">
+                     {totalCategoryArticles}
+                   </span>
+                   <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--newsos-text-tertiary)]">
+                     Stories
+                   </span>
+                 </div>
+               </div>
+
+               {/* Legend & Breakdown List */}
+               <div className="mt-2 max-h-[120px] overflow-y-auto pr-1 space-y-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[var(--newsos-border-default)] [&::-webkit-scrollbar-thumb]:rounded-full border-t border-[var(--newsos-border-default)] pt-2">
+                 {categoryPieData.map((item) => {
+                   const percent = totalCategoryArticles > 0 ? ((item.value / totalCategoryArticles) * 100).toFixed(1) : '0';
+                   return (
+                     <div 
+                       key={item.id} 
+                       className="flex items-center justify-between text-xs py-1 px-1.5 rounded hover:bg-[var(--newsos-bg-hover)] transition-colors group"
+                     >
+                       <div className="flex items-center gap-2 min-w-0 pr-2">
+                         <span 
+                           className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" 
+                           style={{ backgroundColor: item.color }} 
+                         />
+                         <span className="font-medium text-[var(--newsos-text-primary)] truncate">
+                           {item.label}
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-1.5 shrink-0 font-mono">
+                         <span className="text-[var(--newsos-text-secondary)] font-semibold">{item.value}</span>
+                         <span className="text-[10px] font-bold text-[var(--newsos-text-tertiary)] bg-[var(--newsos-bg-primary)] px-1.5 py-0.5 rounded border border-[var(--newsos-border-default)]">
+                           {percent}%
+                         </span>
+                       </div>
+                     </div>
+                   );
+                 })}
+               </div>
+             </div>
+           ) : (
+             <div className="h-[300px] flex items-center justify-center text-sm text-gray-400 font-mono">
+               No categories
+             </div>
+           )}
         </div>
       </div>
 

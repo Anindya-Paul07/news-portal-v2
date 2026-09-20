@@ -9,6 +9,7 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import SignalCellularAltRoundedIcon from '@mui/icons-material/SignalCellularAltRounded';
+import { Globe, ArrowUpRight } from 'lucide-react';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -52,8 +53,15 @@ export function AdminShell({
       <aside className="hidden lg:flex flex-col bg-[var(--newsos-bg-sidebar,var(--newsos-bg-primary))] border-r border-[var(--newsos-border-default)] overflow-y-auto">
         {/* Sidebar Header */}
         <div className="sticky top-0 z-10 bg-[var(--newsos-bg-primary)] border-b border-[var(--newsos-border-default)] p-3">
-          <div className="text-lg font-bold uppercase tracking-wider text-[var(--newsos-text-primary)]">
-            NewsOS
+          <div className="flex items-center justify-between">
+            <Link 
+              href="/" 
+              className="text-lg font-bold uppercase tracking-wider text-[var(--newsos-text-primary)] hover:text-[var(--newsos-accent-primary)] transition-colors flex items-center gap-1.5 group"
+              title="View Site"
+            >
+              <span>NewsOS</span>
+              <ArrowUpRight className="w-4 h-4 text-[var(--newsos-text-tertiary)] group-hover:text-[var(--newsos-accent-primary)] transition-colors" />
+            </Link>
           </div>
           <div className="mt-2 text-xs text-[var(--newsos-text-tertiary)]">
             {user?.name || user?.email || 'USER'}
@@ -89,11 +97,19 @@ export function AdminShell({
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="border-t border-[var(--newsos-border-default)] p-3">
+        {/* Bottom Actions: View Site & Logout */}
+        <div className="border-t border-[var(--newsos-border-default)] p-3 space-y-2">
+          <Link
+            href="/"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[var(--newsos-bg-secondary)] border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-xs font-bold uppercase tracking-wide cursor-pointer transition-all hover:bg-[var(--newsos-bg-hover)] hover:border-[var(--newsos-accent-primary)] hover:text-[var(--newsos-accent-primary)] rounded"
+            title="View Live Site"
+          >
+            <Globe className="w-4 h-4 text-[var(--newsos-accent-primary)]" />
+            View Site
+          </Link>
           <button 
             onClick={logout}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-xs font-bold uppercase tracking-wide cursor-pointer transition-all hover:bg-[var(--newsos-bg-hover)] hover:border-[var(--newsos-accent-primary)] hover:text-[var(--newsos-accent-primary)]"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-xs font-bold uppercase tracking-wide cursor-pointer transition-all hover:bg-[var(--newsos-bg-hover)] hover:border-[var(--newsos-accent-primary)] hover:text-[var(--newsos-accent-primary)] rounded"
           >
             <LogoutRoundedIcon sx={{ fontSize: 16 }} />
             Logout
@@ -124,6 +140,19 @@ export function AdminShell({
                   {description}
                 </p>
               )}
+            </div>
+
+            {/* Quick Action: View Site */}
+            <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wide rounded border border-[var(--newsos-border-default)] bg-[var(--newsos-bg-secondary)] text-[var(--newsos-text-primary)] hover:bg-[var(--newsos-bg-hover)] hover:border-[var(--newsos-accent-primary)] hover:text-[var(--newsos-accent-primary)] transition-all shadow-xs"
+                title="View Live Site"
+              >
+                <Globe className="w-3.5 h-3.5 text-[var(--newsos-accent-primary)]" />
+                <span className="hidden sm:inline">View Site</span>
+                <ArrowUpRight className="w-3 h-3 opacity-60" />
+              </Link>
             </div>
           </div>
 
@@ -173,10 +202,18 @@ export function AdminShell({
             })}
           </nav>
 
-          <div className="border-t border-[var(--newsos-border-default)] p-3">
+          <div className="border-t border-[var(--newsos-border-default)] p-3 space-y-2">
+            <Link 
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[var(--newsos-bg-secondary)] border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-xs font-bold uppercase tracking-wide rounded"
+            >
+              <Globe className="w-4 h-4 text-[var(--newsos-accent-primary)]" />
+              View Site
+            </Link>
             <button 
               onClick={logout}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--newsos-border-default)] text-xs font-bold uppercase tracking-wide"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--newsos-border-default)] text-xs font-bold uppercase tracking-wide rounded"
             >
               <LogoutRoundedIcon sx={{ fontSize: 16 }} />
               Logout

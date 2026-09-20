@@ -1,9 +1,7 @@
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { alpha } from '@mui/material/styles';
 import { Article } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { getLocalizedText } from '@/lib/utils';
@@ -36,30 +34,20 @@ export function BreakingTicker({ items, condensed = false, loading = false, erro
         alignItems: 'center',
         gap: condensed ? 1 : 2,
         minHeight: condensed ? 32 : 38,
+        minWidth: 0,
+        width: '100%',
+        maxWidth: '100%',
+        overflow: 'hidden',
       }}
     >
-      <Chip
-        label={language === 'bn' ? 'ব্রেকিং' : 'Breaking'}
-        size="small"
-        sx={{
-          height: condensed ? 22 : 24,
-          borderRadius: 0.5,
-          border: '1px solid rgba(255,255,255,0.85)',
-          bgcolor: alpha('#8f0c16', 0.9),
-          color: '#fff',
-          fontWeight: 800,
-          letterSpacing: 1.8,
-          textTransform: 'uppercase',
-          '& .MuiChip-label': {
-            px: 1.2,
-          },
-        }}
-      />
 
       <Box
         sx={{
           position: 'relative',
           flex: 1,
+          minWidth: 0,
+          width: '100%',
+          maxWidth: '100%',
           overflow: 'hidden',
         }}
       >

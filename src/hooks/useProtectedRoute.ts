@@ -11,7 +11,7 @@ type ProtectedRouteOptions = {
   forbiddenTo?: string;
 };
 
-export function useProtectedRoute(pathOrOptions: string | ProtectedRouteOptions = '/auth/login') {
+export function useProtectedRoute(pathOrOptions: string | ProtectedRouteOptions = '/tc-newsroom-portal-access') {
   const { status, user } = useAuth();
   const router = useRouter();
 
@@ -20,7 +20,7 @@ export function useProtectedRoute(pathOrOptions: string | ProtectedRouteOptions 
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.replace(options.redirectTo ?? '/auth/login');
+      router.replace(options.redirectTo ?? '/tc-newsroom-portal-access');
     }
     if (status === 'authenticated' && options.allowedRoles && user?.role) {
       if (!options.allowedRoles.includes(user.role)) {
