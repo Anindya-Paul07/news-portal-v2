@@ -128,18 +128,27 @@ const getClientLabel = (client: Advertisement['client']) => {
   return '';
 };
 
+// Hook for wrappers/containers to know if ads are currently enabled — avoids leaving orphan spacing when ads are off
+export function useAdsEnabled(): boolean {
+  const localCuration = readLayoutCuration();
+  const { data: layoutSettings } = useLayoutSettings();
+  return layoutSettings?.adsEnabled ?? localCuration.adsEnabled ?? true;
+}
+
 export function AdSlot({
   slot,
   position,
   page,
   categoryId,
   className,
+  containerClassName,
 }: {
   slot?: AdPresetKey;
   position?: string;
   page?: string;
   categoryId?: string;
   className?: string;
+  containerClassName?: string;
 }) {
   const normalizedPage = normalizePage(page);
   const legacy = position && position in legacySlotMap ? legacySlotMap[position as LegacySlotKey] : undefined;
@@ -158,20 +167,11 @@ export function AdSlot({
   const theme = useTheme();
   const { language } = useLanguage();
 
-  const fallbackAd = useMemo(() => {
-    return (
-      sampleAds.find((item) => inferAdPreset(item) === preset.key) ||
-      sampleAds.find((item) => item.position === queryPosition) ||
-      sampleAds[0]
-    );
-  }, [preset.key, queryPosition]);
-
   const ad = useMemo(
-    () => pickBestAd({ ads: data ?? [], preset: preset.key, page: normalizedPage ?? preset.page, categoryId }) || fallbackAd,
-    [categoryId, data, fallbackAd, normalizedPage, preset.key, preset.page],
+    () => pickBestAd({ ads: data ?? [], preset: preset.key, page: normalizedPage ?? preset.page, categoryId }),
+    [categoryId, data, normalizedPage, preset.key, preset.page],
   );
 
-  const isFallbackAd = !data || data.length === 0 || ad?.id === fallbackAd?.id;
   const imageUrl = ad?.image?.url || ad?.imageUrl;
   const adTitle = getLocalizedText(ad?.title, language) || ad?.name || preset.label;
   const adDescription = getLocalizedText(ad?.description, language);
@@ -181,18 +181,19 @@ export function AdSlot({
   const clientLabel = getClientLabel(ad?.client);
 
   useEffect(() => {
-    if (!adsEnabled || !ad?.id || isFallbackAd) return;
+    if (!adsEnabled || !ad?.id) return;
     apiClient.post(`/advertisements/${ad.id}/impression`).catch(() => {});
-  }, [ad?.id, adsEnabled, isFallbackAd]);
+  }, [ad?.id, adsEnabled]);
 
   const handleAdClick = () => {
-    if (!ad?.id || isFallbackAd) return;
+    if (!ad?.id) return;
     apiClient.post(`/advertisements/${ad.id}/click`).catch(() => {});
   };
 
-  if (!adsEnabled) return null;
+  // If ads are disabled by admin or there is no active matching ad, render NOTHING — leaving ZERO residual space
+  if (!adsEnabled || !ad) return null;
 
-  return (
+  const paperElement = (
     <Paper
       variant="outlined"
       className={className}
@@ -275,4 +276,10 @@ export function AdSlot({
       </Box>
     </Paper>
   );
+
+  if (containerClassName) {
+    return <div className={containerClassName}>{paperElement}</div>;
+  }
+
+  return paperElement;
 }

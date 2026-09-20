@@ -1,48 +1,73 @@
 'use client';
 
 import { useThemeMode } from '@/contexts/theme-context';
-import { Button } from '@/components/ui/Button';
+import { useLanguage } from '@/contexts/language-context';
+import { Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-function SunIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M3 12h2M19 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-    </svg>
-  );
-}
-
-function MoonIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M21 13.35A8 8 0 0 1 10.65 3 6.5 6.5 0 1 0 21 13.35Z" />
-    </svg>
-  );
-}
-
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggle } = useThemeMode();
+  const { language } = useLanguage();
   const isDark = theme === 'dark';
 
+  const tooltipText = isDark
+    ? language === 'bn'
+      ? 'লাইট মোডে পরিবর্তন করুন'
+      : 'Switch to Light Mode'
+    : language === 'bn'
+      ? 'ডার্ক মোডে পরিবর্তন করুন'
+      : 'Switch to Dark Mode';
+
   return (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      className="rounded-full border border-transparent bg-transparent px-1 py-1 shadow-none hover:bg-transparent"
+      role="switch"
+      aria-checked={isDark}
+      aria-label={tooltipText}
+      title={tooltipText}
       onClick={toggle}
-      aria-label="Toggle light and dark theme"
+      className={cn(
+        'group relative inline-flex h-[30px] w-[58px] cursor-pointer items-center rounded-full p-[3px] transition-all duration-300 ease-out select-none active:scale-[0.96]',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--news-red-700)] focus-visible:ring-offset-2',
+        isDark
+          ? 'bg-[#181514] border border-[#3E3835] shadow-[inset_0_2px_4px_rgba(0,0,0,0.7)]'
+          : 'bg-[#EAE4DC] border border-[#C8BBB1] shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)]',
+        className,
+      )}
     >
-      <span className="relative inline-flex h-6 w-12 items-center rounded-full bg-[var(--color-surface-elevated)] px-1">
-        <span
+      {/* Background Track Icons */}
+      <div className="absolute inset-0 flex items-center justify-between px-[7px] pointer-events-none">
+        {/* Sun Icon on the left */}
+        <Sun
           className={cn(
-            'inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-primary-contrast)] transition-transform',
-            isDark ? 'translate-x-5' : 'translate-x-0',
+            'h-3.5 w-3.5 transition-all duration-200',
+            isDark ? 'text-neutral-500 opacity-60' : 'text-amber-500 opacity-0',
           )}
-        >
-          {isDark ? <MoonIcon className="h-3 w-3" /> : <SunIcon className="h-3 w-3" />}
-        </span>
+        />
+        {/* Moon Icon on the right */}
+        <Moon
+          className={cn(
+            'h-3.5 w-3.5 transition-all duration-200',
+            isDark ? 'text-amber-400 opacity-0' : 'text-neutral-500 opacity-60',
+          )}
+        />
+      </div>
+
+      {/* Tactile Sliding Knob (Thumb) */}
+      <span
+        className={cn(
+          'relative z-10 flex h-[22px] w-[22px] items-center justify-center rounded-full transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+          isDark
+            ? 'translate-x-[28px] bg-gradient-to-b from-[#2E2825] to-[#1C1816] text-amber-300 border border-[#4D4540] shadow-[0_2px_5px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.4)]'
+            : 'translate-x-0 bg-gradient-to-b from-white to-[#F7F4F0] text-amber-600 border border-black/10 shadow-[0_2px_5px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.08)]',
+        )}
+      >
+        {isDark ? (
+          <Moon className="h-3.5 w-3.5 transition-transform duration-300 group-hover:scale-110" />
+        ) : (
+          <Sun className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-45 group-hover:scale-110" />
+        )}
       </span>
-    </Button>
+    </button>
   );
 }

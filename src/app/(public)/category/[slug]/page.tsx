@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Clock } from 'lucide-react';
-import { AdSlot } from '@/components/ads/AdSlot';
+import { AdSlot, useAdsEnabled } from '@/components/ads/AdSlot';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
 import { useCategory, useCategoryArticles } from '@/hooks/api-hooks';
@@ -16,6 +16,7 @@ export default function CategoryPage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug as string;
   const { language } = useLanguage();
+  const adsEnabled = useAdsEnabled();
   const { data: category, isLoading: isCategoryLoading, isError: isCategoryError, error: categoryError } = useCategory(slug);
   const { data: articles, isLoading: isArticlesLoading, isError: isArticlesError, error: articlesError } = useCategoryArticles(slug, {
     limit: 15,
@@ -66,33 +67,7 @@ export default function CategoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--news-page)]">
-      <div className="border-b border-[var(--news-grid)] bg-[var(--news-paper)]">
-        <div className="mx-auto max-w-[1440px] px-4 py-10 md:py-14">
-          <p className="news-meta text-[var(--news-red-700)]">Section</p>
-          <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
-            <div>
-              <h1 className="[font-family:var(--font-serif)] text-4xl font-bold leading-none tracking-[-0.04em] text-[var(--news-ink)] md:text-6xl">
-                {categoryName}
-              </h1>
-              {categoryDescription ? (
-                <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--news-muted)] md:text-lg">
-                  {categoryDescription}
-                </p>
-              ) : null}
-            </div>
-            <p className="max-w-sm text-sm leading-6 text-[var(--news-soft)]">
-              {language === 'bn'
-                ? 'প্রধান প্রতিবেদন, দ্রুত আপডেট এবং গভীর বিশ্লেষণ একই নিউজরুম গ্রিডে সাজানো।'
-                : 'Lead coverage, rapid updates, and secondary reads arranged in the same newsroom grid as the homepage.'}
-            </p>
-          </div>
-          <div className="mt-8">
-            <AdSlot slot="category_top_banner" page="category" categoryId={category?.id} />
-          </div>
-        </div>
-      </div>
-
+    <div className="w-full bg-[var(--news-page)]">
       <div className="mx-auto max-w-[1440px] px-4 py-8 md:py-10">
         {articlesList.length === 0 ? (
           <div className="border border-[var(--news-grid)] bg-[var(--news-white)] px-6 py-16 text-center">
@@ -133,9 +108,12 @@ export default function CategoryPage() {
                 </div>
               </div>
 
-              <div className="border border-[var(--news-grid)] bg-[var(--news-paper)] p-4">
-                <AdSlot slot="category_sidebar_tall" page="category" categoryId={category?.id} />
-              </div>
+              <AdSlot
+                slot="category_sidebar_tall"
+                page="category"
+                categoryId={category?.id}
+                containerClassName="border border-[var(--news-grid)] bg-[var(--news-paper)] p-4"
+              />
 
               <div className="bg-[var(--news-black)] p-6 text-white">
                 <p className="news-meta text-[#f0c2c2]">The Red Wire</p>
@@ -157,9 +135,12 @@ export default function CategoryPage() {
                 </div>
               </div>
 
-              <div className="border border-[var(--news-grid)] bg-[var(--news-white)] p-4">
-                <AdSlot slot="category_sidebar_tall" page="category" categoryId={category?.id} />
-              </div>
+              <AdSlot
+                slot="category_sidebar_tall"
+                page="category"
+                categoryId={category?.id}
+                containerClassName="border border-[var(--news-grid)] bg-[var(--news-white)] p-4"
+              />
             </aside>
           </div>
         )}
@@ -197,7 +178,7 @@ function CategoryLead({ article, categoryName }: { article: Article; categoryNam
             <span className="news-kicker bg-[var(--news-red-700)] text-white">{categoryName}</span>
             {article.isBreaking ? <span className="news-meta text-[var(--news-red-700)]">Breaking</span> : null}
           </div>
-          <h2 className="mt-4 [font-family:var(--font-serif)] text-3xl font-bold leading-tight text-[var(--news-ink)] md:text-5xl">
+          <h2 className="mt-4 [font-family:var(--font-serif)] text-2xl sm:text-3xl md:text-[2rem] lg:text-[2.25rem] font-bold leading-[1.25] text-[var(--news-ink)]">
             {title}
           </h2>
           {excerpt ? <div className="mt-4 max-w-3xl text-base leading-7 text-[var(--news-muted)] [&>p]:m-0" dangerouslySetInnerHTML={{ __html: excerpt }} /> : null}

@@ -2,9 +2,13 @@
 
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
-import { AdSlot } from '@/components/ads/AdSlot';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, ChevronLeft, ChevronRight, Clock, TrendingUp } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import { AdSlot, useAdsEnabled } from '@/components/ads/AdSlot';
 import { BreakingTicker } from '@/components/news/BreakingTicker';
 import type { FbShort } from '@/components/news/FbShortsRail';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
@@ -21,7 +25,7 @@ import { findCuratedArticle, findCuratedArticles, readLayoutCuration } from '@/l
 import { fetchReels, readReels } from '@/lib/reels-store';
 import { handleApiError } from '@/lib/query-config';
 import type { Article, LayoutCuration } from '@/lib/types';
-import { formatDate, getLocalizedText, resolveMediaUrl } from '@/lib/utils';
+import { cleanExcerpt, formatDate, getLocalizedText, resolveMediaUrl } from '@/lib/utils';
 
 const FbShortsRail = dynamic(() => import('@/components/news/FbShortsRail').then((mod) => mod.FbShortsRail), {
   ssr: false,
@@ -69,8 +73,14 @@ function StoryImage({
   priority?: boolean;
   sizes: string;
 }) {
-  if (!article.featuredImage?.url) {
-    return <div className="h-full w-full bg-[linear-gradient(135deg,var(--news-red-900),var(--news-black))]" />;
+  const [hasError, setHasError] = useState(false);
+
+  if (!article.featuredImage?.url || hasError) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,var(--news-red-900),var(--news-black))] text-white/50 select-none">
+        <span className="text-xs font-semibold tracking-wider uppercase">The Contemporary</span>
+      </div>
+    );
   }
 
   return (
@@ -80,6 +90,8 @@ function StoryImage({
       fill
       priority={priority}
       sizes={sizes}
+      draggable={false}
+      onError={() => setHasError(true)}
       className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
     />
   );
@@ -118,15 +130,15 @@ function TopPickRail({
   if (items.length === 0) return null;
 
   return (
-    <div className="border-b border-t border-[var(--news-ink)] py-5">
-      <div className="mb-5 flex items-center gap-3">
-        <h2 className="shrink-0 text-xl font-extrabold leading-none text-[var(--news-mahogany)]">
+    <div className="py-2">
+      <div className="mb-4 flex items-center gap-3">
+        <h2 className="shrink-0 text-base sm:text-lg font-bold leading-none text-[#8a0e16] dark:text-[#f87171]">
           {language === 'bn' ? 'টপ পিক' : 'Top pick'}
         </h2>
-        <div className="h-px flex-1 bg-[var(--news-ink)]" />
+        <div className="h-px flex-1 bg-[var(--news-grid)]" />
       </div>
 
-      <div className="space-y-7">
+      <div className="space-y-6">
         {items.map((article, index) => {
           const title = getStoryTitle(article, language);
           const label = categoryName || getCategoryName(article, language);
@@ -136,22 +148,17 @@ function TopPickRail({
               <div className="relative aspect-[16/9] overflow-hidden bg-[var(--news-gray-200)]">
                 <StoryImage article={article} alt={title} sizes="(min-width: 1280px) 390px, (min-width: 1024px) 32vw, 100vw" />
               </div>
-              <div className={index === 0 ? 'mt-4' : 'mt-3'}>
+              <div className="mt-2.5">
                 {index > 0 ? (
-                  <p className="mb-2 text-lg font-semibold leading-none text-[var(--news-red-600)]">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-[var(--news-red-600)]">
                     {label}
-                    <span className="mx-1.5 inline-block h-2 w-2 rounded-full bg-[var(--news-red-600)] align-middle" />
                   </p>
                 ) : null}
                 <h3
-                  className={`font-extrabold leading-[1.45] text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)] ${
+                  className={`font-bold leading-[1.3] text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)] break-words ${
                     language === 'bn'
-                      ? index === 0
-                        ? 'text-[1.85rem]'
-                        : 'text-[1.68rem]'
-                      : index === 0
-                        ? '[font-family:var(--font-serif)] text-[1.65rem] leading-tight'
-                        : '[font-family:var(--font-serif)] text-[1.45rem] leading-tight'
+                      ? 'text-base sm:text-[1.05rem]'
+                      : '[font-family:var(--font-serif)] text-base sm:text-[1.05rem]'
                   }`}
                 >
                   {title}
@@ -165,7 +172,7 @@ function TopPickRail({
       {categorySlug ? (
         <TransitionLink
           href={`/category/${categorySlug}`}
-          className="news-meta mt-6 inline-flex text-[var(--news-red-700)] transition-colors hover:text-[var(--news-red-hover)]"
+          className="news-meta mt-4 inline-flex text-xs font-semibold text-[var(--news-red-700)] transition-colors hover:underline"
         >
           {language === 'bn' ? 'আরও দেখুন' : `More ${categoryName || 'stories'}`}
         </TransitionLink>
@@ -229,152 +236,368 @@ function HomepageLeadCarousel({ articles, language }: { articles: Article[]; lan
   const slides = articles
     .filter((article, index, source) => source.findIndex((entry) => entry.id === article.id) === index)
     .slice(0, 4);
-  const [activeIndex, setActiveIndex] = useState(0);
 
-  useEffect(() => {
-    if (slides.length <= 1) return;
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slides.length);
-    }, 7500);
-    return () => window.clearInterval(timer);
-  }, [slides.length]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const swiperRef = useRef<any>(null);
 
   if (slides.length === 0) return null;
 
-  const safeActiveIndex = activeIndex >= slides.length ? 0 : activeIndex;
-  const activeArticle = slides[safeActiveIndex];
-  const title = getStoryTitle(activeArticle, language);
-  const excerpt = getStoryExcerpt(activeArticle, language);
-
-  const goToSlide = (direction: 'prev' | 'next') => {
-    setActiveIndex((current) => {
-      if (direction === 'next') return (current + 1) % slides.length;
-      return current === 0 ? slides.length - 1 : current - 1;
-    });
-  };
-
   return (
-    <div className="relative bg-[var(--news-white)] px-4 py-8 md:px-10 md:py-10 lg:px-12">
-      <div className="mx-auto max-w-[920px] text-center">
-        <p className="text-sm font-bold text-[var(--news-mahogany)] md:text-base">
-          {getCategoryName(activeArticle, language)}
-        </p>
-        <TransitionLink href={getArticleHref(activeArticle)} className="group mt-2 block">
-          <h1 className="[font-family:var(--font-serif)] text-[2.25rem] font-bold leading-[1.15] tracking-[-0.03em] text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)] md:text-[3.5rem] lg:text-[4rem]">
-            {title}
-          </h1>
-        </TransitionLink>
+    <div className="relative w-full min-w-0 max-w-full bg-[var(--news-white)] py-4 sm:py-5 md:py-6 homepage-lead-swiper">
+      {/* Pagination dot styles only — arrows are custom buttons below */}
+      <style>{`
+        .homepage-lead-swiper .swiper-pagination {
+          position: static;
+          margin-top: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        .homepage-lead-swiper .swiper-pagination-bullet {
+          width: 10px;
+          height: 10px;
+          background: transparent;
+          border: 2px solid #8a0e16;
+          opacity: 1;
+          border-radius: 50%;
+          transition: background 0.25s;
+          margin: 0 !important;
+        }
+        .homepage-lead-swiper .swiper-pagination-bullet-active {
+          background: #8a0e16;
+        }
+      `}</style>
 
-        <div className="relative mt-7">
-          <TransitionLink
-            href={getArticleHref(activeArticle)}
-            className="group relative block aspect-[16/9] overflow-hidden bg-[var(--news-gray-200)]"
-          >
-            <StoryImage article={activeArticle} alt={title} priority sizes="(min-width: 1280px) 820px, (min-width: 1024px) 64vw, 100vw" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-80" />
-          </TransitionLink>
+      {/* Outer wrapper: side padding = gutter space for arrows */}
+      <div className="relative mx-auto w-full max-w-[1000px] px-3 sm:px-10 md:px-12">
 
-          {slides.length > 1 ? (
-            <>
-              <button
-                type="button"
-                aria-label={language === 'bn' ? 'আগের স্লাইড' : 'Previous slide'}
-                onClick={() => goToSlide('prev')}
-                className="absolute left-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center text-[var(--news-mahogany)] transition-colors hover:text-[var(--news-red-700)] md:-left-16 md:h-14 md:w-14"
-              >
-                <ChevronLeft className="h-9 w-9 md:h-12 md:w-12" strokeWidth={1.6} />
-              </button>
-              <button
-                type="button"
-                aria-label={language === 'bn' ? 'পরের স্লাইড' : 'Next slide'}
-                onClick={() => goToSlide('next')}
-                className="absolute right-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center text-[var(--news-mahogany)] transition-colors hover:text-[var(--news-red-700)] md:-right-16 md:h-14 md:w-14"
-              >
-                <ChevronRight className="h-9 w-9 md:h-12 md:w-12" strokeWidth={1.6} />
-              </button>
-            </>
-          ) : null}
-        </div>
-
-        {excerpt ? (
-          <div
-            className="mx-auto mt-5 max-w-[760px] text-base leading-8 text-[var(--news-ink)] md:text-lg [&>p]:m-0"
-            dangerouslySetInnerHTML={{ __html: excerpt }}
-          />
-        ) : null}
-
+        {/* LEFT arrow — sits in left gutter, outside image */}
         {slides.length > 1 ? (
-          <div className="mt-7 flex items-center justify-center gap-4">
-            {slides.map((article, dotIndex) => (
-              <button
-                key={article.id}
-                type="button"
-                aria-label={`${language === 'bn' ? 'স্লাইডে যান' : 'Go to slide'} ${dotIndex + 1}`}
-                onClick={() => setActiveIndex(dotIndex)}
-                className={`h-3.5 w-3.5 rounded-full border-2 border-[var(--news-mahogany)] transition-colors ${
-                  dotIndex === safeActiveIndex ? 'bg-[var(--news-mahogany)]' : 'bg-transparent'
-                }`}
-              />
-            ))}
-          </div>
+          <button
+            type="button"
+            aria-label={language === 'bn' ? 'আগের স্লাইড' : 'Previous slide'}
+            onClick={() => swiperRef.current?.slidePrev()}
+            className="absolute left-0 top-1/2 -translate-y-1/2 hidden sm:flex items-center justify-center w-10 h-10 z-10 cursor-pointer select-none text-[#8a0e16] hover:opacity-70 transition-opacity"
+          >
+            <ChevronLeft className="h-20 w-20" strokeWidth={2} />
+          </button>
         ) : null}
+
+        {/* Swiper — no built-in navigation, pagination only */}
+        <Swiper
+          onSwiper={(swiper) => { swiperRef.current = swiper; }}
+          modules={[Pagination, Autoplay]}
+          pagination={{ clickable: true }}
+          autoplay={{ delay: 7500, disableOnInteraction: false, pauseOnMouseEnter: true }}
+          loop={slides.length > 1}
+          grabCursor
+          className="w-full text-center"
+        >
+          {slides.map((article, idx) => {
+            const title = getStoryTitle(article, language);
+            const excerpt = getStoryExcerpt(article, language);
+            return (
+              <SwiperSlide key={article.id}>
+                <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#8a0e16] dark:text-[#f87171] mb-1">
+                  {getCategoryName(article, language)}
+                </p>
+                <TransitionLink
+                  href={getArticleHref(article)}
+                  draggable={false}
+                  className="group block w-full min-w-0 max-w-[780px] mx-auto"
+                >
+                  <h1 className="w-full min-w-0 [font-family:var(--font-serif)] text-xl sm:text-2xl md:text-[2rem] lg:text-[2.25rem] font-bold leading-[1.26] sm:leading-[1.28] tracking-tight text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)] break-words">
+                    {title}
+                  </h1>
+                </TransitionLink>
+
+                <TransitionLink
+                  href={getArticleHref(article)}
+                  draggable={false}
+                  className="group relative mt-3.5 sm:mt-4 block aspect-[16/9] w-full overflow-hidden bg-[var(--news-gray-200)]"
+                >
+                  <StoryImage
+                    article={article}
+                    alt={title}
+                    priority={idx === 0}
+                    sizes="(min-width: 1280px) 820px, (min-width: 1024px) 64vw, 100vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-80" />
+                </TransitionLink>
+
+                {excerpt ? (
+                  <div
+                    className="mx-auto mt-3.5 max-w-[740px] text-sm sm:text-base leading-relaxed text-[var(--news-muted)] md:text-[1.05rem] [&>p]:m-0"
+                    dangerouslySetInnerHTML={{ __html: excerpt }}
+                  />
+                ) : null}
+              </SwiperSlide>
+            );
+          })}
+        </Swiper>
+
+        {/* RIGHT arrow — sits in right gutter, outside image */}
+        {slides.length > 1 ? (
+          <button
+            type="button"
+            aria-label={language === 'bn' ? 'পরের স্লাইড' : 'Next slide'}
+            onClick={() => swiperRef.current?.slideNext()}
+            className="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:flex items-center justify-center w-10 h-10 z-10 cursor-pointer select-none text-[#8a0e16] hover:opacity-70 transition-opacity"
+          >
+            <ChevronRight className="h-20 w-20" strokeWidth={2} />
+          </button>
+        ) : null}
+
       </div>
     </div>
   );
 }
 
 function TrendingCarousel({ articles, language }: { articles: Article[]; language: 'en' | 'bn' }) {
-  const items = articles
-    .filter((article, index, source) => source.findIndex((entry) => entry.id === article.id) === index)
-    .slice(0, 6);
+  const items = useMemo(() => {
+    return articles
+      .filter((article, index, source) => source.findIndex((entry) => entry.id === article.id) === index)
+      .slice(0, 4);
+  }, [articles]);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [cardsPerView, setCardsPerView] = useState(1);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const isDraggingRef = useRef(false);
+  const hasSwipedRef = useRef(false);
+  const pointerStartXRef = useRef(0);
+  const pointerStartYRef = useRef(0);
+  const isPointerDownRef = useRef(false);
+
+  useEffect(() => {
+    const updateCards = () => {
+      if (typeof window === 'undefined') return;
+      if (window.innerWidth >= 1024) setCardsPerView(3);
+      else if (window.innerWidth >= 640) setCardsPerView(2);
+      else setCardsPerView(1);
+    };
+    updateCards();
+    window.addEventListener('resize', updateCards);
+    return () => window.removeEventListener('resize', updateCards);
+  }, []);
+
+  useEffect(() => {
+    if (items.length <= 1 || isPaused || isDragging) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % items.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [items.length, isPaused, isDragging]);
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
+  };
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev + 1) % items.length);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0 || items.length <= 1) return;
+    isPointerDownRef.current = true;
+    isDraggingRef.current = false;
+    hasSwipedRef.current = false;
+    pointerStartXRef.current = e.clientX;
+    pointerStartYRef.current = e.clientY;
+    setIsPaused(true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isPointerDownRef.current || items.length <= 1) return;
+    const diffX = e.clientX - pointerStartXRef.current;
+    const diffY = e.clientY - pointerStartYRef.current;
+
+    if (!isDraggingRef.current) {
+      if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 8) {
+        isPointerDownRef.current = false;
+        return;
+      }
+      if (Math.abs(diffX) > 6) {
+        isDraggingRef.current = true;
+        hasSwipedRef.current = true;
+        setIsDragging(true);
+        try {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch {}
+      }
+    }
+
+    if (isDraggingRef.current) {
+      setDragOffset(diffX);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isPointerDownRef.current) return;
+    isPointerDownRef.current = false;
+    try {
+      if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      }
+    } catch {}
+
+    if (isDraggingRef.current) {
+      const diffX = e.clientX - pointerStartXRef.current;
+      if (diffX < -35) {
+        nextSlide();
+      } else if (diffX > 35) {
+        prevSlide();
+      }
+    }
+
+    setDragOffset(0);
+    setIsDragging(false);
+    isDraggingRef.current = false;
+    setIsPaused(false);
+    setTimeout(() => {
+      hasSwipedRef.current = false;
+    }, 120);
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent) => {
+    handlePointerUp(e);
+  };
+
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (hasSwipedRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
 
   if (items.length === 0) return null;
 
   return (
-    <section className="news-perf-section border-b border-[var(--news-grid)] py-8 md:py-10">
-      <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="news-meta text-[var(--news-red-700)]">
-            {language === 'bn' ? 'ট্রেন্ডিং ক্যারোসেল' : 'Trending carousel'}
-          </p>
-          <h2 className="news-section-title">
-            {language === 'bn' ? 'এখন সবচেয়ে আলোচিত খবর' : 'Stories gaining momentum now'}
-          </h2>
+    <section className="news-perf-section border-b border-[var(--news-grid)] py-6 md:py-10 overflow-hidden max-w-full">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="news-section-title">
+          {language === 'bn' ? 'এখন সবচেয়ে আলোচিত খবর' : 'Stories gaining momentum now'}
+        </h2>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            onClick={prevSlide}
+            aria-label="Previous story"
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center border border-[var(--news-grid-strong)] bg-[var(--news-paper)] text-[var(--news-ink)] transition-colors hover:border-[var(--news-red-700)] hover:bg-[var(--news-red-700)] hover:text-white active:scale-95"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={nextSlide}
+            aria-label="Next story"
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center border border-[var(--news-grid-strong)] bg-[var(--news-paper)] text-[var(--news-ink)] transition-colors hover:border-[var(--news-red-700)] hover:bg-[var(--news-red-700)] hover:text-white active:scale-95"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
-        <p className="max-w-md text-sm leading-6 text-[var(--news-muted)]">
-          {language === 'bn'
-            ? 'শুধু নির্বাচিত ট্রেন্ডিং গল্পগুলো অফ-হোয়াইট কন্টেইনারে, যাতে পেজ ভারী না লাগে।'
-            : 'Only selected trending stories sit in a paper-toned carousel, keeping the page clean instead of over-contained.'}
-        </p>
       </div>
-      <div className="rounded-[1.75rem] border border-[var(--news-grid)] bg-[var(--news-paper)] p-3 shadow-[0_18px_55px_rgba(18,24,31,0.06)] md:p-5">
-        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
-          {items.map((article) => {
-            const title = getStoryTitle(article, language);
+      <div
+        className="relative overflow-hidden rounded-[1.25rem] sm:rounded-[1.75rem] border border-[var(--news-grid)] bg-[var(--news-paper)] p-2.5 sm:p-4 md:p-5 shadow-[0_12px_40px_rgba(18,24,31,0.05)] max-w-full select-none cursor-grab active:cursor-grabbing touch-pan-y"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => {
+          if (!isDraggingRef.current) setIsPaused(false);
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        onClickCapture={handleClickCapture}
+        onDragStart={(e) => e.preventDefault()}
+      >
+        <div className="overflow-hidden w-full">
+          <div
+            className="flex w-full"
+            style={{
+              gap: '16px',
+              transform:
+                cardsPerView === 1
+                  ? `translateX(calc(-${currentIndex % items.length} * (100% + 16px) + ${dragOffset}px))`
+                  : cardsPerView === 2
+                  ? `translateX(calc(-${currentIndex % items.length} * ((100% - 16px) / 2 + 16px) + ${dragOffset}px))`
+                  : `translateX(calc(-${currentIndex % items.length} * ((100% - 32px) / 3 + 16px) + ${dragOffset}px))`,
+              transition: isDragging ? 'none' : 'transform 500ms ease-out',
+            }}
+          >
+            {[...items, ...items].map((article, idx) => {
+              const title = getStoryTitle(article, language);
+              return (
+                <div
+                  key={`${article.id}-${idx}`}
+                  style={{
+                    flex:
+                      cardsPerView === 1
+                        ? '0 0 100%'
+                        : cardsPerView === 2
+                        ? '0 0 calc((100% - 16px) / 2)'
+                        : '0 0 calc((100% - 32px) / 3)',
+                    maxWidth:
+                      cardsPerView === 1
+                        ? '100%'
+                        : cardsPerView === 2
+                        ? 'calc((100% - 16px) / 2)'
+                        : 'calc((100% - 32px) / 3)',
+                    minWidth: 0,
+                  }}
+                >
+                  <TransitionLink
+                    href={getArticleHref(article)}
+                    draggable={false}
+                    className="group block h-full overflow-hidden border border-[var(--news-grid)] bg-[var(--news-page)] transition-all hover:shadow-md"
+                  >
+                    <div className="relative aspect-[16/10] overflow-hidden bg-[var(--news-gray-200)] w-full">
+                      <StoryImage article={article} alt={title} sizes="(min-width: 1024px) 32vw, 100vw" />
+                      <div className="absolute left-2.5 top-2.5 sm:left-3 sm:top-3">
+                        <span className="news-kicker bg-white/92 dark:bg-black/80 text-[var(--news-ink)] text-[10px] sm:text-xs">
+                          {getCategoryName(article, language)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-3 sm:p-4">
+                      <h3 className="line-clamp-2 [font-family:var(--font-serif)] text-lg sm:text-xl md:text-2xl font-bold leading-snug text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)]">
+                        {title}
+                      </h3>
+                      {getStoryExcerpt(article, language) ? (
+                        <div
+                          className="mt-2 line-clamp-2 text-xs sm:text-sm leading-5 sm:leading-6 text-[var(--news-muted)] [&>p]:m-0"
+                          dangerouslySetInnerHTML={{ __html: getStoryExcerpt(article, language) || '' }}
+                        />
+                      ) : null}
+                      <p className="news-meta mt-3 text-[var(--news-soft)] text-[11px] sm:text-xs">{formatDate(article.publishedAt, language)}</p>
+                    </div>
+                  </TransitionLink>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {/* Dot indicators for the 4 items */}
+        <div className="mt-3.5 flex items-center justify-center gap-1.5 sm:gap-2">
+          {items.map((_, dotIdx) => {
+            const isActive = (currentIndex % items.length) === dotIdx;
             return (
-              <TransitionLink
-                key={article.id}
-                href={getArticleHref(article)}
-                className="group min-w-[82%] snap-start overflow-hidden border border-[var(--news-grid)] bg-[var(--news-page)] sm:min-w-[48%] lg:min-w-[31%]"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden bg-[var(--news-gray-200)]">
-                  <StoryImage article={article} alt={title} sizes="(min-width: 1024px) 32vw, 82vw" />
-                  <div className="absolute left-3 top-3">
-                    <span className="news-kicker bg-white/92 dark:bg-black/80 text-[var(--news-ink)]">
-                      {getCategoryName(article, language)}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="[font-family:var(--font-serif)] text-2xl font-bold leading-tight text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)]">
-                    {title}
-                  </h3>
-                  {getStoryExcerpt(article, language) ? (
-                    <div className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--news-muted)] [&>p]:m-0" dangerouslySetInnerHTML={{ __html: getStoryExcerpt(article, language) || '' }} />
-                  ) : null}
-                  <p className="news-meta mt-4 text-[var(--news-soft)]">{formatDate(article.publishedAt, language)}</p>
-                </div>
-              </TransitionLink>
+              <button
+                key={dotIdx}
+                type="button"
+                aria-label={`Slide to story ${dotIdx + 1}`}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex(dotIdx);
+                }}
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  isActive ? 'w-5 sm:w-6 bg-[var(--news-red-700)]' : 'w-1.5 sm:w-2 bg-[var(--news-grid-strong)] hover:bg-[var(--news-muted)]'
+                }`}
+              />
             );
           })}
         </div>
@@ -514,6 +737,187 @@ function CategoryNewsShowcase({
   );
 }
 
+function LatestNewsSection({
+  articles,
+  language,
+  isLoading = false,
+}: {
+  articles: Article[];
+  language: 'en' | 'bn';
+  isLoading?: boolean;
+}) {
+  if (isLoading && articles.length === 0) {
+    return (
+      <section className="news-perf-section border-b border-[var(--news-grid)] py-8 md:py-10">
+        <SectionHeading
+          title={language === 'bn' ? 'সর্বশেষ সংবাদ' : 'Latest News'}
+          href="/latest"
+          language={language}
+        />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(360px,1fr)]">
+          <div className="h-[380px] animate-pulse rounded border border-[var(--news-grid)] bg-[var(--news-paper)]" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-[180px] animate-pulse rounded border border-[var(--news-grid)] bg-[var(--news-paper)]" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!articles || articles.length === 0) return null;
+
+  const [leadStory, ...otherStories] = articles;
+  const gridStories = otherStories.slice(0, 4);
+  const bottomStories = otherStories.slice(4, 8);
+
+  const leadTitle = getStoryTitle(leadStory, language);
+  const leadExcerpt = cleanExcerpt(getStoryExcerpt(leadStory, language));
+
+  return (
+    <section className="news-perf-section border-b border-[var(--news-grid)] py-8 md:py-10">
+      <SectionHeading
+        title={language === 'bn' ? 'সর্বশেষ সংবাদ' : 'Latest News'}
+        href="/latest"
+        language={language}
+      />
+
+      {/* Main Grid: Lead Story (left) + 4 Supporting Stories (right) */}
+      <div className={gridStories.length > 0 ? 'grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(360px,1fr)]' : 'w-full'}>
+        {/* Lead Fresh Story */}
+        <TransitionLink
+          href={getArticleHref(leadStory)}
+          className="group flex flex-col justify-between border border-[var(--news-grid)] bg-[var(--news-paper)] p-4 sm:p-5 transition-all duration-200 hover:border-[var(--news-red-700)]/40 hover:shadow-md"
+        >
+          <div>
+            <div className="relative aspect-[16/10] w-full overflow-hidden bg-[var(--news-gray-200)] rounded-sm">
+              <StoryImage
+                article={leadStory}
+                alt={leadTitle}
+                sizes="(min-width: 1024px) 50vw, 100vw"
+              />
+              <div className="absolute left-3 top-3 flex items-center gap-1.5">
+                <span className="news-kicker bg-white/95 dark:bg-black/85 text-[var(--news-ink)] text-xs font-bold px-2.5 py-1 shadow-sm">
+                  {getCategoryName(leadStory, language)}
+                </span>
+                <span className="inline-flex items-center gap-1.5 bg-[var(--news-red-700)] text-white text-[11px] font-bold px-2 py-1 rounded-sm shadow-sm">
+                  <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                  {language === 'bn' ? 'সদ্য প্রাপ্ত' : 'Just In'}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <h3 className="[font-family:var(--font-serif)] text-xl sm:text-2xl lg:text-[1.7rem] font-bold leading-snug text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)]">
+                {leadTitle}
+              </h3>
+              {leadExcerpt ? (
+                <p className="mt-2.5 line-clamp-3 text-sm sm:text-base leading-relaxed text-[var(--news-muted)]">
+                  {leadExcerpt}
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between border-t border-[var(--news-grid)] pt-3 text-xs text-[var(--news-soft)]">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-[var(--news-red-700)]" />
+              <span>{formatDate(leadStory.publishedAt, language)}</span>
+            </div>
+            {leadStory.author?.name ? (
+              <span className="truncate max-w-[150px] font-medium text-[var(--news-muted)]">
+                {leadStory.author.name}
+              </span>
+            ) : null}
+          </div>
+        </TransitionLink>
+
+        {/* 4 Supporting Latest Stories in 2x2 Grid */}
+        {gridStories.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {gridStories.map((article) => {
+              const title = getStoryTitle(article, language);
+              return (
+                <TransitionLink
+                  key={article.id}
+                  href={getArticleHref(article)}
+                  className="group flex flex-col justify-between border border-[var(--news-grid)] bg-[var(--news-paper)] p-3 sm:p-3.5 transition-all duration-200 hover:border-[var(--news-red-700)]/40 hover:shadow-sm"
+                >
+                  <div>
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-[var(--news-gray-200)] rounded-sm">
+                      <StoryImage
+                        article={article}
+                        alt={title}
+                        sizes="(min-width: 1024px) 25vw, 50vw"
+                      />
+                      <div className="absolute left-2 top-2">
+                        <span className="news-kicker bg-white/90 dark:bg-black/80 text-[var(--news-ink)] text-[10px] px-2 py-0.5 shadow-sm">
+                          {getCategoryName(article, language)}
+                        </span>
+                      </div>
+                    </div>
+                    <h4 className="mt-2.5 line-clamp-2 text-sm sm:text-[0.95rem] font-bold leading-snug text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)]">
+                      {title}
+                    </h4>
+                  </div>
+                  <div className="mt-3 flex items-center gap-1.5 border-t border-[var(--news-grid)] pt-2 text-[11px] text-[var(--news-soft)]">
+                    <Clock className="h-3 w-3 text-[var(--news-red-700)]" />
+                    <span>{formatDate(article.publishedAt, language)}</span>
+                  </div>
+                </TransitionLink>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+
+      {/* Bottom Row: 4 Additional Latest Articles (if available) */}
+      {bottomStories.length > 0 ? (
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {bottomStories.map((article) => {
+            const title = getStoryTitle(article, language);
+            return (
+              <TransitionLink
+                key={article.id}
+                href={getArticleHref(article)}
+                className="group flex gap-3 border border-[var(--news-grid)] bg-[var(--news-paper)] p-3 transition-all duration-200 hover:border-[var(--news-red-700)]/40 hover:shadow-sm"
+              >
+                <div className="relative h-16 w-20 shrink-0 overflow-hidden bg-[var(--news-gray-200)] rounded-sm">
+                  <StoryImage
+                    article={article}
+                    alt={title}
+                    sizes="80px"
+                  />
+                </div>
+                <div className="min-w-0 flex-1 flex flex-col justify-between">
+                  <h4 className="line-clamp-2 text-xs sm:text-sm font-bold leading-snug text-[var(--news-ink)] transition-colors group-hover:text-[var(--news-red-700)]">
+                    {title}
+                  </h4>
+                  <span className="mt-1 text-[11px] text-[var(--news-soft)]">
+                    {formatDate(article.publishedAt, language)}
+                  </span>
+                </div>
+              </TransitionLink>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {/* "View All" Footer Link */}
+      <div className="mt-5 flex justify-end">
+        <TransitionLink
+          href="/latest"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[var(--news-red-700)] transition-all hover:text-[var(--news-red-hover)] hover:translate-x-1"
+        >
+          <span>{language === 'bn' ? 'সকল সর্বশেষ সংবাদ পড়ুন' : 'View all latest news'}</span>
+          <ArrowRight className="h-4 w-4" />
+        </TransitionLink>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   const { language } = useLanguage();
   const [customReels, setCustomReels] = useState<FbShort[]>(() => readReels());
@@ -523,6 +927,7 @@ export default function HomePage() {
   const featuredQuery = useFeaturedArticles();
   const menuCategoriesQuery = useMenuCategories();
   const layoutSettingsQuery = useLayoutSettings();
+  const adsEnabled = useAdsEnabled();
 
   useEffect(() => {
     let mounted = true;
@@ -660,12 +1065,12 @@ export default function HomePage() {
   }, [language, menuCategories, rankedStories]);
 
   return (
-    <div className="min-h-screen bg-[var(--news-page)]">
+    <div className="w-full bg-[var(--news-page)]">
       {breakingTicker.length > 0 ? (
-        <div className="border-y border-[var(--news-grid)] bg-[var(--news-ticker-bg)]">
-          <div className="mx-auto max-w-[1440px] px-4">
-            <div className="flex items-center gap-3 py-2.5">
-              <span className="inline-flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--news-ticker-live)]">
+        <div className="border-b border-[var(--news-grid)] bg-[var(--news-ticker-bg)] w-full">
+          <div className="w-full px-3 sm:px-4 md:px-6">
+            <div className="flex items-center gap-3 py-2 w-full">
+              <span className="inline-flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--news-ticker-live)] shrink-0">
                 <span className="h-2 w-2 rounded-full bg-[var(--news-red-500)]" />
                 {language === 'bn' ? 'লাইভ' : 'Live'}
               </span>
@@ -677,20 +1082,24 @@ export default function HomePage() {
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-[1440px] px-4 py-5 md:py-8">
+      <div className="mx-auto max-w-[1440px] px-3 sm:px-4 py-4 sm:py-6 md:py-8 w-full min-w-0 overflow-hidden">
         {latestQuery.isError || trendingQuery.isError ? (
           <div className="mb-6 border border-[var(--news-grid)] bg-white px-5 py-4 text-sm leading-6 text-[var(--news-muted)]">
             {handleApiError(latestQuery.error || trendingQuery.error)}
           </div>
         ) : null}
-        <section className="border-b border-[var(--news-grid)] pb-8 md:pb-10">
+        <section className="border-b border-[var(--news-grid)] pb-8 md:pb-10 w-full min-w-0 overflow-hidden">
           {carouselStories.length > 0 ? (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_410px]">
-              <HomepageLeadCarousel articles={carouselStories} language={language} />
-              <aside className="border-l-0 lg:border-l lg:border-[var(--news-grid)] lg:pl-6">
-                <div className="mb-7 bg-[var(--news-white)] p-2">
-                  <AdSlot slot="home_top_leaderboard" page="home" />
-                </div>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_410px] w-full min-w-0">
+              <div className="min-w-0 w-full overflow-hidden">
+                <HomepageLeadCarousel articles={carouselStories} language={language} />
+              </div>
+              <aside className="border-l-0 lg:border-l lg:border-[var(--news-grid)] lg:pl-6 min-w-0 w-full">
+                <AdSlot
+                  slot="home_top_leaderboard"
+                  page="home"
+                  containerClassName="mb-7 bg-[var(--news-white)] p-2"
+                />
                 <TopPickRail
                   articles={heroStack}
                   categoryName={topPickCandidates.categoryName}
@@ -714,6 +1123,12 @@ export default function HomePage() {
             (article): article is Article => Boolean(article),
           )}
           language={language}
+        />
+
+        <LatestNewsSection
+          articles={latestList}
+          language={language}
+          isLoading={latestQuery.isLoading}
         />
 
         <section className="news-perf-section grid gap-8 border-b border-[var(--news-grid)] py-8 md:py-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
@@ -771,9 +1186,11 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="mt-8 border border-[var(--news-grid)] bg-[var(--news-paper)] p-3">
-              <AdSlot slot="home_sidebar_tall" page="home" />
-            </div>
+              <AdSlot
+                slot="home_sidebar_tall"
+                page="home"
+                containerClassName="mt-8 border border-[var(--news-grid)] bg-[var(--news-paper)] p-3"
+              />
           </aside>
         </section>
 

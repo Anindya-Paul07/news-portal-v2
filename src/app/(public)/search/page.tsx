@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Filter, Search } from 'lucide-react';
-import { AdSlot } from '@/components/ads/AdSlot';
+import { AdSlot, useAdsEnabled } from '@/components/ads/AdSlot';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { useLanguage } from '@/contexts/language-context';
 import { useArticles, useMenuCategories, useSearchArticles } from '@/hooks/api-hooks';
@@ -32,6 +32,7 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { language } = useLanguage();
+  const adsEnabled = useAdsEnabled();
   const [term, setTerm] = useState(searchParams.get('query') || '');
   const [sort, setSort] = useState(searchParams.get('sort') || 'relevance');
   const category = searchParams.get('category') || undefined;
@@ -60,7 +61,7 @@ function SearchContent() {
   }, [term, sort, category, router, searchParams]);
 
   return (
-    <div className="min-h-screen bg-[var(--news-page)]">
+    <div className="w-full bg-[var(--news-page)]">
       <div className="border-b border-[var(--news-grid)] bg-[var(--news-paper)]">
         <div className="mx-auto max-w-[1440px] px-4 py-10 md:py-14">
           <div className="max-w-4xl">
@@ -202,9 +203,11 @@ function SearchContent() {
           </div>
 
           <aside className="space-y-6">
-            <div className="border border-[var(--news-grid)] bg-[var(--news-paper)] p-4">
-              <AdSlot position="sidebar" page="search" />
-            </div>
+            <AdSlot
+              position="sidebar"
+              page="search"
+              containerClassName="border border-[var(--news-grid)] bg-[var(--news-paper)] p-4"
+            />
 
             <div className="border border-[var(--news-grid)] bg-[var(--news-white)] p-5">
               <h3 className="news-section-title border-b border-[var(--news-grid)] pb-2">
@@ -243,7 +246,7 @@ function SearchContent() {
           </aside>
         </div>
         {isCategoriesError ? (
-          <div className="mt-6 border border-[var(--news-grid)] bg-white px-5 py-4 text-sm text-[var(--news-muted)]">
+          <div className="mt-6 border border-[var(--news-grid)] bg-[var(--news-white)] px-5 py-4 text-sm text-[var(--news-muted)]">
             {handleApiError(categoriesError)}
           </div>
         ) : null}

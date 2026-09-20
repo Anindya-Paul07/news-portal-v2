@@ -7,7 +7,7 @@ export default function CookiesPage() {
   const isBn = language === 'bn';
 
   return (
-    <main className="min-h-screen bg-[var(--news-page)]">
+    <main className="w-full bg-[var(--news-page)]">
       {/* Header */}
       <section className="border-b border-[var(--news-grid)] bg-[var(--news-paper)]">
         <div className="mx-auto max-w-[960px] px-4 py-12 md:py-16">

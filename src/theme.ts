@@ -177,7 +177,9 @@ export function getTheme(mode: PaletteMode): Theme {
         styleOverrides: {
           root: {
             boxShadow: 'none',
-            borderBottom: `2px solid ${base.palette.divider}`,
+            border: 'none',
+            borderTop: 'none',
+            borderBottom: 'none',
           },
           colorPrimary: {
             backgroundImage: 'none',
@@ -204,7 +206,7 @@ export function getTheme(mode: PaletteMode): Theme {
       MuiTabs: {
         styleOverrides: {
           root: {
-            borderBottom: `2px solid ${base.palette.divider}`,
+            borderBottom: 'none',
           },
           indicator: {
             height: 2,

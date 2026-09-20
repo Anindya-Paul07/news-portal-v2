@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Bookmark, Clock, PlayCircle, Share2, Video } from 'lucide-react';
-import { AdSlot } from '@/components/ads/AdSlot';
+import { AdSlot, useAdsEnabled } from '@/components/ads/AdSlot';
 import { EmptyState } from '@/components/states/EmptyState';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
 import { getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/components/news/FbShortsRail';
@@ -35,6 +35,7 @@ export default function YouTubeArticlePage() {
   const params = useParams<{ id: string }>();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const { language } = useLanguage();
+  const adsEnabled = useAdsEnabled();
   const [item, setItem] = useState<ReelItem | null>(null);
   const [related, setRelated] = useState<ReelItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +76,7 @@ export default function YouTubeArticlePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--news-page)]">
+    <div className="w-full bg-[var(--news-page)]">
       <div className="mx-auto max-w-[1200px] px-4 py-8 lg:py-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
           <main className="lg:col-span-8">
@@ -90,28 +91,28 @@ export default function YouTubeArticlePage() {
                   </span>
                 </div>
 
-                <h1 className="[font-family:var(--font-serif)] text-3xl font-bold leading-tight text-[var(--news-ink)] md:text-5xl">
+                <h1 className="[font-family:var(--font-serif)] text-2xl sm:text-3xl md:text-[2.25rem] font-bold leading-[1.25] text-[var(--news-ink)]">
                   {item.title}
                 </h1>
 
                 {item.description ? (
-                  <p className="mt-5 border-l-4 border-[var(--news-red-700)] bg-[var(--news-offwhite)] py-3 pl-4 pr-3 text-lg leading-8 text-[var(--news-gray-600)]">
+                  <p className="mt-5 border-l-4 border-[var(--news-red-700)] bg-[var(--news-paper)] py-3 pl-4 pr-3 text-lg leading-8 text-[var(--news-ink)]">
                     {item.description}
                   </p>
                 ) : null}
 
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-[var(--news-gray-200)] py-4">
-                  <div className="flex items-center gap-2 text-sm text-[var(--news-darkgray)]">
-                    <Clock size={16} className="text-[var(--news-gray-400)]" />
+                  <div className="flex items-center gap-2 text-sm text-[var(--news-ink)]">
+                    <Clock size={16} className="text-[var(--news-soft)]" />
                     <span>{item.updatedAt ? formatDate(item.updatedAt, language) : ''}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold text-[var(--news-gray-600)] transition-colors hover:bg-[var(--news-red-50)] hover:text-[var(--news-red-700)]">
+                    <button className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold text-[var(--news-muted)] transition-colors hover:bg-[var(--news-red-700)] hover:!text-white">
                       <Share2 size={16} />
                       <span className="hidden sm:inline">Share</span>
                     </button>
-                    <button className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold text-[var(--news-gray-600)] transition-colors hover:bg-[var(--news-red-50)] hover:text-[var(--news-red-700)]">
+                    <button className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold text-[var(--news-muted)] transition-colors hover:bg-[var(--news-red-700)] hover:!text-white">
                       <Bookmark size={16} />
                       <span className="hidden sm:inline">Save</span>
                     </button>
@@ -136,13 +137,13 @@ export default function YouTubeArticlePage() {
               </div>
 
               {item.description ? (
-                <div className="prose prose-lg max-w-none font-serif text-[var(--news-ink)] prose-p:text-lg prose-p:leading-8">
+                <div className="prose prose-lg dark:prose-invert max-w-none font-serif text-[var(--news-ink)] prose-p:text-lg prose-p:leading-8">
                   <p>{item.description}</p>
                 </div>
               ) : null}
 
               <div className="my-10 border-t border-[var(--news-gray-200)] pt-8">
-                <h2 className="mb-5 text-xl font-extrabold text-[var(--news-mahogany)]">
+                <h2 className="mb-5 text-xl font-extrabold text-[var(--news-red-700)] dark:text-[#f87171]">
                   {language === 'bn' ? 'সম্পর্কিত' : 'Related'}
                 </h2>
                 <div className="grid gap-5 md:grid-cols-2">
@@ -166,11 +167,9 @@ export default function YouTubeArticlePage() {
 
           <aside className="lg:col-span-4 lg:border-l lg:border-[var(--news-gray-200)] lg:pl-8">
             <div className="sticky top-24">
-              <div className="mb-8">
-                <AdSlot slot="article_sidebar_tall" page="article" />
-              </div>
+              <AdSlot slot="article_sidebar_tall" page="article" containerClassName="mb-8" />
 
-              <div className="border-t-4 border-[var(--news-red-700)] bg-[var(--news-offwhite)] p-6">
+              <div className="border-t-4 border-[var(--news-red-700)] bg-[var(--news-paper)] p-6">
                 <h3 className="mb-6 text-lg font-bold uppercase tracking-wide text-[var(--news-red-700)]">
                   {language === 'bn' ? 'আরও ভিডিও' : 'More video'}
                 </h3>

@@ -173,7 +173,11 @@ export default function MediaPage() {
                 <Input label="Alt text (BN)" value={altBn} onChange={(e) => setAltBn(e.target.value)} />
               </Grid>
             </Grid>
-            <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            <input 
+              type="file" 
+              accept="image/*,image/webp,image/avif,.webp,.avif,.png,.jpg,.jpeg,.gif,.svg,.bmp,.ico,video/*,application/pdf" 
+              onChange={(e) => setFile(e.target.files?.[0] || null)} 
+            />
             <Button 
               type="submit" 
               sx={{ 
@@ -338,12 +342,15 @@ function MediaItemCard({ item, onUpdate, onDelete, onUse }: MediaItemCardProps) 
             size="small"
             variant="outline"
             sx={{
-              color: 'error.main',
-              borderColor: 'error.main',
-              backgroundColor: 'rgba(0,0,0,0.35)',
+              color: '#ffffff',
+              borderColor: (theme) => theme.palette.mode === 'dark' ? '#ff6b81' : '#e21837',
+              backgroundColor: 'rgba(0,0,0,0.45)',
+              fontWeight: 700,
+              textShadow: '0 1px 2px rgba(0,0,0,0.9)',
               '&:hover': {
-                borderColor: 'error.dark',
-                backgroundColor: 'rgba(211,47,47,0.16)',
+                borderColor: (theme) => theme.palette.mode === 'dark' ? '#ff8595' : '#ff4d4f',
+                backgroundColor: 'rgba(226,24,55,0.25)',
+                color: '#ffffff',
               },
             }}
             onClick={handleDelete}

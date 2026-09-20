@@ -1,9 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Hind_Siliguri, Noto_Serif_Bengali, Playfair_Display, Work_Sans } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import "./globals.css";
 import "swiper/css";
 import { Providers } from "./providers";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 const playfair = Playfair_Display({
   variable: "--font-serif",
@@ -77,7 +83,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${playfair.variable} ${workSans.variable} ${bengaliSans.variable} ${bengaliSerif.variable} antialiased bg-[var(--color-surface)] text-[var(--color-ink)]`}
+        className={`${playfair.variable} ${workSans.variable} ${bengaliSans.variable} ${bengaliSerif.variable} antialiased bg-[var(--news-page)] text-[var(--news-ink)]`}
       >
         <AppRouterCacheProvider>
           <Providers>{children}</Providers>

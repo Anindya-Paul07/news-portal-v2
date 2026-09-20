@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useMemo, useEffect, useState } from 'react';
 import { Share2, Bookmark, Clock, User, ArrowRight, Mail } from 'lucide-react';
-import { AdSlot } from '@/components/ads/AdSlot';
+import { AdSlot, useAdsEnabled } from '@/components/ads/AdSlot';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useArticle, useRelatedArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
@@ -35,6 +35,7 @@ export default function ArticlePage() {
   const relatedQuery = useRelatedArticles(article?.id);
   const related = relatedQuery.data;
   const { language } = useLanguage();
+  const adsEnabled = useAdsEnabled();
   
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -111,7 +112,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="bg-[var(--news-page)] min-h-screen relative">
+    <div className="bg-[var(--news-page)] w-full relative">
       {/* Reading Progress Bar (Red) */}
       <div className="fixed top-0 left-0 h-1 bg-[var(--news-red-700)] z-50 transition-all duration-100 ease-out" style={{ width: `${scrollProgress * 100}%` }} />
 
@@ -133,40 +134,40 @@ export default function ArticlePage() {
                   </TransitionLink>
                 </div>
 
-                <h1 className="font-['var(--font-playfair)'] text-[var(--news-ink)] text-3xl md:text-5xl font-bold leading-tight mb-4">
+                <h1 className="font-['var(--font-playfair)'] text-[var(--news-ink)] text-2xl sm:text-3xl md:text-[2.25rem] lg:text-[2.5rem] font-bold leading-[1.25] mb-4">
                   {title}
                 </h1>
 
                 {summary && (
                   <div 
-                    className="font-['var(--font-work-sans)'] text-[var(--news-gray-600)] text-lg md:text-xl leading-relaxed mb-6 border-l-4 border-[var(--news-red-700)] pl-4 bg-[var(--news-offwhite)] py-2 pr-2 [&>p]:m-0"
+                    className="font-['var(--font-work-sans)'] text-[var(--news-ink)] text-lg md:text-xl leading-relaxed mb-6 border-l-4 border-[var(--news-red-700)] pl-4 bg-[var(--news-paper)] py-3 pr-3 [&>p]:m-0"
                     dangerouslySetInnerHTML={{ __html: summary }}
                   />
                 )}
 
                 {/* Meta Data Row */}
                 <div className="flex flex-wrap items-center justify-between border-y border-[var(--news-gray-200)] py-4 gap-4">
-                  <div className="flex flex-col md:flex-row md:items-center gap-y-2 gap-x-6 text-sm text-[var(--news-darkgray)] font-['var(--font-work-sans)']">
+                  <div className="flex flex-col md:flex-row md:items-center gap-y-2 gap-x-6 text-sm text-[var(--news-ink)] font-['var(--font-work-sans)']">
                     {displayArticle.author?.name && (
                       <div className="flex items-center gap-2 font-bold group">
-                        <div className="p-1 bg-[var(--news-red-100)] rounded-full group-hover:bg-[var(--news-red-200)] transition-colors">
+                        <div className="p-1 bg-[var(--news-red-100)] dark:bg-[var(--news-red-900)] rounded-full group-hover:bg-[var(--news-red-200)] transition-colors">
                             <User size={14} className="text-[var(--news-red-700)]" />
                         </div>
                         <span className="group-hover:text-[var(--news-red-700)] transition-colors">By {displayArticle.author.name}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                       <Clock size={16} className="text-[var(--news-gray-400)]" />
+                       <Clock size={16} className="text-[var(--news-soft)]" />
                        <span>{displayArticle.publishedAt ? formatDate(displayArticle.publishedAt) : ''}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-[var(--news-red-50)] text-[var(--news-gray-600)] hover:text-[var(--news-red-700)] transition-colors text-sm font-bold group">
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-[var(--news-red-700)] text-[var(--news-muted)] hover:!text-white transition-colors text-sm font-bold group">
                       <Share2 size={16} />
                       <span className="hidden sm:inline">Share</span>
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-[var(--news-red-50)] text-[var(--news-gray-600)] hover:text-[var(--news-red-700)] transition-colors text-sm font-bold">
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-[var(--news-red-700)] text-[var(--news-muted)] hover:!text-white transition-colors text-sm font-bold">
                       <Bookmark size={16} />
                       <span className="hidden sm:inline">Save</span>
                     </button>
@@ -198,13 +199,13 @@ export default function ArticlePage() {
 
               {/* Article Body */}
               <div 
-                className="prose prose-lg max-w-none 
+                className="prose prose-lg dark:prose-invert max-w-none 
                   prose-headings:font-['var(--font-playfair)'] prose-headings:font-bold prose-headings:text-[var(--news-ink)]
-                  prose-p:font-['Georgia'] prose-p:text-[var(--news-darkgray)] prose-p:text-lg prose-p:leading-8 prose-p:mb-6
-                  prose-a:text-[var(--news-red-700)] prose-a:font-bold prose-a:no-underline prose-a:border-b-2 prose-a:border-[var(--news-red-200)] hover:prose-a:border-[var(--news-red-700)] hover:prose-a:bg-[var(--news-red-50)] prose-a:transition-all
-                  prose-blockquote:border-l-4 prose-blockquote:border-[var(--news-red-700)] prose-blockquote:bg-[var(--news-offwhite)] prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:my-8 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:font-['var(--font-playfair)'] prose-blockquote:text-xl prose-blockquote:text-[var(--news-ink)]
+                  prose-p:font-['Georgia'] prose-p:text-[var(--news-ink)] prose-p:text-lg prose-p:leading-8 prose-p:mb-6
+                  prose-a:text-[var(--news-red-700)] dark:prose-a:text-[#f87171] prose-a:font-bold prose-a:no-underline prose-a:border-b-2 prose-a:border-[var(--news-red-200)] hover:prose-a:border-[var(--news-red-700)] hover:prose-a:bg-[var(--news-red-50)] prose-a:transition-all
+                  prose-blockquote:border-l-4 prose-blockquote:border-[var(--news-red-700)] prose-blockquote:bg-[var(--news-paper)] prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:my-8 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:font-['var(--font-playfair)'] prose-blockquote:text-xl prose-blockquote:text-[var(--news-ink)]
                   prose-img:rounded-sm prose-img:w-full prose-img:shadow-md
-                  prose-strong:text-[var(--news-red-700)]
+                  prose-strong:text-[var(--news-red-700)] dark:prose-strong:text-[#f87171]
                   font-serif text-[var(--news-ink)]"
                 dangerouslySetInnerHTML={{ __html: bodyHtml }}
               />
@@ -230,10 +231,12 @@ export default function ArticlePage() {
               */}
 
               {/* In-content Ad */}
-              <div className="my-8 py-8 border-t border-[var(--news-gray-200)] text-center">
-                 <span className="text-xs text-[var(--news-gray-400)] uppercase tracking-widest mb-2 block">Advertisement</span>
-                 <AdSlot slot="article_inline_wide" page="article" categoryId={displayArticle.category?.id || displayArticle.categoryId} />
-              </div>
+              <AdSlot
+                slot="article_inline_wide"
+                page="article"
+                categoryId={displayArticle.category?.id || displayArticle.categoryId}
+                containerClassName="my-8 py-8 border-t border-[var(--news-gray-200)] text-center"
+              />
 
             </article>
           </main>
@@ -242,7 +245,7 @@ export default function ArticlePage() {
           <aside className="lg:col-span-4 lg:pl-8 lg:border-l border-[var(--news-gray-200)]">
              <div className="sticky top-24">
                 {/* Related Stories */}
-                <div className="mb-8 p-6 bg-[var(--news-offwhite)] border-t-4 border-[var(--news-red-700)]">
+                <div className="mb-8 p-6 bg-[var(--news-paper)] border-t-4 border-[var(--news-red-700)]">
                   <div className="flex items-center gap-2 mb-6">
                     <h3 className="font-['var(--font-work-sans)'] font-bold text-lg uppercase tracking-wide text-[var(--news-red-700)]">
                       Related Stories
@@ -266,22 +269,25 @@ export default function ArticlePage() {
                              <h4 className="font-['var(--font-work-sans)'] font-bold text-sm leading-snug text-[var(--news-ink)] group-hover:text-[var(--news-red-700)] transition-colors line-clamp-3">
                                {getLocalizedText(story.title, language)}
                              </h4>
-                             <span className="text-xs text-[var(--news-gray-500)] mt-1 block group-hover:text-[var(--news-red-400)]">
+                             <span className="text-xs text-[var(--news-soft)] mt-1 block group-hover:text-[var(--news-red-400)]">
                                {story.publishedAt ? formatDate(story.publishedAt) : ''}
                              </span>
                           </div>
                         </TransitionLink>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">No related stories found.</p>
+                      <p className="text-sm text-[var(--news-muted)]">No related stories found.</p>
                     )}
                   </div>
                 </div>
 
                 {/* Sidebar Ad */}
-                <div className="mb-8">
-                  <AdSlot slot="article_sidebar_tall" page="article" categoryId={displayArticle.category?.id || displayArticle.categoryId} />
-                </div>
+                <AdSlot
+                  slot="article_sidebar_tall"
+                  page="article"
+                  categoryId={displayArticle.category?.id || displayArticle.categoryId}
+                  containerClassName="mb-8"
+                />
                 
                 {/* Explore Categories */}
                 <div className="p-6 border border-[var(--news-gray-200)]">
@@ -293,7 +299,7 @@ export default function ArticlePage() {
                         <TransitionLink 
                           key={cat}
                           href={`/category/${cat.toLowerCase()}`} 
-                          className="px-3 py-1 bg-[var(--news-white)] border border-[var(--news-gray-300)] text-xs font-bold text-[var(--news-ink)] hover:border-[var(--news-red-700)] hover:bg-[var(--news-red-700)] hover:text-white transition-all duration-300 uppercase"
+                          className="news-topic-pill uppercase"
                         >
                           {cat}
                         </TransitionLink>
@@ -305,9 +311,12 @@ export default function ArticlePage() {
           </aside>
         </div>
 
-        <div className="mt-10 border-t border-[var(--news-gray-200)] pt-8">
-          <AdSlot slot="article_footer_banner" page="article" categoryId={displayArticle.category?.id || displayArticle.categoryId} />
-        </div>
+        <AdSlot
+          slot="article_footer_banner"
+          page="article"
+          categoryId={displayArticle.category?.id || displayArticle.categoryId}
+          containerClassName="mt-10 border-t border-[var(--news-gray-200)] pt-8"
+        />
       </div>
     </div>
   );

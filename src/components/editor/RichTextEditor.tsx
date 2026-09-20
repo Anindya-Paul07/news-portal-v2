@@ -130,12 +130,15 @@ export function RichTextEditor({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        showAlert('Please select an image file', 'error');
+      const isImage =
+        file.type.startsWith('image/') ||
+        /\.(jpe?g|png|webp|avif|gif|svg|bmp|tiff?|ico|heic|heif|apng)$/i.test(file.name);
+      if (!isImage) {
+        showAlert('Please select a valid image file (JPEG, PNG, WEBP, AVIF, GIF, SVG, etc.)', 'error');
         return;
       }
-      if (file.size > 5 * 1024 * 1024) { // 5MB
-        showAlert('Image must be less than 5MB', 'error');
+      if (file.size > 20 * 1024 * 1024) { // 20MB
+        showAlert('Image must be less than 20MB', 'error');
         return;
       }
       handleImageUpload(file);
@@ -157,7 +160,7 @@ export function RichTextEditor({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,image/webp,image/avif,.webp,.avif,.png,.jpg,.jpeg,.gif,.svg,.bmp,.ico"
         className="hidden"
         onChange={handleFileChange}
       />

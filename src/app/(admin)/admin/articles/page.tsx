@@ -480,7 +480,7 @@ export default function ArticlesPage() {
                         </span>
                         <input 
                           type="file" 
-                          accept="image/*" 
+                          accept="image/*,image/webp,image/avif,.webp,.avif,.png,.jpg,.jpeg,.gif,.svg,.bmp,.ico" 
                           onChange={handleImageUpload} 
                           disabled={uploadMutation.isPending}
                           className="hidden" 
@@ -504,19 +504,31 @@ export default function ArticlesPage() {
                       value={draft.imageUrl} 
                       onChange={(e) => setDraft({ ...draft, imageUrl: e.target.value })} 
                       className="w-full px-3 py-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-sm focus:outline-none focus:border-[var(--newsos-accent-primary)]" 
-                      placeholder="/uploads/image.jpg" 
+                      placeholder="/uploads/image.webp or https://example.com/image.avif" 
                     />
 
                     {draft.imageUrl && (
-                      <div className="relative w-full aspect-video rounded-sm overflow-hidden border border-[var(--newsos-border-default)] bg-[var(--newsos-bg-secondary)]">
+                      <div className="relative w-full aspect-video rounded-sm overflow-hidden border border-[var(--newsos-border-default)] bg-[var(--newsos-bg-secondary)] flex items-center justify-center">
                         <img 
+                          key={draft.imageUrl}
                           src={resolveMediaUrl(draft.imageUrl)} 
                           alt="Preview" 
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
+                            const fallback = e.currentTarget.parentElement?.querySelector('.img-error-fallback');
+                            if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                          }}
+                          onLoad={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'block';
+                            const fallback = e.currentTarget.parentElement?.querySelector('.img-error-fallback');
+                            if (fallback) (fallback as HTMLElement).style.display = 'none';
                           }}
                         />
+                        <div className="img-error-fallback hidden text-xs text-[var(--newsos-text-tertiary)] flex-col items-center gap-1 p-4 text-center">
+                          <span>Preview unavailable for this image URL</span>
+                          <span className="text-[10px] break-all opacity-75">{draft.imageUrl}</span>
+                        </div>
                       </div>
                     )}
                   </div>

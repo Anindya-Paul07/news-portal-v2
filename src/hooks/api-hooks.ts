@@ -89,6 +89,19 @@ export const useArticles = (
     enabled: options?.enabled ?? true,
   });
 
+export const usePaginatedArticles = (
+  params?: Record<string, string | number | boolean | undefined>,
+  options?: { enabled?: boolean },
+) =>
+  useQuery({
+    queryKey: ['articles', 'paginated', params],
+    queryFn: async (): Promise<{ articles: Article[]; pagination?: Pagination }> => {
+      const response = await apiClient.get<ApiResponse<Article[]>>(`/articles${buildQuery(params)}`);
+      return { articles: response.data, pagination: response.pagination };
+    },
+    enabled: options?.enabled ?? true,
+  });
+
 export const useArticle = (identifier: string) =>
   useQuery({
     enabled: !!identifier,

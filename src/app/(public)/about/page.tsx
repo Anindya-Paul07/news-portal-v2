@@ -7,7 +7,7 @@ export default function AboutPage() {
   const isBn = language === 'bn';
 
   return (
-    <main className="min-h-screen bg-[var(--news-page)]">
+    <main className="w-full bg-[var(--news-page)]">
 
       {/* Hero Header */}
       <section className="border-b border-[var(--news-grid)] bg-[var(--news-paper)]">
