@@ -1,5 +1,6 @@
 'use client';
 
+import { getAuthorRoleLabel } from '@/lib/author-role';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Clock } from 'lucide-react';
@@ -187,7 +188,7 @@ function CategoryLead({ article, categoryName }: { article: Article; categoryNam
               <Clock className="h-3.5 w-3.5" />
               {article.publishedAt ? formatDate(article.publishedAt, language) : 'Recent'}
             </span>
-            {article.author?.name ? <span>{article.author.name}</span> : null}
+            <span>{getAuthorRoleLabel(article.author?.role, language)}</span>
           </div>
         </div>
       </TransitionLink>

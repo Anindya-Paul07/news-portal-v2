@@ -1,5 +1,6 @@
 'use client';
 
+import { getAuthorRoleLabel } from '@/lib/author-role';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -825,11 +826,9 @@ function LatestNewsSection({
               <Clock className="h-3.5 w-3.5 text-[var(--news-red-700)]" />
               <span>{formatDate(leadStory.publishedAt, language)}</span>
             </div>
-            {leadStory.author?.name ? (
-              <span className="truncate max-w-[150px] font-medium text-[var(--news-muted)]">
-                {leadStory.author.name}
-              </span>
-            ) : null}
+            <span className="truncate max-w-[150px] font-medium text-[var(--news-muted)]">
+              {getAuthorRoleLabel(leadStory.author?.role, language)}
+            </span>
           </div>
         </TransitionLink>
 

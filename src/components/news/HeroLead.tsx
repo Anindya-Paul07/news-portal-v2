@@ -1,3 +1,4 @@
+import { getAuthorRoleLabel } from '@/lib/author-role';
 import Image from 'next/image';
 import Link from 'next/link';
 import Card from '@mui/material/Card';
@@ -55,7 +56,7 @@ export function HeroLead({ article }: { article: Article }) {
                 <Typography component="div" variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.6, '& > p': { m: 0 } }} dangerouslySetInnerHTML={{ __html: summary }} />
               )}
               <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ color: 'text.secondary', fontSize: 14 }}>
-                <span>{article.author?.name || 'Staff Desk'}</span>
+                <span>{getAuthorRoleLabel(article.author?.role, language)}</span>
                 {article.publishedAt && <span>• {formatDate(article.publishedAt)}</span>}
                 {readTime && <span>• {readTime} min read</span>}
               </Stack>

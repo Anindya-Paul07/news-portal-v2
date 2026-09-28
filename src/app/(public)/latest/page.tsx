@@ -1,5 +1,6 @@
 'use client';
 
+import { getAuthorRoleLabel } from '@/lib/author-role';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { Clock, ChevronDown, RefreshCw, Newspaper, ArrowRight, Youtube, Play } from 'lucide-react';
@@ -193,9 +194,7 @@ export default function LatestNewsPage() {
                         {leadStory.readTime && (
                           <span>• {language === 'bn' ? `${leadStory.readTime} মিনিট পড়া` : `${leadStory.readTime} min read`}</span>
                         )}
-                        {leadStory.author?.name && (
-                          <span>• {leadStory.author.name}</span>
-                        )}
+                        <span>• {getAuthorRoleLabel(leadStory.author?.role, language)}</span>
                       </div>
                     </div>
                   </TransitionLink>

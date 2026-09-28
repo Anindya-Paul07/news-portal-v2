@@ -1,5 +1,6 @@
 'use client';
 
+import { getAuthorRoleLabel } from '@/lib/author-role';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useMemo, useEffect, useState } from 'react';
@@ -11,14 +12,6 @@ import { useLanguage } from '@/contexts/language-context';
 import { handleApiError } from '@/lib/query-config';
 import { formatDate, getLocalizedText, normalizeRichText, resolveMediaUrl, resolveRichTextMedia } from '@/lib/utils';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
-import type { Role } from '@/lib/types';
-
-const authorRoleLabels: Record<Role, { en: string; bn: string }> = {
-  super_admin: { en: 'Super Admin', bn: 'সুপার অ্যাডমিন' },
-  admin: { en: 'Admin', bn: 'অ্যাডমিন' },
-  editorial: { en: 'Editorial', bn: 'সম্পাদনা বিভাগ' },
-};
-
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * 🔴 THE RED WIRE - ARTICLE READER (BBC/CNN Professional Design)
@@ -58,11 +51,7 @@ export default function ArticlePage() {
   }, []);
 
   const displayArticle = article;
-  const authorRole = displayArticle?.author?.role;
-  const authorRoleLabel = getLocalizedText(
-    (authorRole && authorRoleLabels[authorRole]) || { en: 'News Desk', bn: 'নিউজ ডেস্ক' },
-    language,
-  );
+  const authorRoleLabel = getAuthorRoleLabel(displayArticle?.author?.role, language);
   const relatedStories =
     related && related.length > 0 && displayArticle
       ? related.filter((item) => item.id !== displayArticle.id).slice(0, 4)
