@@ -126,8 +126,8 @@
   --newsos-statusbar-text: #5B534F;
 
   /* ─── Fonts ─── */
-  --font-sans: var(--font-work-sans), var(--font-bengali-sans), "Noto Sans Bengali", "Hind Siliguri", "Noto Sans", system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-playfair), var(--font-bengali-serif), "Noto Serif Bengali", "Noto Serif Bengali UI", Georgia, serif;
+  --font-sans: var(--font-work-sans), var(--font-solaimanlipi), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-playfair), var(--font-solaimanlipi), Georgia, serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -283,8 +283,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-work-sans), var(--font-bengali-sans), "Noto Sans Bengali", "Hind Siliguri", "Noto Sans", system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-playfair), var(--font-bengali-serif), "Noto Serif Bengali", "Noto Serif Bengali UI", Georgia, serif;
+  --font-sans: var(--font-work-sans), var(--font-solaimanlipi), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-playfair), var(--font-solaimanlipi), Georgia, serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

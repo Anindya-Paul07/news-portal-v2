@@ -3,14 +3,21 @@
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useMemo, useEffect, useState } from 'react';
-import { Share2, Bookmark, Clock, User, ArrowRight, Mail } from 'lucide-react';
-import { AdSlot, useAdsEnabled } from '@/components/ads/AdSlot';
+import { Share2, Bookmark, Clock, ArrowRight } from 'lucide-react';
+import { AdSlot } from '@/components/ads/AdSlot';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useArticle, useRelatedArticles } from '@/hooks/api-hooks';
 import { useLanguage } from '@/contexts/language-context';
 import { handleApiError } from '@/lib/query-config';
 import { formatDate, getLocalizedText, normalizeRichText, resolveMediaUrl, resolveRichTextMedia } from '@/lib/utils';
 import { TransitionLink } from '@/components/navigation/TransitionLink';
+import type { Role } from '@/lib/types';
+
+const authorRoleLabels: Record<Role, { en: string; bn: string }> = {
+  super_admin: { en: 'Super Admin', bn: 'সুপার অ্যাডমিন' },
+  admin: { en: 'Admin', bn: 'অ্যাডমিন' },
+  editorial: { en: 'Editorial', bn: 'সম্পাদনা বিভাগ' },
+};
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -35,7 +42,6 @@ export default function ArticlePage() {
   const relatedQuery = useRelatedArticles(article?.id);
   const related = relatedQuery.data;
   const { language } = useLanguage();
-  const adsEnabled = useAdsEnabled();
   
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -52,6 +58,11 @@ export default function ArticlePage() {
   }, []);
 
   const displayArticle = article;
+  const authorRole = displayArticle?.author?.role;
+  const authorRoleLabel = getLocalizedText(
+    (authorRole && authorRoleLabels[authorRole]) || { en: 'News Desk', bn: 'নিউজ ডেস্ক' },
+    language,
+  );
   const relatedStories =
     related && related.length > 0 && displayArticle
       ? related.filter((item) => item.id !== displayArticle.id).slice(0, 4)
@@ -128,34 +139,38 @@ export default function ArticlePage() {
                   <span className="w-2 h-2 bg-[var(--news-red-700)] rounded-full animate-pulse"></span>
                   <TransitionLink 
                     href={getCategoryLink()}
-                    className="font-['var(--font-work-sans)'] text-[var(--news-red-700)] text-sm font-bold uppercase tracking-wider hover:underline"
+                    className="font-sans text-[var(--news-red-700)] text-sm font-bold uppercase tracking-wider hover:underline"
                   >
                     {categoryLabel}
                   </TransitionLink>
                 </div>
 
-                <h1 className="font-['var(--font-playfair)'] text-[var(--news-ink)] text-2xl sm:text-3xl md:text-[2.25rem] lg:text-[2.5rem] font-bold leading-[1.25] mb-4">
+                <h1 className="font-serif text-[var(--news-ink)] text-2xl sm:text-3xl md:text-[2.25rem] lg:text-[2.5rem] font-bold leading-[1.25] mb-4">
                   {title}
                 </h1>
 
                 {summary && (
                   <div 
-                    className="font-['var(--font-work-sans)'] text-[var(--news-ink)] text-lg md:text-xl leading-relaxed mb-6 border-l-4 border-[var(--news-red-700)] pl-4 bg-[var(--news-paper)] py-3 pr-3 [&>p]:m-0"
+                    className="font-sans text-[var(--news-ink)] text-lg md:text-xl leading-relaxed mb-6 border-l-4 border-[var(--news-red-700)] pl-4 bg-[var(--news-paper)] py-3 pr-3 [&>p]:m-0"
                     dangerouslySetInnerHTML={{ __html: summary }}
                   />
                 )}
 
                 {/* Meta Data Row */}
                 <div className="flex flex-wrap items-center justify-between border-y border-[var(--news-gray-200)] py-4 gap-4">
-                  <div className="flex flex-col md:flex-row md:items-center gap-y-2 gap-x-6 text-sm text-[var(--news-ink)] font-['var(--font-work-sans)']">
-                    {displayArticle.author?.name && (
-                      <div className="flex items-center gap-2 font-bold group">
-                        <div className="p-1 bg-[var(--news-red-100)] dark:bg-[var(--news-red-900)] rounded-full group-hover:bg-[var(--news-red-200)] transition-colors">
-                            <User size={14} className="text-[var(--news-red-700)]" />
-                        </div>
-                        <span className="group-hover:text-[var(--news-red-700)] transition-colors">By {displayArticle.author.name}</span>
+                  <div className="flex flex-col gap-4 text-sm text-[var(--news-ink)] font-sans">
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--news-gray-200)] bg-white p-2 shadow-sm">
+                        <Image
+                          src="/logo.png"
+                          alt="The Contemporary"
+                          width={40}
+                          height={40}
+                          className="size-10 object-contain"
+                        />
                       </div>
-                    )}
+                      <span className="text-base font-bold sm:text-lg">{authorRoleLabel}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                        <Clock size={16} className="text-[var(--news-soft)]" />
                        <span>{displayArticle.publishedAt ? formatDate(displayArticle.publishedAt) : ''}</span>
@@ -189,7 +204,7 @@ export default function ArticlePage() {
                   />
                   {displayArticle.featuredImage?.caption && (
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
-                       <p className="text-white text-xs md:text-sm font-['var(--font-work-sans)']">
+                       <p className="text-white text-xs md:text-sm font-sans">
                          {getLocalizedText(displayArticle.featuredImage.caption, language)}
                        </p>
                     </div>
@@ -200,10 +215,10 @@ export default function ArticlePage() {
               {/* Article Body */}
               <div 
                 className="prose prose-lg dark:prose-invert max-w-none 
-                  prose-headings:font-['var(--font-playfair)'] prose-headings:font-bold prose-headings:text-[var(--news-ink)]
-                  prose-p:font-['Georgia'] prose-p:text-[var(--news-ink)] prose-p:text-lg prose-p:leading-8 prose-p:mb-6
+                  prose-headings:font-serif prose-headings:font-bold prose-headings:text-[var(--news-ink)]
+                  prose-p:[font-family:Georgia,var(--font-solaimanlipi),serif] prose-p:text-[var(--news-ink)] prose-p:text-lg prose-p:leading-8 prose-p:mb-6
                   prose-a:text-[var(--news-red-700)] dark:prose-a:text-[#f87171] prose-a:font-bold prose-a:no-underline prose-a:border-b-2 prose-a:border-[var(--news-red-200)] hover:prose-a:border-[var(--news-red-700)] hover:prose-a:bg-[var(--news-red-50)] prose-a:transition-all
-                  prose-blockquote:border-l-4 prose-blockquote:border-[var(--news-red-700)] prose-blockquote:bg-[var(--news-paper)] prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:my-8 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:font-['var(--font-playfair)'] prose-blockquote:text-xl prose-blockquote:text-[var(--news-ink)]
+                  prose-blockquote:border-l-4 prose-blockquote:border-[var(--news-red-700)] prose-blockquote:bg-[var(--news-paper)] prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:my-8 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:font-serif prose-blockquote:text-xl prose-blockquote:text-[var(--news-ink)]
                   prose-img:rounded-sm prose-img:w-full prose-img:shadow-md
                   prose-strong:text-[var(--news-red-700)] dark:prose-strong:text-[#f87171]
                   font-serif text-[var(--news-ink)]"
@@ -213,8 +228,8 @@ export default function ArticlePage() {
               {/* Newsletter Callout commented out at client request
               <div className="my-10 p-8 bg-[var(--news-red-700)] text-white rounded-sm text-center">
                   <Mail className="w-8 h-8 mx-auto mb-4 text-white/80" />
-                  <h3 className="font-['var(--font-playfair)'] text-2xl font-bold mb-2">Get the Red Wire</h3>
-                  <p className="font-['var(--font-work-sans)'] text-white/80 mb-6 max-w-md mx-auto">
+                  <h3 className="font-serif text-2xl font-bold mb-2">Get the Red Wire</h3>
+                  <p className="font-sans text-white/80 mb-6 max-w-md mx-auto">
                     Essential news, expert analysis, and exclusive content delivered straight to your inbox.
                   </p>
                   <div className="flex max-w-sm mx-auto gap-2">
@@ -247,7 +262,7 @@ export default function ArticlePage() {
                 {/* Related Stories */}
                 <div className="mb-8 p-6 bg-[var(--news-paper)] border-t-4 border-[var(--news-red-700)]">
                   <div className="flex items-center gap-2 mb-6">
-                    <h3 className="font-['var(--font-work-sans)'] font-bold text-lg uppercase tracking-wide text-[var(--news-red-700)]">
+                    <h3 className="font-sans font-bold text-lg uppercase tracking-wide text-[var(--news-red-700)]">
                       Related Stories
                     </h3>
                   </div>
@@ -266,7 +281,7 @@ export default function ArticlePage() {
                              <ArrowRight size={16} className="text-[var(--news-red-700)] -ml-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1" />
                           </div>
                           <div>
-                             <h4 className="font-['var(--font-work-sans)'] font-bold text-sm leading-snug text-[var(--news-ink)] group-hover:text-[var(--news-red-700)] transition-colors line-clamp-3">
+                             <h4 className="font-sans font-bold text-sm leading-snug text-[var(--news-ink)] group-hover:text-[var(--news-red-700)] transition-colors line-clamp-3">
                                {getLocalizedText(story.title, language)}
                              </h4>
                              <span className="text-xs text-[var(--news-soft)] mt-1 block group-hover:text-[var(--news-red-400)]">
@@ -291,7 +306,7 @@ export default function ArticlePage() {
                 
                 {/* Explore Categories */}
                 <div className="p-6 border border-[var(--news-gray-200)]">
-                   <h3 className="font-['var(--font-work-sans)'] font-bold text-sm uppercase tracking-wide mb-4 text-[var(--news-ink)]">
+                   <h3 className="font-sans font-bold text-sm uppercase tracking-wide mb-4 text-[var(--news-ink)]">
                      Explore More
                    </h3>
                    <div className="flex flex-wrap gap-2">

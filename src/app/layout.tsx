@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Hind_Siliguri, Noto_Serif_Bengali, Playfair_Display, Work_Sans } from "next/font/google";
+import { Playfair_Display, Work_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import "./globals.css";
 import "swiper/css";
@@ -12,31 +13,27 @@ export const viewport: Viewport = {
 };
 
 const playfair = Playfair_Display({
-  variable: "--font-serif",
+  variable: "--font-playfair",
   subsets: ["latin"],
   display: "swap",
   weight: ["600", "700", "800"],
 });
 
 const workSans = Work_Sans({
-  variable: "--font-sans",
+  variable: "--font-work-sans",
   subsets: ["latin"],
   display: "swap",
   weight: ["400", "500", "600", "700"],
 });
 
-const bengaliSans = Hind_Siliguri({
-  variable: "--font-bengali-sans",
-  subsets: ["bengali", "latin"],
+const solaimanLipi = localFont({
+  src: [
+    { path: "./fonts/SolaimanLipi_22-02-2012.ttf", weight: "400", style: "normal" },
+    { path: "./fonts/SolaimanLipi_Bold_10-03-12.ttf", weight: "700", style: "normal" },
+  ],
+  variable: "--font-solaimanlipi",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
-const bengaliSerif = Noto_Serif_Bengali({
-  variable: "--font-bengali-serif",
-  subsets: ["bengali", "latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
+  adjustFontFallback: false,
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://thecontemporary.news";
@@ -80,10 +77,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${playfair.variable} ${workSans.variable} ${solaimanLipi.variable}`}
+      suppressHydrationWarning
+    >
       <body
         suppressHydrationWarning
-        className={`${playfair.variable} ${workSans.variable} ${bengaliSans.variable} ${bengaliSerif.variable} antialiased bg-[var(--news-page)] text-[var(--news-ink)]`}
+        className="antialiased bg-[var(--news-page)] text-[var(--news-ink)]"
       >
         <AppRouterCacheProvider>
           <Providers>{children}</Providers>
