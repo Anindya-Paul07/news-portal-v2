@@ -33,6 +33,14 @@ type MobilePane = 'list' | 'editor';
 
 const DEFAULT_ARTICLE_LIMIT = 10;
 
+const hasArticleText = (value: string) => Boolean(value
+  .replace(/<[^>]*>/g, '')
+  .replace(/&(?:nbsp|#160|#x0*a0);/gi, ' ')
+  .replace(/[\u200B-\u200D\uFEFF]/g, '')
+  .trim());
+
+const normalizeArticleText = (value: string) => hasArticleText(value) ? value.trim() : '';
+
 const statusColors: Record<ArticleStatus, string> = {
   draft: 'var(--newsos-status-draft)',
   published: 'var(--newsos-status-published)',
@@ -207,8 +215,13 @@ export default function ArticlesPage() {
       return;
     }
 
-    if (!draft.contentEn.trim() || !draft.contentBn.trim()) {
-      showAlert('Both English and Bangla article content are required by the backend.', 'error', 'Missing content');
+    if (!hasArticleText(draft.excerptEn) && !hasArticleText(draft.excerptBn)) {
+      showAlert('Enter an excerpt in English or Bangla.', 'error', 'Missing excerpt');
+      return;
+    }
+
+    if (!hasArticleText(draft.contentEn) && !hasArticleText(draft.contentBn)) {
+      showAlert('Enter article content in English or Bangla.', 'error', 'Missing content');
       return;
     }
 
@@ -222,8 +235,8 @@ export default function ArticlesPage() {
         id: editingId || undefined,
         slug: draft.slug || undefined,
         title: { en: draft.titleEn, bn: draft.titleBn },
-        excerpt: { en: draft.excerptEn, bn: draft.excerptBn },
-        content: { en: draft.contentEn, bn: draft.contentBn },
+        excerpt: { en: normalizeArticleText(draft.excerptEn), bn: normalizeArticleText(draft.excerptBn) },
+        content: { en: normalizeArticleText(draft.contentEn), bn: normalizeArticleText(draft.contentBn) },
         category: draft.category || undefined,
         featuredImage: draft.imageUrl ? { url: draft.imageUrl } : undefined,
         status: draft.status,
@@ -432,7 +445,7 @@ export default function ArticlesPage() {
 
                 {/* Excerpt with Tabs */}
                 <div>
-                  <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Excerpt</label>
+                  <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Excerpt (at least one language required) *</label>
                   <LanguageTabs
                     tabs={[
                       {
@@ -451,7 +464,7 @@ export default function ArticlesPage() {
 
                 {/* Content with Tabs */}
                 <div>
-                  <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Content</label>
+                  <label className="block text-[0.65rem] font-bold uppercase tracking-wide text-[var(--newsos-text-tertiary)] mb-1.5">Content (at least one language required) *</label>
                   <LanguageTabs
                     tabs={[
                       {
