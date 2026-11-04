@@ -29,6 +29,7 @@ import {
 import { useUploadMedia } from '@/hooks/api-hooks';
 import { useAlert } from '@/contexts/alert-context';
 import { getDisplayErrorMessage } from '@/lib/errors';
+import { resolveMediaUrl, resolveRichTextMedia } from '@/lib/utils';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -89,7 +90,7 @@ export function RichTextEditor({
       TextStyle,
       Color,
     ],
-    content: value,
+    content: resolveRichTextMedia(value || ''),
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
@@ -103,8 +104,9 @@ export function RichTextEditor({
   useEffect(() => {
     if (!editor) return;
     const currentHtml = editor.getHTML();
-    if (currentHtml === value) return;
-    editor.commands.setContent(value || '', { emitUpdate: false });
+    const resolvedValue = resolveRichTextMedia(value || '');
+    if (currentHtml === resolvedValue) return;
+    editor.commands.setContent(resolvedValue, { emitUpdate: false });
   }, [editor, value]);
 
   const handleImageUpload = async (file: File) => {
@@ -115,7 +117,7 @@ export function RichTextEditor({
       });
 
       if (result.data?.url && editor) {
-        editor.chain().focus().setImage({ src: result.data.url }).run();
+        editor.chain().focus().setImage({ src: resolveMediaUrl(result.data.url) }).run();
         showAlert('Image uploaded successfully', 'success');
       }
     } catch (error) {
