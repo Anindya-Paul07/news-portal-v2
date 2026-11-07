@@ -267,6 +267,7 @@ export const useSaveArticle = () => {
         ? apiClient.put<ApiResponse<Article>>(`/articles/${payload.id}`, payload)
         : apiClient.post<ApiResponse<Article>>('/articles', payload),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['article'] });
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'articles'] });
     },

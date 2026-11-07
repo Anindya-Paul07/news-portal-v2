@@ -59,6 +59,8 @@ const initialDraft = {
   category: '',
   status: 'draft' as ArticleStatus,
   imageUrl: '',
+  authorName: '',
+  authorPhoto: '',
   isFeatured: false,
   isBreaking: false,
   isTrending: false,
@@ -85,14 +87,14 @@ export default function ArticlesPage() {
   const saveMutation = useSaveArticle();
   const uploadMutation = useUploadMedia();
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'imageUrl' | 'authorPhoto' = 'imageUrl') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       const res = await uploadMutation.mutateAsync({ file });
       if (res.success && res.data.url) {
-        setDraft(prev => ({ ...prev, imageUrl: res.data.url }));
+        setDraft(prev => ({ ...prev, [field]: res.data.url }));
         showAlert('Image uploaded successfully', 'success');
       }
     } catch (error) {
@@ -106,7 +108,7 @@ export default function ArticlesPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState(initialDraft);
-  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<'imageUrl' | 'authorPhoto' | null>(null);
 
   const totalArticles = pagination?.total ?? articles.length;
   const currentPage = pagination?.page ?? articlePage;
@@ -184,6 +186,8 @@ export default function ArticlesPage() {
       category: article.category?.id || article.categoryId || '',
       status: article.status || 'draft',
       imageUrl: getImgUrl(article.featuredImage) || article.coverImage || '',
+      authorName: article.authorName || '',
+      authorPhoto: article.authorPhoto || '',
       isFeatured: article.isFeatured || false,
       isBreaking: article.isBreaking || false,
       isTrending: article.isTrending || false,
@@ -209,6 +213,7 @@ export default function ArticlesPage() {
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
+    if (uploadMutation.isPending || saveMutation.isPending) return;
     
     if (!draft.titleEn.trim() || !draft.titleBn.trim()) {
       showAlert('Both English and Bangla titles are required by the backend.', 'error', 'Missing title');
@@ -239,6 +244,8 @@ export default function ArticlesPage() {
         content: { en: normalizeArticleText(draft.contentEn), bn: normalizeArticleText(draft.contentBn) },
         category: draft.category || undefined,
         featuredImage: draft.imageUrl ? { url: draft.imageUrl } : undefined,
+        authorName: draft.authorName.trim() || null,
+        authorPhoto: draft.authorPhoto.trim() || null,
         status: draft.status,
         isFeatured: draft.isFeatured,
         isBreaking: draft.isBreaking,
@@ -395,7 +402,7 @@ export default function ArticlesPage() {
                   {editingId ? 'Edit Article' : 'New Article'}
                 </div>
                 <div className="flex gap-2 mt-3">
-                  <button type="submit" className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--newsos-accent-primary)] text-white border-none text-xs font-bold uppercase tracking-wide hover:bg-[var(--newsos-accent-hover)]">
+                  <button type="submit" disabled={saveMutation.isPending || uploadMutation.isPending} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--newsos-accent-primary)] text-white border-none text-xs font-bold uppercase tracking-wide hover:bg-[var(--newsos-accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed">
                     <SaveRoundedIcon sx={{ fontSize: 16 }} />
                     Save
                   </button>
@@ -418,6 +425,52 @@ export default function ArticlesPage() {
                     <input type="text" value={draft.titleBn} onChange={(e) => setDraft({ ...draft, titleBn: e.target.value })} className="w-full px-3 py-2 bg-transparent border border-[var(--newsos-border-default)] text-[var(--newsos-text-primary)] text-sm focus:outline-none focus:border-[var(--newsos-accent-primary)]" placeholder="শিরোনাম..." />
                   </div>
                 </div>
+
+                <fieldset className="space-y-3 border border-[var(--newsos-border-default)] p-4">
+                  <legend className="px-1 text-xs font-bold text-[var(--newsos-text-primary)]">Author byline (optional)</legend>
+                  <p id="author-byline-help" className="text-xs text-[var(--newsos-text-tertiary)]">
+                    Leave the name empty to keep the default byline. Leave the photo empty to use the portal logo.
+                  </p>
+                  <div>
+                    <label htmlFor="article-author-name" className="mb-1.5 block text-xs font-bold text-[var(--newsos-text-primary)]">Author name</label>
+                    <input
+                      id="article-author-name"
+                      type="text"
+                      maxLength={200}
+                      value={draft.authorName}
+                      onChange={(e) => setDraft((prev) => ({ ...prev, authorName: e.target.value }))}
+                      aria-describedby="author-byline-help"
+                      placeholder="নিজস্ব প্রতিবেদক / Staff Correspondent"
+                      className="w-full border border-[var(--newsos-border-default)] bg-transparent px-3 py-2 text-sm text-[var(--newsos-text-primary)]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="article-author-photo" className="mb-1.5 block text-xs font-bold text-[var(--newsos-text-primary)]">Author photo</label>
+                    <input
+                      id="article-author-photo"
+                      type="text"
+                      value={draft.authorPhoto}
+                      onChange={(e) => setDraft((prev) => ({ ...prev, authorPhoto: e.target.value }))}
+                      aria-describedby="author-byline-help"
+                      placeholder="/uploads/author.jpg or https://example.com/author.jpg"
+                      className="w-full border border-[var(--newsos-border-default)] bg-transparent px-3 py-2 text-sm text-[var(--newsos-text-primary)]"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--newsos-text-primary)]">
+                    <label className="cursor-pointer border border-[var(--newsos-border-default)] px-3 py-2">
+                      {uploadMutation.isPending ? 'Uploading...' : 'Upload author photo'}
+                      <input type="file" accept="image/*" aria-label="Upload author photo" className="sr-only" disabled={uploadMutation.isPending} onChange={(e) => handleImageUpload(e, 'authorPhoto')} />
+                    </label>
+                    <button type="button" className="border border-[var(--newsos-border-default)] px-3 py-2" onClick={() => setMediaPickerTarget('authorPhoto')}>Choose from library</button>
+                    {draft.authorPhoto && (
+                      <button type="button" className="border border-[var(--newsos-border-default)] px-3 py-2" onClick={() => setDraft((prev) => ({ ...prev, authorPhoto: '' }))}>Remove photo</button>
+                    )}
+                  </div>
+                  {draft.authorPhoto.trim() && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={resolveMediaUrl(draft.authorPhoto.trim())} alt="Author photo preview" className="size-14 rounded-full object-cover" />
+                  )}
+                </fieldset>
 
                 {/* Slug + Dropdowns */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -494,14 +547,14 @@ export default function ArticlesPage() {
                         <input 
                           type="file" 
                           accept="image/*,image/webp,image/avif,.webp,.avif,.png,.jpg,.jpeg,.gif,.svg,.bmp,.ico" 
-                          onChange={handleImageUpload} 
+                          onChange={(e) => handleImageUpload(e)}
                           disabled={uploadMutation.isPending}
                           className="hidden" 
                         />
                       </label>
                       <button
                         type="button"
-                        onClick={() => setIsMediaPickerOpen(true)}
+                        onClick={() => setMediaPickerTarget('imageUrl')}
                         className="flex items-center gap-2 px-3 py-2 border border-[var(--newsos-border-default)] text-xs font-bold uppercase tracking-wide text-[var(--newsos-text-primary)] transition-colors hover:bg-[var(--newsos-bg-hover)]"
                       >
                         <PhotoLibraryRoundedIcon sx={{ fontSize: 18 }} />
@@ -620,10 +673,10 @@ export default function ArticlesPage() {
         </div>
       </div>
       <MediaPickerDialog
-        open={isMediaPickerOpen}
-        onClose={() => setIsMediaPickerOpen(false)}
+        open={mediaPickerTarget !== null}
+        onClose={() => setMediaPickerTarget(null)}
         onSelect={(item) => {
-          setDraft((prev) => ({ ...prev, imageUrl: item.url }));
+          if (mediaPickerTarget) setDraft((prev) => ({ ...prev, [mediaPickerTarget]: item.url }));
           showAlert('Image selected from media library', 'success');
         }}
       />

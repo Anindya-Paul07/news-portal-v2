@@ -51,7 +51,8 @@ export default function ArticlePage() {
   }, []);
 
   const displayArticle = article;
-  const authorRoleLabel = getAuthorRoleLabel(displayArticle?.author?.role, language);
+  const authorRoleLabel = displayArticle?.authorName?.trim() || getAuthorRoleLabel(displayArticle?.author?.role, language);
+  const authorPhoto = resolveMediaUrl(displayArticle?.authorPhoto?.trim());
   const relatedStories =
     related && related.length > 0 && displayArticle
       ? related.filter((item) => item.id !== displayArticle.id).slice(0, 4)
@@ -149,13 +150,14 @@ export default function ArticlePage() {
                 <div className="flex flex-wrap items-center justify-between border-y border-[var(--news-gray-200)] py-4 gap-4">
                   <div className="flex flex-col gap-4 text-sm text-[var(--news-ink)] font-sans">
                     <div className="flex items-center gap-3">
-                      <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--news-gray-200)] bg-white p-2 shadow-sm">
+                      <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--news-gray-200)] bg-white shadow-sm">
                         <Image
-                          src="/logo.png"
-                          alt="The Contemporary"
-                          width={40}
-                          height={40}
-                          className="size-10 object-contain"
+                          src={authorPhoto || "/logo.png"}
+                          alt={authorPhoto ? authorRoleLabel : "The Contemporary"}
+                          width={56}
+                          height={56}
+                          unoptimized={Boolean(authorPhoto)}
+                          className={authorPhoto ? "size-14 object-cover" : "size-10 object-contain"}
                         />
                       </div>
                       <span className="text-base font-bold sm:text-lg">{authorRoleLabel}</span>

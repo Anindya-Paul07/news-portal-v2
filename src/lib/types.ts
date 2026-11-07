@@ -61,6 +61,8 @@ export type Article = {
   categoryId?: string;
   category?: Category;
   author?: User;
+  authorName?: string | null;
+  authorPhoto?: string | null;
   status?: ArticleStatus;
   isFeatured?: boolean;
   isBreaking?: boolean;
@@ -81,6 +83,8 @@ export type Article = {
 };
 
 export type ArticlePayload = {
+  authorName?: string | null;
+  authorPhoto?: string | null;
   id?: string;
   slug?: string;
   title: LocalizedText;

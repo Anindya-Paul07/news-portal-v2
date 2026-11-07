@@ -25,6 +25,13 @@ pnpm build
 pnpm lint
 ```
 
+## Run with Docker
+```bash
+docker compose up -d --build web
+```
+
+This rebuilds the image and recreates the web container when it changes. Building an image alone does not update a running container. The runtime image uses Next.js standalone output, including its required dependencies, so it does not download packages at startup or during the final image stage. The initial dependency installation still requires registry access.
+
 ## Structure
 - `src/app/(public)`: reader-facing routes (home, article, category, search, auth, profile)
 - `src/app/(admin)/admin`: protected backoffice (dashboard, articles, categories, ads, media, users, settings)
